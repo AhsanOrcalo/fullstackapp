@@ -20,16 +20,33 @@ const DataManagement = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    name: '',
+    city: '',
+    dobFrom: '',
+    dobTo: '',
+    zip: '',
+    state: '',
+    scoreFilter: '',
+    priceSort: '',
+  });
 
   useEffect(() => {
     fetchLeads();
   }, []);
 
-  const fetchLeads = async () => {
+  const fetchLeads = async (filterParams = {}) => {
     try {
       setLoading(true);
       setError('');
-      const data = await getAllLeads();
+      const activeFilters = { ...filters, ...filterParams };
+      // Remove empty filters
+      const cleanFilters = Object.fromEntries(
+        Object.entries(activeFilters).filter(([_, v]) => v !== '')
+      );
+      const data = await getAllLeads(cleanFilters);
       setLeads(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message || 'Failed to fetch leads');
@@ -38,6 +55,43 @@ const DataManagement = () => {
       setLoading(false);
     }
   };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleRadioChange = (name, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [name]: prev[name] === value ? '' : value, // Toggle if same value clicked
+    }));
+  };
+
+  const applyFilters = () => {
+    fetchLeads();
+  };
+
+  const clearFilters = () => {
+    const clearedFilters = {
+      name: '',
+      city: '',
+      dobFrom: '',
+      dobTo: '',
+      zip: '',
+      state: '',
+      scoreFilter: '',
+      priceSort: '',
+    };
+    setFilters(clearedFilters);
+    fetchLeads(clearedFilters);
+  };
+
+  // Get unique states from leads for dropdown
+  const uniqueStates = [...new Set(leads.map(lead => lead.state).filter(Boolean))].sort();
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -170,7 +224,7 @@ const DataManagement = () => {
       setFormErrors({});
       setShowForm(false);
       
-      // Refresh leads list
+      // Refresh leads list with current filters
       await fetchLeads();
     } catch (err) {
       setFormErrors({ submit: err.message || 'Failed to add lead. Please try again.' });
@@ -217,6 +271,141 @@ const DataManagement = () => {
           </button>
         </div>
       </div>
+
+      {/* Filters Section */}
+      <div className="filtercard" style={{ marginBottom: '20px' }}>
+        <div className="filterheader">
+          <span className="filtertitle">Filters</span>
+          <button className="clearbtn" onClick={clearFilters}>Clear All</button>
+        </div>
+        
+        <div className="filtergrid">
+          <div className="filtergroup">
+            <label>Name</label>
+            <input
+              type="text"
+              name="name"
+              value={filters.name}
+              onChange={handleFilterChange}
+              placeholder="Search by name"
+              className="filterinput"
+            />
+          </div>
+          <div className="filtergroup">
+            <label>City</label>
+            <input
+              type="text"
+              name="city"
+              value={filters.city}
+              onChange={handleFilterChange}
+              placeholder="Search by city"
+              className="filterinput"
+            />
+          </div>
+          <div className="filtergroup">
+            <label>Date of Birth (Year)</label>
+            <div className="daterow">
+              <input
+                type="text"
+                name="dobFrom"
+                value={filters.dobFrom}
+                onChange={handleFilterChange}
+                placeholder="From"
+                className="filterinput"
+              />
+              <input
+                type="text"
+                name="dobTo"
+                value={filters.dobTo}
+                onChange={handleFilterChange}
+                placeholder="To"
+                className="filterinput"
+              />
+            </div>
+          </div>
+          <div className="filtergroup">
+            <label>ZIP Code</label>
+            <input
+              type="text"
+              name="zip"
+              value={filters.zip}
+              onChange={handleFilterChange}
+              placeholder="Search by ZIP"
+              className="filterinput"
+            />
+          </div>
+        </div>
+
+        <div className="filtergrid">
+          <div className="filtergroup">
+            <label>Score</label>
+            <div className="checkrow">
+              <label className="customradio">
+                <input
+                  type="radio"
+                  name="scoreFilter"
+                  checked={filters.scoreFilter === '700+'}
+                  onChange={() => handleRadioChange('scoreFilter', '700+')}
+                />
+                <span>700+ Score</span>
+              </label>
+              <label className="customradio">
+                <input
+                  type="radio"
+                  name="scoreFilter"
+                  checked={filters.scoreFilter === '800+'}
+                  onChange={() => handleRadioChange('scoreFilter', '800+')}
+                />
+                <span>800+ Score</span>
+              </label>
+            </div>
+          </div>
+          <div className="filtergroup">
+            <label>State</label>
+            <select
+              name="state"
+              value={filters.state}
+              onChange={handleFilterChange}
+              className="filterinput"
+            >
+              <option value="">All States/Provinces</option>
+              {uniqueStates.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filtergroup">
+            <label>Price Sort</label>
+            <div className="checkrow">
+              <label className="customradio">
+                <input
+                  type="radio"
+                  name="priceSort"
+                  checked={filters.priceSort === 'high-to-low'}
+                  onChange={() => handleRadioChange('priceSort', 'high-to-low')}
+                />
+                <span>High to Low</span>
+              </label>
+              <label className="customradio">
+                <input
+                  type="radio"
+                  name="priceSort"
+                  checked={filters.priceSort === 'low-to-high'}
+                  onChange={() => handleRadioChange('priceSort', 'low-to-high')}
+                />
+                <span>Low to High</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button className="applybtn" onClick={applyFilters}>
+          Apply Filters
+        </button>
+      </div>
+
       <div className="tablecard">
         {loading ? (
           <div className="nodata">
