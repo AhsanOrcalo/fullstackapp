@@ -14,6 +14,7 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
     { name: 'Orders', icon: '📋' },
     { name: 'Payments', icon: '💳' },
     { name: 'Funds', icon: '💰' },
+    { name: 'Enquiries', icon: '💬' },
   ];
 
   const adminMenuItems = [
@@ -21,6 +22,7 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
     { name: 'Data Management', icon: '🗂️' },
     { name: 'User Management', icon: '👥' },
     { name: 'Sold Data', icon: '📊' },
+    { name: 'Enquiries', icon: '💬' },
   ];
 
   // Select menu items based on role

@@ -249,3 +249,61 @@ export const getUserPurchases = async () => {
   }
 };
 
+// Enquiries API
+export const createEnquiry = async (message) => {
+  try {
+    const response = await apiRequest('/enquiries', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUserEnquiries = async () => {
+  try {
+    const response = await apiRequest('/enquiries', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllEnquiries = async () => {
+  try {
+    const response = await apiRequest('/enquiries/all', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const respondToEnquiry = async (enquiryId, response) => {
+  try {
+    const response_data = await apiRequest(`/enquiries/${enquiryId}/respond`, {
+      method: 'PUT',
+      body: JSON.stringify({ response }),
+    });
+    return response_data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const closeEnquiry = async (enquiryId) => {
+  try {
+    const response = await apiRequest(`/enquiries/${enquiryId}/close`, {
+      method: 'PUT',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
