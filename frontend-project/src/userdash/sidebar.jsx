@@ -1,7 +1,13 @@
 import React from 'react';
+import { getUserData } from '../services/api';
 
 const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
-  const menuItems = [
+  // Get user data to determine role
+  const userData = getUserData();
+  const userRole = userData?.role || 'user';
+
+  // Define menu items based on role
+  const userMenuItems = [
     { name: 'Dashboard', icon: '🏠' },
     { name: 'Browse Data', icon: '🗂️' },
     { name: 'Cart', icon: '🛒' },
@@ -9,6 +15,16 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
     { name: 'Payments', icon: '💳' },
     { name: 'Funds', icon: '💰' },
   ];
+
+  const adminMenuItems = [
+    { name: 'Dashboard', icon: '🏠' },
+    { name: 'Data Management', icon: '🗂️' },
+    { name: 'User Management', icon: '👥' },
+    { name: 'Sold Data', icon: '📊' },
+  ];
+
+  // Select menu items based on role
+  const menuItems = userRole === 'admin' ? adminMenuItems : userMenuItems;
 
   return (
     <div className="sidebar">
