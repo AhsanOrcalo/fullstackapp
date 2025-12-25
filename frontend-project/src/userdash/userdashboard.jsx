@@ -6,7 +6,8 @@ import Cart from './cart.jsx';
 import Orders from './orders.jsx'; 
 import Payments from './payments.jsx'; 
 import Funds from './funds.jsx';
-import Accountsettings from './accountsettings.jsx'; 
+import Accountsettings from './accountsettings.jsx';
+import DataManagement from './datamanagement.jsx';
 import './userdashboard.css';
 
 const Userdashboard = ({ logout }) => {
@@ -59,6 +60,7 @@ const Userdashboard = ({ logout }) => {
           {view === 'Payments' && <Payments />}
           {view === 'Funds' && <Funds />}
           {view === 'Settings' && <Accountsettings />}
+          {view === 'Data Management' && <DataManagement />}
 
           {/* 3. Placeholder Logic */}
           {view !== 'Dashboard' && 
@@ -67,7 +69,8 @@ const Userdashboard = ({ logout }) => {
            view !== 'Orders' && 
            view !== 'Payments' && 
            view !== 'Funds' && 
-           view !== 'Settings' && ( 
+           view !== 'Settings' &&
+           view !== 'Data Management' && ( 
             <div>
               <h1 style={{ color: 'var(--text-main)' }}>{view} Page</h1>
               <p style={{ color: 'var(--text-sub)' }}>This section is coming soon.</p>

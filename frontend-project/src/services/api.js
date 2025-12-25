@@ -123,3 +123,43 @@ export const isAuthenticated = () => {
   return !!getAuthToken();
 };
 
+// Get all leads API
+export const getAllLeads = async (filters = {}) => {
+  try {
+    // Build query string from filters
+    const queryParams = new URLSearchParams();
+    if (filters.name) queryParams.append('name', filters.name);
+    if (filters.city) queryParams.append('city', filters.city);
+    if (filters.dobFrom) queryParams.append('dobFrom', filters.dobFrom);
+    if (filters.dobTo) queryParams.append('dobTo', filters.dobTo);
+    if (filters.zip) queryParams.append('zip', filters.zip);
+    if (filters.state) queryParams.append('state', filters.state);
+    if (filters.priceSort) queryParams.append('priceSort', filters.priceSort);
+    if (filters.scoreFilter) queryParams.append('scoreFilter', filters.scoreFilter);
+
+    const queryString = queryParams.toString();
+    const endpoint = `/leads${queryString ? `?${queryString}` : ''}`;
+
+    const response = await apiRequest(endpoint, {
+      method: 'GET',
+    });
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Add lead API
+export const addLead = async (leadData) => {
+  try {
+    const response = await apiRequest('/leads/add-lead', {
+      method: 'POST',
+      body: JSON.stringify(leadData),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
