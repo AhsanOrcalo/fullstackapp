@@ -159,10 +159,31 @@ export class LeadsController {
   async getAllLeads(@Request() req: any, @Query() filterDto: FilterLeadsDto) {
     const leads = await this.leadsService.getAllLeads(filterDto);
     const userId = req.user.userId;
+    const userRole = req.user.role;
 
-    // Add purchase status for each lead
+    // For regular users: filter out leads that have been purchased by ANY user
+    // For admins: show all leads (they can see everything)
+    let availableLeads = leads;
+    if (userRole === Role.USER) {
+      // Filter out leads that have been purchased by anyone
+      const leadsWithPurchaseStatus = await Promise.all(
+        leads.map(async (lead) => {
+          const isPurchasedByAnyone = await this.purchasesService.isLeadPurchased(lead.id);
+          return {
+            lead,
+            isPurchasedByAnyone,
+          };
+        }),
+      );
+      // Only return leads that haven't been purchased by anyone
+      availableLeads = leadsWithPurchaseStatus
+        .filter(({ isPurchasedByAnyone }) => !isPurchasedByAnyone)
+        .map(({ lead }) => lead);
+    }
+
+    // Add purchase status for each lead (whether current user has purchased it)
     const leadsWithPurchaseStatus = await Promise.all(
-      leads.map(async (lead) => {
+      availableLeads.map(async (lead) => {
         const isPurchased = await this.purchasesService.isLeadPurchasedByUser(userId, lead.id);
         return {
           ...lead,

@@ -33,9 +33,9 @@ const Browsedata = () => {
         Object.entries(activeFilters).filter(([_, v]) => v !== '')
       );
       const data = await getAllLeads(cleanFilters);
-      // Filter out sold leads (only show leads that are not purchased)
-      const unsoldLeads = Array.isArray(data) ? data.filter(lead => !lead.isPurchased) : [];
-      setLeads(unsoldLeads);
+      // Backend already filters out leads purchased by any user for regular users
+      // So we just use the data as-is
+      setLeads(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message || 'Failed to fetch leads');
       console.error('Error fetching leads:', err);

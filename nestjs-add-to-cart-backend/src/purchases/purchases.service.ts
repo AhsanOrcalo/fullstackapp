@@ -67,5 +67,12 @@ export class PurchasesService {
       relations: ['user'],
     });
   }
+
+  async isLeadPurchased(leadId: string): Promise<boolean> {
+    const purchase = await this.purchasesRepository.findOne({
+      where: { leadId },
+    });
+    return !!purchase;
+  }
 }
 
