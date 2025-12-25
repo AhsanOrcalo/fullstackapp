@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllLeads } from '../services/api';
+import { getAllLeads, addMultipleToCart } from '../services/api';
 
 const Browsedata = () => {
   const [leads, setLeads] = useState([]);
@@ -136,8 +136,17 @@ const Browsedata = () => {
           <button className="applybtn" onClick={handleSelectAll}>
             {selectedLeads.size === leads.length && leads.length > 0 ? 'Deselect All' : 'Select All'}
           </button>
-          <button className="applybtn" disabled={selectedLeads.size === 0}>
-            ⚡ Buy Fast ({selectedLeads.size})
+          <button 
+            className="applybtn" 
+            disabled={selectedLeads.size === 0}
+            onClick={() => {
+              const selectedLeadsData = leads.filter(lead => selectedLeads.has(lead.id));
+              addMultipleToCart(selectedLeadsData);
+              setSelectedLeads(new Set());
+              alert(`${selectedLeadsData.length} lead(s) added to cart!`);
+            }}
+          >
+            🛒 Add to Cart ({selectedLeads.size})
           </button>
         </div>
       </div>

@@ -31,6 +31,44 @@ export const removeUserData = () => {
   localStorage.removeItem('user_data');
 };
 
+// Cart management functions
+export const getCart = () => {
+  const cart = localStorage.getItem('cart');
+  return cart ? JSON.parse(cart) : [];
+};
+
+export const addToCart = (lead) => {
+  const cart = getCart();
+  // Check if lead already in cart
+  if (!cart.find(item => item.id === lead.id)) {
+    cart.push(lead);
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }
+  return cart;
+};
+
+export const addMultipleToCart = (leads) => {
+  const cart = getCart();
+  leads.forEach(lead => {
+    if (!cart.find(item => item.id === lead.id)) {
+      cart.push(lead);
+    }
+  });
+  localStorage.setItem('cart', JSON.stringify(cart));
+  return cart;
+};
+
+export const removeFromCart = (leadId) => {
+  const cart = getCart();
+  const updatedCart = cart.filter(item => item.id !== leadId);
+  localStorage.setItem('cart', JSON.stringify(updatedCart));
+  return updatedCart;
+};
+
+export const clearCart = () => {
+  localStorage.removeItem('cart');
+};
+
 // Generic API request function
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -179,6 +217,30 @@ export const getAllUsers = async () => {
 export const getAllPurchases = async () => {
   try {
     const response = await apiRequest('/purchases/all', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Purchase a lead API (User only)
+export const purchaseLead = async (leadId) => {
+  try {
+    const response = await apiRequest(`/purchases/lead/${leadId}`, {
+      method: 'POST',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get user purchases API (User only)
+export const getUserPurchases = async () => {
+  try {
+    const response = await apiRequest('/purchases', {
       method: 'GET',
     });
     return response;
