@@ -9,6 +9,7 @@ import Funds from './funds.jsx';
 import Accountsettings from './accountsettings.jsx';
 import DataManagement from './datamanagement.jsx';
 import UserManagement from './usermanagement.jsx';
+import SoldData from './solddata.jsx';
 import './userdashboard.css';
 
 const Userdashboard = ({ logout }) => {
@@ -63,6 +64,7 @@ const Userdashboard = ({ logout }) => {
           {view === 'Settings' && <Accountsettings />}
           {view === 'Data Management' && <DataManagement />}
           {view === 'User Management' && <UserManagement />}
+          {view === 'Sold Data' && <SoldData />}
 
           {/* 3. Placeholder Logic */}
           {view !== 'Dashboard' && 
@@ -73,7 +75,8 @@ const Userdashboard = ({ logout }) => {
            view !== 'Funds' && 
            view !== 'Settings' &&
            view !== 'Data Management' &&
-           view !== 'User Management' && ( 
+           view !== 'User Management' &&
+           view !== 'Sold Data' && ( 
             <div>
               <h1 style={{ color: 'var(--text-main)' }}>{view} Page</h1>
               <p style={{ color: 'var(--text-sub)' }}>This section is coming soon.</p>

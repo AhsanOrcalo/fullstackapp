@@ -175,3 +175,15 @@ export const getAllUsers = async () => {
   }
 };
 
+// Get all purchases API (Admin only)
+export const getAllPurchases = async () => {
+  try {
+    const response = await apiRequest('/purchases/all', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
