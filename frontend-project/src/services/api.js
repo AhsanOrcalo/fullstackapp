@@ -163,3 +163,15 @@ export const addLead = async (leadData) => {
   }
 };
 
+// Get all users API (Admin only)
+export const getAllUsers = async () => {
+  try {
+    const response = await apiRequest('/auth/users', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
