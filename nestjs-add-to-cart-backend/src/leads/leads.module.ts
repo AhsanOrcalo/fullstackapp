@@ -1,12 +1,18 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { LeadsController } from './leads.controller';
 import { LeadsService } from './leads.service';
 import { RolesGuard } from '../users/guards/roles.guard';
 import { PurchasesModule } from '../purchases/purchases.module';
+import { Lead } from './entities/lead.entity';
 
 @Module({
-  imports: [PassportModule, forwardRef(() => PurchasesModule)],
+  imports: [
+    TypeOrmModule.forFeature([Lead]),
+    PassportModule,
+    forwardRef(() => PurchasesModule),
+  ],
   controllers: [LeadsController],
   providers: [LeadsService, RolesGuard],
   exports: [LeadsService],

@@ -6,13 +6,15 @@ import { UsersModule } from './users/users.module';
 import { LeadsModule } from './leads/leads.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { User } from './users/entities/user.entity';
+import { Lead } from './leads/entities/lead.entity';
+import { Purchase } from './purchases/entities/purchase.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'database.sqlite',
-      entities: [User],
+      entities: [User, Lead, Purchase],
       synchronize: true, // Set to false in production and use migrations
     }),
     UsersModule,
