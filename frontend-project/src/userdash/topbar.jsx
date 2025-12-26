@@ -1,6 +1,12 @@
 import React from 'react';
+import { getUserData } from '../services/api';
 
 const Topbar = ({ title, logout, setview }) => {
+  // Get user data to determine role
+  const userData = getUserData();
+  const userRole = userData?.role || 'user';
+  const isUser = userRole !== 'admin';
+
   return (
     <div className="topbar">
       {/* Click karne par Dashboard par le jaye ga */}
@@ -11,15 +17,12 @@ const Topbar = ({ title, logout, setview }) => {
       </div>
       
       <div className="topright">
-        <div className="balancebox" onClick={() => setview('Payments')}>
-          <span className="coin-icon">💰</span> 
-          $0.00
-        </div>
-
-        <button className="cartbutton" onClick={() => setview('Cart')}>
-          <span className="cart-icon">🛒</span> 
-          Add to Cart
-        </button>
+        {isUser && (
+          <div className="balancebox" onClick={() => setview('Payments')}>
+            <span className="coin-icon">💰</span> 
+            $0.00
+          </div>
+        )}
 
         <button className="logoutbutton" onClick={logout}>Logout</button>
       </div>
