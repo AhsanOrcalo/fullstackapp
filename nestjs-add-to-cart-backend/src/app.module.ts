@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { LeadsModule } from './leads/leads.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { User } from './users/entities/user.entity';
 import { Lead } from './leads/entities/lead.entity';
 import { Purchase } from './purchases/entities/purchase.entity';
@@ -23,6 +24,7 @@ import { Enquiry } from './enquiries/entities/enquiry.entity';
     LeadsModule,
     PurchasesModule,
     EnquiriesModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

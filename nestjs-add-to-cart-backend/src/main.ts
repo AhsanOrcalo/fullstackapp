@@ -23,9 +23,13 @@ async function bootstrap() {
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('Cart Backend API')
-    .setDescription('API documentation for Cart Backend - Authentication endpoints')
+    .setDescription('API documentation for Cart Backend - Full API endpoints')
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
+    .addTag('leads', 'Leads management endpoints')
+    .addTag('purchases', 'Purchase management endpoints')
+    .addTag('enquiries', 'Enquiry management endpoints')
+    .addTag('dashboard', 'Dashboard statistics endpoints')
     .addBearerAuth(
       {
         type: 'http',

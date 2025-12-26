@@ -307,3 +307,15 @@ export const closeEnquiry = async (enquiryId) => {
   }
 };
 
+// Get admin dashboard stats API
+export const getDashboardStats = async () => {
+  try {
+    const response = await apiRequest('/dashboard/stats', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+

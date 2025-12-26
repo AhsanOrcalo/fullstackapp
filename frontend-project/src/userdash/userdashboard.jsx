@@ -11,11 +11,18 @@ import DataManagement from './datamanagement.jsx';
 import UserManagement from './usermanagement.jsx';
 import SoldData from './solddata.jsx';
 import Enquiries from './enquiries.jsx';
+import AdminDashboard from './admindashboard.jsx';
+import { getUserData } from '../services/api';
 import './userdashboard.css';
 
 const Userdashboard = ({ logout }) => {
   const [view, setview] = useState('Dashboard');
   const [theme, setTheme] = useState('dark'); // Default theme dark
+
+  // Get user data to determine role
+  const userData = getUserData();
+  const userRole = userData?.role || 'user';
+  const isAdmin = userRole === 'admin';
 
   // Theme change function
   const toggleTheme = () => {
@@ -38,22 +45,28 @@ const Userdashboard = ({ logout }) => {
         <div style={{ padding: '30px', flex: 1 }}>
           {/* 1. Dashboard View */}
           {view === 'Dashboard' && (
-            <div>
-              <div className="statsrow">
-                <div className="statcard">
-                  <p className="cardtitle">Data Purchased</p>
-                  <h1 className="cardvalue">0</h1>
+            <>
+              {isAdmin ? (
+                <AdminDashboard setview={setview} />
+              ) : (
+                <div>
+                  <div className="statsrow">
+                    <div className="statcard">
+                      <p className="cardtitle">Data Purchased</p>
+                      <h1 className="cardvalue">0</h1>
+                    </div>
+                    <div className="statcard">
+                      <p className="cardtitle">Available Balance</p>
+                      <h1 className="cardvalue">$0.00</h1>
+                    </div>
+                  </div>
+                  <div className="datasection">
+                    <h2 className="sectiontitle">All Data Available</h2>
+                    <p className="infotext">No data records found at the moment.</p>
+                  </div>
                 </div>
-                <div className="statcard">
-                  <p className="cardtitle">Available Balance</p>
-                  <h1 className="cardvalue">$0.00</h1>
-                </div>
-              </div>
-              <div className="datasection">
-                <h2 className="sectiontitle">All Data Available</h2>
-                <p className="infotext">No data records found at the moment.</p>
-              </div>
-            </div>
+              )}
+            </>
           )}
 
           {/* 2. Page Components */}
