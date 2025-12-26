@@ -22,7 +22,7 @@ const AdminDashboard = ({ setview }) => {
   useEffect(() => {
     fetchDashboardStats();
     // Refresh stats every 30 seconds
-    const interval = setInterval(fetchDashboardStats, 30000);
+    const interval = setInterval(fetchDashboardStats, 800000);
     return () => clearInterval(interval);
   }, []);
 
@@ -182,12 +182,7 @@ const AdminDashboard = ({ setview }) => {
       {/* Metric Cards Grid */}
       {!loading && (
         <>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-            gap: '20px', 
-            marginBottom: '30px' 
-          }}>
+          <div className="admin-metric-grid">
             {metricCards.map((card, index) => (
               <div
                 key={index}

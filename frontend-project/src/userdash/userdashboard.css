@@ -992,3 +992,32 @@ input:checked + .slider:before {
   .sidebar { display: none; }
   .topbar { padding: 0 15px; }
 }
+
+/* Admin Dashboard Responsive Grid */
+.admin-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+/* Medium screens: 3 columns */
+@media (max-width: 1200px) {
+  .admin-metric-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Small screens: 2 columns */
+@media (max-width: 768px) {
+  .admin-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Very small screens: 1 column */
+@media (max-width: 480px) {
+  .admin-metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
