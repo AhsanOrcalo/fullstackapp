@@ -331,3 +331,16 @@ export const getUserDashboardStats = async () => {
   }
 };
 
+// Change password API
+export const changePassword = async (oldPassword, newPassword, confirmPassword) => {
+  try {
+    const response = await apiRequest('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ oldPassword, newPassword, confirmPassword }),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
