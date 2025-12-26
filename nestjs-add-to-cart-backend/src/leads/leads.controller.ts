@@ -42,6 +42,7 @@ export class LeadsController {
           dob: '1990-01-15T00:00:00.000Z',
           ssn: '123-45-6789',
           email: 'john.doe@example.com',
+          score: 750,
           createdAt: '2024-01-01T00:00:00.000Z',
         },
       },
@@ -114,8 +115,10 @@ export class LeadsController {
           dob: '1990-01-15T00:00:00.000Z',
           ssn: '123-45-6789',
           email: 'john.doe@example.com',
+          score: 750,
           createdAt: '2024-01-01T00:00:00.000Z',
           isPurchased: false,
+          isPurchasedByAnyone: false,
         },
         {
           id: '9876543210',
@@ -129,8 +132,10 @@ export class LeadsController {
           dob: '1985-05-20T00:00:00.000Z',
           ssn: '987-65-4321',
           email: 'jane.smith@example.com',
+          score: 820,
           createdAt: '2024-01-02T00:00:00.000Z',
           isPurchased: true,
+          isPurchasedByAnyone: true,
         },
       ],
     },
@@ -182,12 +187,17 @@ export class LeadsController {
     }
 
     // Add purchase status for each lead (whether current user has purchased it)
+    // For admins, also add isPurchasedByAnyone to show if lead is sold to anyone
     const leadsWithPurchaseStatus = await Promise.all(
       availableLeads.map(async (lead) => {
         const isPurchased = await this.purchasesService.isLeadPurchasedByUser(userId, lead.id);
+        const isPurchasedByAnyone = userRole === Role.ADMIN 
+          ? await this.purchasesService.isLeadPurchased(lead.id)
+          : undefined;
         return {
           ...lead,
           isPurchased,
+          isPurchasedByAnyone,
         };
       }),
     );

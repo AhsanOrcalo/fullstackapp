@@ -24,6 +24,7 @@ export class LeadsService {
       dob: new Date(addLeadDto.dob),
       ssn: addLeadDto.ssn,
       email: addLeadDto.email,
+      score: addLeadDto.score,
     });
 
     const savedLead = await this.leadsRepository.save(newLead);

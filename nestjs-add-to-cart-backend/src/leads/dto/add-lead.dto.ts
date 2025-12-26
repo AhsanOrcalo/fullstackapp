@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, MinLength, Min, IsEmail, Matches, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, MinLength, Min, IsEmail, Matches, IsDateString, IsOptional, Max } from 'class-validator';
 
 export class AddLeadDto {
   @ApiProperty({
@@ -91,5 +91,18 @@ export class AddLeadDto {
   @IsEmail({}, { message: 'Email must be a valid email address' })
   @IsNotEmpty()
   email: string;
+
+  @ApiProperty({
+    description: 'Score of the lead',
+    example: 750,
+    minimum: 300,
+    maximum: 850,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Min(300, { message: 'Score must be at least 300' })
+  @Max(850, { message: 'Score must be at most 850' })
+  score?: number;
 }
 

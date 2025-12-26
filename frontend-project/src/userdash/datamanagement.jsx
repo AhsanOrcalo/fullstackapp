@@ -17,6 +17,7 @@ const DataManagement = () => {
     dob: '',
     ssn: '',
     price: '',
+    score: '',
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -179,6 +180,9 @@ const DataManagement = () => {
     if (!formData.price || isNaN(formData.price) || parseFloat(formData.price) < 0) {
       errors.price = 'Price must be a positive number';
     }
+    if (formData.score && (isNaN(formData.score) || parseFloat(formData.score) < 300 || parseFloat(formData.score) > 850)) {
+      errors.score = 'Score must be between 300 and 850';
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -204,6 +208,7 @@ const DataManagement = () => {
         dob: formData.dob,
         ssn: formData.ssn.trim(),
         price: parseFloat(formData.price),
+        score: formData.score ? parseFloat(formData.score) : undefined,
       };
 
       await addLead(leadPayload);
@@ -220,6 +225,7 @@ const DataManagement = () => {
         dob: '',
         ssn: '',
         price: '',
+        score: '',
       });
       setFormErrors({});
       setShowForm(false);
@@ -247,6 +253,7 @@ const DataManagement = () => {
       dob: '',
       ssn: '',
       price: '',
+      score: '',
     });
     setFormErrors({});
   };
@@ -470,7 +477,16 @@ const DataManagement = () => {
                       )}
                     </td>
                     <td>
-                      {lead.isPurchased ? (
+                      {lead.isPurchasedByAnyone ? (
+                        <span style={{ 
+                          color: '#ef4444',
+                          fontWeight: '600',
+                          fontSize: '12px',
+                          textTransform: 'uppercase'
+                        }}>
+                          Unavailable
+                        </span>
+                      ) : lead.isPurchased ? (
                         <span style={{ 
                           color: '#10b981',
                           fontWeight: '600',
@@ -748,6 +764,28 @@ const DataManagement = () => {
                     </span>
                   )}
                 </div>
+              </div>
+
+              <div className="filtergroup" style={{ marginBottom: '15px' }}>
+                <label style={{ color: 'var(--text-main)', marginBottom: '8px', display: 'block', fontWeight: '600' }}>
+                  Score
+                </label>
+                <input
+                  type="number"
+                  name="score"
+                  value={formData.score}
+                  onChange={handleInputChange}
+                  className="filterinput"
+                  placeholder="750"
+                  min="300"
+                  max="850"
+                  step="1"
+                />
+                {formErrors.score && (
+                  <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', display: 'block' }}>
+                    {formErrors.score}
+                  </span>
+                )}
               </div>
 
               {formErrors.submit && (
