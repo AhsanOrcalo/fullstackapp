@@ -319,3 +319,15 @@ export const getDashboardStats = async () => {
   }
 };
 
+// Get user dashboard stats API
+export const getUserDashboardStats = async () => {
+  try {
+    const response = await apiRequest('/dashboard/user-stats', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+

@@ -12,6 +12,7 @@ import UserManagement from './usermanagement.jsx';
 import SoldData from './solddata.jsx';
 import Enquiries from './enquiries.jsx';
 import AdminDashboard from './admindashboard.jsx';
+import UserDashboardComponent from './userdashboardcomponent.jsx';
 import { getUserData } from '../services/api';
 import './userdashboard.css';
 
@@ -49,22 +50,7 @@ const Userdashboard = ({ logout }) => {
               {isAdmin ? (
                 <AdminDashboard setview={setview} />
               ) : (
-                <div>
-                  <div className="statsrow">
-                    <div className="statcard">
-                      <p className="cardtitle">Data Purchased</p>
-                      <h1 className="cardvalue">0</h1>
-                    </div>
-                    <div className="statcard">
-                      <p className="cardtitle">Available Balance</p>
-                      <h1 className="cardvalue">$0.00</h1>
-                    </div>
-                  </div>
-                  <div className="datasection">
-                    <h2 className="sectiontitle">All Data Available</h2>
-                    <p className="infotext">No data records found at the moment.</p>
-                  </div>
-                </div>
+                <UserDashboardComponent />
               )}
             </>
           )}

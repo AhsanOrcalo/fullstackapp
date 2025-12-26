@@ -98,5 +98,35 @@ export class DashboardService {
       throw error;
     }
   }
+
+  async getUserDashboardStats(userId: string) {
+    try {
+      // Get user purchases count
+      const userPurchases = await this.purchasesRepository.find({
+        where: { userId },
+        relations: ['lead'],
+      });
+
+      const dataPurchased = userPurchases.length;
+
+      // Calculate total spent (sum of all purchased lead prices)
+      const totalSpent = userPurchases.reduce((sum, purchase) => {
+        return sum + (purchase.lead?.price || 0);
+      }, 0);
+
+      // For now, available balance is set to 0.0
+      // In a real system, this would come from a user balance field or payment system
+      const availableBalance = 0.0;
+
+      return {
+        dataPurchased,
+        availableBalance,
+        totalSpent, // Optional: can be used for display
+      };
+    } catch (error) {
+      console.error('Error fetching user dashboard stats:', error);
+      throw error;
+    }
+  }
 }
 

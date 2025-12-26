@@ -43,5 +43,32 @@ export class DashboardController {
   async getDashboardStats() {
     return this.dashboardService.getDashboardStats();
   }
+
+  @Get('user-stats')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.USER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get user dashboard statistics' })
+  @ApiResponse({
+    status: 200,
+    description: 'User dashboard statistics retrieved successfully',
+    schema: {
+      example: {
+        dataPurchased: 5,
+        availableBalance: 0.0,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - User access required',
+  })
+  async getUserDashboardStats(@Request() req: any) {
+    return this.dashboardService.getUserDashboardStats(req.user.userId);
+  }
 }
 
