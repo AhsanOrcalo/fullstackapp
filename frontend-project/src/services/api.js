@@ -344,3 +344,44 @@ export const changePassword = async (oldPassword, newPassword, confirmPassword) 
   }
 };
 
+// Get user profile API
+export const getProfile = async () => {
+  try {
+    const response = await apiRequest('/auth/profile', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Update profile API
+export const updateProfile = async (userName, email) => {
+  try {
+    const updateData = {};
+    if (userName) updateData.userName = userName;
+    if (email) updateData.email = email;
+    
+    const response = await apiRequest('/auth/update-profile', {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    });
+    
+    // Update user data in localStorage if username changed
+    if (response.user) {
+      const currentUserData = getUserData();
+      if (currentUserData) {
+        setUserData({
+          ...currentUserData,
+          userName: response.user.userName,
+        });
+      }
+    }
+    
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+

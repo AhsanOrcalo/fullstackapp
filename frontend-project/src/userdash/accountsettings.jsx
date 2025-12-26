@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { changePassword, getUserData } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { changePassword, getUserData, getProfile, updateProfile } from '../services/api';
 
 const Accountsettings = () => {
   const userData = getUserData();
@@ -7,6 +7,10 @@ const Accountsettings = () => {
   // Profile state
   const [username, setUsername] = useState(userData?.userName || '');
   const [email, setEmail] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -17,6 +21,76 @@ const Accountsettings = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  // Fetch profile data on component mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setInitialLoading(true);
+        const profileData = await getProfile();
+        setUsername(profileData.userName || '');
+        setEmail(profileData.email || '');
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setProfileError('Failed to load profile data');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    
+    // Reset messages
+    setProfileError('');
+    setProfileSuccess('');
+
+    // Validation
+    if (!username || username.trim().length < 3) {
+      setProfileError('Username must be at least 3 characters long');
+      return;
+    }
+
+    if (!email || !email.includes('@')) {
+      setProfileError('Please provide a valid email address');
+      return;
+    }
+
+    // Get current profile to check if values changed
+    let currentProfile;
+    try {
+      currentProfile = await getProfile();
+    } catch (err) {
+      // If we can't get profile, continue with update
+      currentProfile = null;
+    }
+
+    // Check if values have actually changed
+    if (currentProfile) {
+      if (username === currentProfile.userName && email === currentProfile.email) {
+        setProfileError('No changes detected. Please update at least one field.');
+        return;
+      }
+    }
+
+    try {
+      setProfileLoading(true);
+      const response = await updateProfile(username, email);
+      setProfileSuccess('Profile updated successfully!');
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setProfileSuccess('');
+      }, 5000);
+    } catch (error) {
+      setProfileError(error.message || 'Failed to update profile. Please try again.');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -77,32 +151,74 @@ const Accountsettings = () => {
       {/* Profile Management Section */}
       <div className="datasection" style={{ marginBottom: '30px' }}>
         <h3 className="filtertitle" style={{ marginBottom: '20px' }}>Profile Management</h3>
-        
-        <div className="filtergroup" style={{ marginBottom: '15px' }}>
-          <label>Username</label>
-          <input 
-            type="text" 
-            className="filterinput" 
-            placeholder="Enter your username" 
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            disabled
-          />
-        </div>
 
-        <div className="filtergroup" style={{ marginBottom: '20px' }}>
-          <label>Email</label>
-          <input 
-            type="email" 
-            className="filterinput" 
-            placeholder="Enter your email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled
-          />
-        </div>
+        {profileError && (
+          <div style={{ 
+            padding: '12px', 
+            marginBottom: '15px', 
+            backgroundColor: '#fee2e2', 
+            color: '#dc2626', 
+            borderRadius: '6px',
+            border: '1px solid #fecaca'
+          }}>
+            {profileError}
+          </div>
+        )}
 
-        <button className="applybtn" disabled>Update Profile</button>
+        {profileSuccess && (
+          <div style={{ 
+            padding: '12px', 
+            marginBottom: '15px', 
+            backgroundColor: '#d1fae5', 
+            color: '#059669', 
+            borderRadius: '6px',
+            border: '1px solid #a7f3d0'
+          }}>
+            {profileSuccess}
+          </div>
+        )}
+
+        {initialLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center' }}>Loading profile...</div>
+        ) : (
+          <form onSubmit={handleUpdateProfile}>
+            <div className="filtergroup" style={{ marginBottom: '15px' }}>
+              <label>Username</label>
+              <input 
+                type="text" 
+                className="filterinput" 
+                placeholder="Enter your username (min 3 characters)" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={profileLoading}
+                required
+                minLength={3}
+              />
+            </div>
+
+            <div className="filtergroup" style={{ marginBottom: '20px' }}>
+              <label>Email</label>
+              <input 
+                type="email" 
+                className="filterinput" 
+                placeholder="Enter your email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={profileLoading}
+                required
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              className="applybtn" 
+              disabled={profileLoading}
+              style={{ opacity: profileLoading ? 0.6 : 1, cursor: profileLoading ? 'not-allowed' : 'pointer' }}
+            >
+              {profileLoading ? 'Updating...' : 'Update Profile'}
+            </button>
+          </form>
+        )}
       </div>
 
       {/* Change Password Section */}

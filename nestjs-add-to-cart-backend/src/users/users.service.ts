@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
 import { Role } from './enums/role.enum';
 
@@ -191,6 +192,72 @@ export class UsersService implements OnModuleInit {
       select: ['id', 'userName', 'email', 'phoneNumber', 'role', 'createdAt'],
     });
     return users;
+  }
+
+  async getProfile(userId: string): Promise<{ id: string; userName: string; email: string; phoneNumber: string; role: Role; createdAt: Date }> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'userName', 'email', 'phoneNumber', 'role', 'createdAt'],
+    });
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+    return user;
+  }
+
+  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<{ message: string; user: { id: string; userName: string; email: string; phoneNumber: string; role: Role } }> {
+    const { userName, email } = updateProfileDto;
+
+    // Find user
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if at least one field is provided
+    if (!userName && !email) {
+      throw new BadRequestException('At least one field (userName or email) must be provided');
+    }
+
+    // Check if username is being changed and if it already exists
+    if (userName && userName !== user.userName) {
+      const existingUserByUsername = await this.usersRepository.findOne({
+        where: { userName },
+      });
+      if (existingUserByUsername) {
+        throw new ConflictException('Username already exists');
+      }
+      user.userName = userName;
+    }
+
+    // Check if email is being changed and if it already exists
+    if (email && email !== user.email) {
+      const existingUserByEmail = await this.usersRepository.findOne({
+        where: { email },
+      });
+      if (existingUserByEmail) {
+        throw new ConflictException('Email already exists');
+      }
+      user.email = email;
+    }
+
+    // Save updated user
+    await this.usersRepository.save(user);
+
+    return {
+      message: 'Profile updated successfully',
+      user: {
+        id: user.id,
+        userName: user.userName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+      },
+    };
   }
 }
 
