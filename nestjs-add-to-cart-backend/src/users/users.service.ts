@@ -7,8 +7,10 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { User } from './entities/user.entity';
 import { Role } from './enums/role.enum';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -16,6 +18,7 @@ export class UsersService implements OnModuleInit {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async onModuleInit() {
@@ -257,6 +260,54 @@ export class UsersService implements OnModuleInit {
         phoneNumber: user.phoneNumber,
         role: user.role,
       },
+    };
+  }
+
+  async forgetPassword(forgetPasswordDto: ForgetPasswordDto): Promise<{ message: string }> {
+    const { email } = forgetPasswordDto;
+
+    // Find user by email
+    const user = await this.usersRepository.findOne({
+      where: { email },
+    });
+
+    // For security, don't reveal if email exists or not
+    // Always return success message to prevent email enumeration
+    if (!user) {
+      // Still return success to prevent email enumeration attacks
+      return {
+        message: 'If the email exists, a temporary password has been sent to your email address.',
+      };
+    }
+
+    // Generate a random temporary password (8-12 characters with mix of letters, numbers, and special chars)
+    const generateTemporaryPassword = (): string => {
+      const length = 10;
+      const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+      let password = '';
+      for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+      }
+      return password;
+    };
+
+    const temporaryPassword = generateTemporaryPassword();
+
+    // Hash the temporary password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(temporaryPassword, saltRounds);
+
+    // Update user password
+    user.password = hashedPassword;
+    await this.usersRepository.save(user);
+
+    // Send email with temporary password
+    // Note: Email service will handle errors and log appropriately
+    // In development mode, it will always log the temporary password
+    await this.emailService.sendPasswordResetEmail(user.email, temporaryPassword);
+
+    return {
+      message: 'If the email exists, a temporary password has been sent to your email address.',
     };
   }
 }

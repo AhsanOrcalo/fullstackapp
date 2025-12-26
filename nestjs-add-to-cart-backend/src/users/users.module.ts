@@ -7,6 +7,7 @@ import { UsersService } from './users.service';
 import { JwtStrategy } from './jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { User } from './entities/user.entity';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { User } from './entities/user.entity';
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
       signOptions: { expiresIn: '24h' },
     }),
+    EmailModule,
   ],
   controllers: [UsersController],
   providers: [UsersService, JwtStrategy, RolesGuard],

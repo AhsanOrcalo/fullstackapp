@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { Roles } from './decorators/roles.decorator';
 import { RolesGuard } from './guards/roles.guard';
 import { Role } from './enums/role.enum';
@@ -103,6 +104,34 @@ export class UsersController {
   })
   async login(@Body() loginDto: LoginDto) {
     return this.usersService.login(loginDto);
+  }
+
+  @Post('forget-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset - sends temporary password to email' })
+  @ApiBody({ type: ForgetPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent (if email exists)',
+    schema: {
+      example: {
+        message: 'If the email exists, a temporary password has been sent to your email address.',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: ['Please provide a valid email address'],
+        error: 'Bad Request',
+      },
+    },
+  })
+  async forgetPassword(@Body() forgetPasswordDto: ForgetPasswordDto) {
+    return this.usersService.forgetPassword(forgetPasswordDto);
   }
 
   @Post('change-password')

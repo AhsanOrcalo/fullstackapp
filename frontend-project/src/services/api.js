@@ -385,3 +385,16 @@ export const updateProfile = async (userName, email) => {
   }
 };
 
+// Forget password API
+export const forgetPassword = async (email) => {
+  try {
+    const response = await apiRequest('/auth/forget-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
