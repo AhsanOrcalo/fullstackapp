@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getUserDashboardStats, getAllLeads } from '../services/api';
 import { getUserData } from '../services/api';
+import { FaChartBar, FaDollarSign } from 'react-icons/fa';
 
 const UserDashboardComponent = () => {
   const [stats, setStats] = useState({
@@ -89,7 +90,15 @@ const UserDashboardComponent = () => {
               <h1 className="cardvalue">{stats.dataPurchased}</h1>
             )}
           </div>
-          <span className="cardicon">📊</span>
+          <div className="cardicon" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            fontSize: '32px',
+            color: 'var(--text-main)'
+          }}>
+            <FaChartBar />
+          </div>
         </div>
         <div className="statcard">
           <div className="cardinfo">
@@ -104,7 +113,15 @@ const UserDashboardComponent = () => {
               <h1 className="cardvalue">{formatPrice(stats.availableBalance)}</h1>
             )}
           </div>
-          <span className="cardicon">💰</span>
+          <div className="cardicon" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            fontSize: '32px',
+            color: '#f1c40f'
+          }}>
+            <FaDollarSign />
+          </div>
         </div>
       </div>
 
