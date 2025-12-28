@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAllLeads, addLead } from '../services/api';
+import { FaSearch, FaFileAlt, FaDatabase, FaUpload, FaDownload, FaPlus } from 'react-icons/fa';
 
 const DataManagement = () => {
   const [leads, setLeads] = useState([]);
@@ -22,32 +23,22 @@ const DataManagement = () => {
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   
-  // Filter state
-  const [filters, setFilters] = useState({
-    name: '',
-    city: '',
-    dobFrom: '',
-    dobTo: '',
-    zip: '',
-    state: '',
-    scoreFilter: '',
-    priceSort: '',
-  });
+  // Filter state - simplified to only search and score filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [scoreFilter, setScoreFilter] = useState('');
 
-  useEffect(() => {
-    fetchLeads();
-  }, []);
-
-  const fetchLeads = async (filterParams = {}) => {
+  const fetchLeads = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      const activeFilters = { ...filters, ...filterParams };
-      // Remove empty filters
-      const cleanFilters = Object.fromEntries(
-        Object.entries(activeFilters).filter(([_, v]) => v !== '')
-      );
-      const data = await getAllLeads(cleanFilters);
+      const filters = {};
+      if (searchQuery) {
+        filters.name = searchQuery;
+      }
+      if (scoreFilter) {
+        filters.scoreFilter = scoreFilter;
+      }
+      const data = await getAllLeads(filters);
       setLeads(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message || 'Failed to fetch leads');
@@ -55,44 +46,22 @@ const DataManagement = () => {
     } finally {
       setLoading(false);
     }
+  }, [searchQuery, scoreFilter]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchLeads();
+    }, 300); // Debounce search
+    return () => clearTimeout(timeoutId);
+  }, [fetchLeads]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleScoreFilterChange = (value) => {
+    setScoreFilter(scoreFilter === value ? '' : value);
   };
-
-  const handleRadioChange = (name, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [name]: prev[name] === value ? '' : value, // Toggle if same value clicked
-    }));
-  };
-
-  const applyFilters = () => {
-    fetchLeads();
-  };
-
-  const clearFilters = () => {
-    const clearedFilters = {
-      name: '',
-      city: '',
-      dobFrom: '',
-      dobTo: '',
-      zip: '',
-      state: '',
-      scoreFilter: '',
-      priceSort: '',
-    };
-    setFilters(clearedFilters);
-    fetchLeads(clearedFilters);
-  };
-
-  // Get unique states from leads for dropdown
-  const uniqueStates = [...new Set(leads.map(lead => lead.state).filter(Boolean))].sort();
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -259,158 +228,148 @@ const DataManagement = () => {
   };
 
   return (
-    <div className="browsebox">
-      <div className="browsetop" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+    <div style={{ width: '100%', padding: '0' }}>
+      {/* Header Section with Buttons in Parallel */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'flex-start',
+        marginBottom: '20px',
+        flexWrap: 'wrap',
+        gap: '20px'
+      }}>
+        {/* Title Section */}
         <div>
-          <h2 style={{ color: 'var(--text-main)', margin: 0, fontSize: '24px', fontWeight: '700' }}>
-            All Leads
-          </h2>
-          <p className="subtitle" style={{ marginTop: '5px' }}>
-            {leads.length} {leads.length === 1 ? 'lead' : 'leads'} found
+          <h1 style={{ 
+            color: 'var(--text-main)', 
+            margin: '0 0 5px 0', 
+            fontSize: '32px', 
+            fontWeight: '700' 
+          }}>
+            Data Management
+          </h1>
+          <p style={{ 
+            color: 'var(--text-sub)', 
+            margin: '0', 
+            fontSize: '16px' 
+          }}>
+            Manage and view all data records.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="applybtn" onClick={() => setShowForm(true)}>
-            ➕ Add Record
+
+        {/* Action Buttons */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '10px', 
+          flexWrap: 'wrap',
+          alignItems: 'flex-start'
+        }}>
+          <button className="dm-btn">
+            <FaFileAlt />
+            <span>Templates</span>
           </button>
-          <button className="applybtn" onClick={fetchLeads} disabled={loading}>
-            {loading ? 'Loading...' : '🔄 Refresh'}
+          <button className="dm-btn">
+            <FaDatabase />
+            <span>Sample Data</span>
+          </button>
+          <button className="dm-btn">
+            <FaUpload />
+            <span>Import</span>
+          </button>
+          <button className="dm-btn">
+            <FaDownload />
+            <span>Export</span>
+          </button>
+          <button 
+            className="applybtn"
+            onClick={() => setShowForm(true)}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              padding: '10px 18px'
+            }}
+          >
+            <FaPlus />
+            <span>Add Record</span>
           </button>
         </div>
       </div>
 
-      {/* Filters Section */}
-      <div className="filtercard" style={{ marginBottom: '20px' }}>
-        <div className="filterheader">
-          <span className="filtertitle">Filters</span>
-          <button className="clearbtn" onClick={clearFilters}>Clear All</button>
-        </div>
-        
-        <div className="filtergrid">
-          <div className="filtergroup">
-            <label>Name</label>
+      {/* Search and Filter Section */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '15px', 
+        alignItems: 'center',
+        marginBottom: '20px',
+        flexWrap: 'wrap'
+      }}>
+        {/* Search Bar - Smaller */}
+        <div style={{ 
+          width: '300px',
+          position: 'relative'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'var(--bg-card)',
+            padding: '10px 12px',
+            borderRadius: '12px',
+            border: '1px solid var(--border-clr)',
+            gap: '8px'
+          }}>
+            <FaSearch style={{ color: 'var(--text-sub)', fontSize: '14px' }} />
             <input
               type="text"
-              name="name"
-              value={filters.name}
-              onChange={handleFilterChange}
-              placeholder="Search by name"
-              className="filterinput"
-            />
-          </div>
-          <div className="filtergroup">
-            <label>City</label>
-            <input
-              type="text"
-              name="city"
-              value={filters.city}
-              onChange={handleFilterChange}
-              placeholder="Search by city"
-              className="filterinput"
-            />
-          </div>
-          <div className="filtergroup">
-            <label>Date of Birth (Year)</label>
-            <div className="daterow">
-              <input
-                type="text"
-                name="dobFrom"
-                value={filters.dobFrom}
-                onChange={handleFilterChange}
-                placeholder="From"
-                className="filterinput"
-              />
-              <input
-                type="text"
-                name="dobTo"
-                value={filters.dobTo}
-                onChange={handleFilterChange}
-                placeholder="To"
-                className="filterinput"
-              />
-            </div>
-          </div>
-          <div className="filtergroup">
-            <label>ZIP Code</label>
-            <input
-              type="text"
-              name="zip"
-              value={filters.zip}
-              onChange={handleFilterChange}
-              placeholder="Search by ZIP"
-              className="filterinput"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search records..."
+              style={{
+                flex: 1,
+                border: 'none',
+                background: 'transparent',
+                outline: 'none',
+                color: 'var(--text-main)',
+                fontSize: '14px',
+                width: '100%'
+              }}
             />
           </div>
         </div>
 
-        <div className="filtergrid">
-          <div className="filtergroup">
-            <label>Score</label>
-            <div className="checkrow">
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="scoreFilter"
-                  checked={filters.scoreFilter === '700+'}
-                  onChange={() => handleRadioChange('scoreFilter', '700+')}
-                />
-                <span>700+ Score</span>
-              </label>
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="scoreFilter"
-                  checked={filters.scoreFilter === '800+'}
-                  onChange={() => handleRadioChange('scoreFilter', '800+')}
-                />
-                <span>800+ Score</span>
-              </label>
-            </div>
-          </div>
-          <div className="filtergroup">
-            <label>State</label>
-            <select
-              name="state"
-              value={filters.state}
-              onChange={handleFilterChange}
-              className="filterinput"
-            >
-              <option value="">All States/Provinces</option>
-              {uniqueStates.map((state) => (
-                <option key={state} value={state}>
-                  {state}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="filtergroup">
-            <label>Price Sort</label>
-            <div className="checkrow">
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="priceSort"
-                  checked={filters.priceSort === 'high-to-low'}
-                  onChange={() => handleRadioChange('priceSort', 'high-to-low')}
-                />
-                <span>High to Low</span>
-              </label>
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="priceSort"
-                  checked={filters.priceSort === 'low-to-high'}
-                  onChange={() => handleRadioChange('priceSort', 'low-to-high')}
-                />
-                <span>Low to High</span>
-              </label>
-            </div>
-          </div>
+        {/* Score Filters */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '15px', 
+          alignItems: 'center'
+        }}>
+          <label className="customradio" style={{ cursor: 'pointer' }}>
+            <input
+              type="radio"
+              checked={scoreFilter === '700+'}
+              onChange={() => handleScoreFilterChange('700+')}
+            />
+            <span style={{ color: 'var(--text-main)', fontSize: '14px' }}>700+</span>
+          </label>
+          <label className="customradio" style={{ cursor: 'pointer' }}>
+            <input
+              type="radio"
+              checked={scoreFilter === '800+'}
+              onChange={() => handleScoreFilterChange('800+')}
+            />
+            <span style={{ color: 'var(--text-main)', fontSize: '14px' }}>800+</span>
+          </label>
         </div>
 
-        <button className="applybtn" onClick={applyFilters}>
-          Apply Filters
-        </button>
+        {/* Record Count */}
+        <div style={{ 
+          color: 'var(--text-sub)', 
+          fontSize: '14px',
+          fontWeight: '500',
+          marginLeft: 'auto'
+        }}>
+          {leads.length} records
+        </div>
       </div>
 
       <div className="tablecard">
@@ -434,79 +393,39 @@ const DataManagement = () => {
             <table>
               <thead>
                 <tr>
-                  <th>First Name</th>
-                  <th>Last Name</th>
-                  <th>Email</th>
-                  <th>Address</th>
-                  <th>City</th>
-                  <th>State</th>
+                  <th>
+                    <label className="customcheck" style={{ margin: 0 }}>
+                      <input type="checkbox" />
+                    </label>
+                  </th>
+                  <th>FIRST NAME</th>
+                  <th>LAST NAME</th>
+                  <th>ADDRESS</th>
+                  <th>CITY</th>
+                  <th>STATE</th>
                   <th>ZIP</th>
                   <th>DOB</th>
                   <th>SSN</th>
-                  <th>Price</th>
-                  <th>Score</th>
-                  <th>Status</th>
-                  <th>Created At</th>
+                  <th>MAIL</th>
                 </tr>
               </thead>
               <tbody>
                 {leads.map((lead) => (
                   <tr key={lead.id}>
+                    <td>
+                      <label className="customcheck" style={{ margin: 0 }}>
+                        <input type="checkbox" />
+                      </label>
+                    </td>
                     <td>{lead.firstName || 'N/A'}</td>
                     <td>{lead.lastName || 'N/A'}</td>
-                    <td>{lead.email || 'N/A'}</td>
                     <td>{lead.address || 'N/A'}</td>
                     <td>{lead.city || 'N/A'}</td>
                     <td>{lead.state || 'N/A'}</td>
                     <td>{lead.zip || 'N/A'}</td>
-                    <td>{formatDate(lead.dob)}</td>
-                    <td>{lead.ssn ? '***-**-' + lead.ssn.slice(-4) : 'N/A'}</td>
-                    <td style={{ color: 'var(--primary-blue)', fontWeight: '600' }}>
-                      {formatPrice(lead.price || 0)}
-                    </td>
-                    <td>
-                      {lead.score ? (
-                        <span style={{ 
-                          color: lead.score >= 800 ? '#10b981' : lead.score >= 700 ? '#3b82f6' : '#ef4444',
-                          fontWeight: '600'
-                        }}>
-                          {lead.score}
-                        </span>
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
-                    <td>
-                      {lead.isPurchasedByAnyone ? (
-                        <span style={{ 
-                          color: '#ef4444',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Unavailable
-                        </span>
-                      ) : lead.isPurchased ? (
-                        <span style={{ 
-                          color: '#10b981',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          textTransform: 'uppercase'
-                        }}>
-                          ✓ Sold
-                        </span>
-                      ) : (
-                        <span style={{ 
-                          color: 'var(--text-sub)',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Available
-                        </span>
-                      )}
-                    </td>
-                    <td>{formatDate(lead.createdAt)}</td>
+                    <td>{lead.dob ? new Date(lead.dob).getFullYear() : 'N/A'}</td>
+                    <td>{lead.ssn || 'N/A'}</td>
+                    <td>{lead.email || 'N/A'}</td>
                   </tr>
                 ))}
               </tbody>
