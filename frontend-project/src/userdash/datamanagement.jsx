@@ -26,14 +26,24 @@ const DataManagement = () => {
   const [importStatus, setImportStatus] = useState({ success: 0, failed: 0, total: 0 });
   const [showImportModal, setShowImportModal] = useState(false);
   
-  // Filter state - simplified to only search and score filter
+  // Filter state - search, score filter, and location filter
   const [searchQuery, setSearchQuery] = useState('');
   const [scoreFilter, setScoreFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('all'); // 'all' or 'canada'
 
   const fetchLeads = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
+      
+      // If "All" is selected, show all records (ignore all other filters)
+      if (locationFilter === 'all') {
+        const data = await getAllLeads({});
+        setLeads(Array.isArray(data) ? data : []);
+        return;
+      }
+      
+      // For Canada filter, apply search and score filters
       const filters = {};
       if (searchQuery) {
         filters.name = searchQuery;
@@ -41,15 +51,39 @@ const DataManagement = () => {
       if (scoreFilter) {
         filters.scoreFilter = scoreFilter;
       }
+      
       const data = await getAllLeads(filters);
-      setLeads(Array.isArray(data) ? data : []);
+      let filteredData = Array.isArray(data) ? data : [];
+      
+      // Apply Canada filter
+      if (locationFilter === 'canada') {
+        filteredData = filteredData.filter(lead => {
+          const state = (lead.state || '').toLowerCase();
+          return state.includes('canada') || state.includes('canda') || state === 'ca';
+        });
+        
+        // Apply score filter if selected
+        if (scoreFilter) {
+          filteredData = filteredData.filter(lead => {
+            const score = lead.score || 0;
+            if (scoreFilter === '700+') {
+              return score >= 700;
+            } else if (scoreFilter === '800+') {
+              return score >= 800;
+            }
+            return true;
+          });
+        }
+      }
+      
+      setLeads(filteredData);
     } catch (err) {
       setError(err.message || 'Failed to fetch leads');
       console.error('Error fetching leads:', err);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, scoreFilter]);
+  }, [searchQuery, scoreFilter, locationFilter]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -64,6 +98,17 @@ const DataManagement = () => {
 
   const handleScoreFilterChange = (value) => {
     setScoreFilter(scoreFilter === value ? '' : value);
+  };
+
+  const handleLocationFilterChange = (value) => {
+    if (value === 'all') {
+      // Clear all filters when "All" is selected
+      setLocationFilter('all');
+      setSearchQuery('');
+      setScoreFilter('');
+    } else {
+      setLocationFilter(locationFilter === value ? 'all' : value);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -440,14 +485,14 @@ const DataManagement = () => {
           flexWrap: 'wrap',
           alignItems: 'flex-start'
         }}>
-          <button className="dm-btn">
+          {/* <button className="dm-btn">
             <FaFileAlt />
             <span>Templates</span>
           </button>
           <button className="dm-btn">
             <FaDatabase />
             <span>Sample Data</span>
-          </button>
+          </button> */}
           <button 
             className="dm-btn"
             onClick={() => {
@@ -510,17 +555,44 @@ const DataManagement = () => {
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Search records..."
+              disabled={locationFilter === 'all'}
               style={{
                 flex: 1,
                 border: 'none',
                 background: 'transparent',
                 outline: 'none',
-                color: 'var(--text-main)',
+                color: locationFilter === 'all' ? 'var(--text-sub)' : 'var(--text-main)',
                 fontSize: '14px',
-                width: '100%'
+                width: '100%',
+                cursor: locationFilter === 'all' ? 'not-allowed' : 'text',
+                opacity: locationFilter === 'all' ? 0.6 : 1
               }}
             />
           </div>
+        </div>
+
+        {/* Location Filters */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '15px', 
+          alignItems: 'center'
+        }}>
+          <label className="customradio" style={{ cursor: 'pointer' }}>
+            <input
+              type="radio"
+              checked={locationFilter === 'all'}
+              onChange={() => handleLocationFilterChange('all')}
+            />
+            <span style={{ color: 'var(--text-main)', fontSize: '14px' }}>All</span>
+          </label>
+          <label className="customradio" style={{ cursor: 'pointer' }}>
+            <input
+              type="radio"
+              checked={locationFilter === 'canada'}
+              onChange={() => handleLocationFilterChange('canada')}
+            />
+            <span style={{ color: 'var(--text-main)', fontSize: '14px' }}>Canada</span>
+          </label>
         </div>
 
         {/* Score Filters */}
@@ -534,16 +606,24 @@ const DataManagement = () => {
               type="radio"
               checked={scoreFilter === '700+'}
               onChange={() => handleScoreFilterChange('700+')}
+              disabled={locationFilter === 'all'}
             />
-            <span style={{ color: 'var(--text-main)', fontSize: '14px' }}>700+</span>
+            <span style={{ 
+              color: locationFilter === 'all' ? 'var(--text-sub)' : 'var(--text-main)', 
+              fontSize: '14px' 
+            }}>700+</span>
           </label>
           <label className="customradio" style={{ cursor: 'pointer' }}>
             <input
               type="radio"
               checked={scoreFilter === '800+'}
               onChange={() => handleScoreFilterChange('800+')}
+              disabled={locationFilter === 'all'}
             />
-            <span style={{ color: 'var(--text-main)', fontSize: '14px' }}>800+</span>
+            <span style={{ 
+              color: locationFilter === 'all' ? 'var(--text-sub)' : 'var(--text-main)', 
+              fontSize: '14px' 
+            }}>800+</span>
           </label>
         </div>
 
