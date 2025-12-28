@@ -55,51 +55,78 @@ const Signin = ({ switchpage, onLoginSuccess }) => {
   };
 
   return (
-    <div className="maincard">
-      <h1 className="title">Welcome Back</h1>
-      <form onSubmit={loginnow}>
-        <input 
-          type="text" 
-          name="username" 
-          placeholder="Username" 
-          className="inputfield" 
-          onChange={handlechange}
-          value={logindata.username}
-          disabled={loading}
-        />
-        <input 
-          type="password" 
-          name="password" 
-          placeholder="Password" 
-          className="inputfield" 
-          onChange={handlechange}
-          value={logindata.password}
-          disabled={loading}
-          style={{marginTop: '20px'}} 
-        />
-        {error && (
-          <div style={{
-            color: '#ff4444',
-            fontSize: '14px',
-            marginTop: '10px',
-            textAlign: 'center'
-          }}>
-            {error}
+    <div className="auth-container">
+      {/* Left Side - Welcome Section */}
+      <div className="auth-welcome-section">
+        <div className="welcome-content">
+          <h1 className="welcome-title">Welcome Back!</h1>
+          <p className="welcome-subtitle">
+            We're excited to have you back. Sign in to continue your journey with us.
+          </p>
+          <div className="welcome-features">
+            <div className="feature-item">
+              <span className="feature-icon">✓</span>
+              <span>Access your dashboard</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">✓</span>
+              <span>Manage your data</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">✓</span>
+              <span>Track your progress</span>
+            </div>
           </div>
-        )}
-        <span className="forgetlink" onClick={() => switchpage('forget')}>Forget Password?</span>
-        <button 
-          type="submit" 
-          className="actionbutton" 
-          disabled={loading}
-          style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
-        >
-          {loading ? 'Signing In...' : 'Sign In'}
-        </button>
-      </form>
-      <p className="bottomtext">
-        Don't have an account? <span className="linktext" onClick={() => switchpage('signup')}>Create One</span>
-      </p>
+        </div>
+      </div>
+
+      {/* Right Side - Form Section */}
+      <div className="auth-form-section">
+        <div className="maincard animated-form">
+          <h1 className="title">Sign In</h1>
+          <form onSubmit={loginnow}>
+            <div className="input-wrapper">
+              <input 
+                type="text" 
+                name="username" 
+                placeholder="Username" 
+                className="inputfield" 
+                onChange={handlechange}
+                value={logindata.username}
+                disabled={loading}
+              />
+            </div>
+            <div className="input-wrapper">
+              <input 
+                type="password" 
+                name="password" 
+                placeholder="Password" 
+                className="inputfield" 
+                onChange={handlechange}
+                value={logindata.password}
+                disabled={loading}
+              />
+            </div>
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+            <span className="forgetlink" onClick={() => switchpage('forget')}>Forget Password?</span>
+            <button 
+              type="submit" 
+              className="actionbutton" 
+              disabled={loading}
+              style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+            >
+              {loading ? 'Signing In...' : 'Sign In'}
+            </button>
+          </form>
+          <p className="bottomtext">
+            Don't have an account? <span className="linktext" onClick={() => switchpage('signup')}>Create One</span>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

@@ -132,100 +132,126 @@ const Signup = ({ switchpage }) => {
   };
 
   return (
-    <div className="maincard">
-      <h1 className="title">Create Account</h1>
-      <form onSubmit={submitform}>
-        <input 
-          type="text" 
-          name="fullname" 
-          placeholder="Full Name (Optional)" 
-          className="inputfield" 
-          onChange={handleinput}
-          value={userdata.fullname}
-          disabled={loading}
-        />
-        <input 
-          type="text" 
-          name="username" 
-          placeholder="Username" 
-          className="inputfield" 
-          onChange={handleinput}
-          value={userdata.username}
-          disabled={loading}
-          style={{marginTop: '20px'}} 
-        />
-        <input 
-          type="email" 
-          name="email" 
-          placeholder="Email Address" 
-          className="inputfield" 
-          onChange={handleinput}
-          value={userdata.email}
-          disabled={loading}
-          style={{marginTop: '20px'}} 
-        />
-        <input 
-          type="text" 
-          name="phone" 
-          placeholder="Phone Number (e.g., +1234567890)" 
-          className="inputfield" 
-          onChange={handleinput}
-          value={userdata.phone}
-          disabled={loading}
-          style={{marginTop: '20px'}} 
-        />
-        <input 
-          type="password" 
-          name="password" 
-          placeholder="Password" 
-          className="inputfield" 
-          onChange={handleinput}
-          value={userdata.password}
-          disabled={loading}
-          style={{marginTop: '20px'}} 
-        />
-        <input 
-          type="password" 
-          name="confirmPassword" 
-          placeholder="Confirm Password" 
-          className="inputfield" 
-          onChange={handleinput}
-          value={userdata.confirmPassword}
-          disabled={loading}
-          style={{marginTop: '20px'}} 
-        />
-        {error && (
-          <div style={{
-            color: '#ff4444',
-            fontSize: '14px',
-            marginTop: '10px',
-            textAlign: 'center'
-          }}>
-            {error}
+    <div className="auth-container">
+      {/* Left Side - Welcome Section */}
+      <div className="auth-welcome-section">
+        <div className="welcome-content">
+          <h1 className="welcome-title">Join Us Today!</h1>
+          <p className="welcome-subtitle">
+            Create your account and start managing your data efficiently. Get access to powerful tools and features.
+          </p>
+          <div className="welcome-features">
+            <div className="feature-item">
+              <span className="feature-icon">✓</span>
+              <span>Easy data management</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">✓</span>
+              <span>Secure and reliable</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">✓</span>
+              <span>24/7 support available</span>
+            </div>
           </div>
-        )}
-        {success && (
-          <div style={{
-            color: '#44ff44',
-            fontSize: '14px',
-            marginTop: '10px',
-            textAlign: 'center'
-          }}>
-            Registration successful! Redirecting to login...
-          </div>
-        )}
-        <button 
-          type="submit" 
-          className="actionbutton" 
-          disabled={loading}
-          style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer', marginTop: '20px' }}
-        >
-          {loading ? 'Creating Account...' : 'Sign Up'}
-        </button>
-      </form>
-      <p className="bottomtext">
-        Already have an account? <span className="linktext" onClick={() => switchpage('signin')}>Login</span>
-      </p>
+        </div>
+      </div>
+
+      {/* Right Side - Form Section */}
+      <div className="auth-form-section">
+        <div className="maincard animated-form">
+          <h1 className="title">Create Account</h1>
+          <form onSubmit={submitform}>
+            <div className="input-wrapper">
+              <input 
+                type="text" 
+                name="fullname" 
+                placeholder="Full Name (Optional)" 
+                className="inputfield" 
+                onChange={handleinput}
+                value={userdata.fullname}
+                disabled={loading}
+              />
+            </div>
+            <div className="input-wrapper">
+              <input 
+                type="text" 
+                name="username" 
+                placeholder="Username" 
+                className="inputfield" 
+                onChange={handleinput}
+                value={userdata.username}
+                disabled={loading}
+              />
+            </div>
+            <div className="input-wrapper">
+              <input 
+                type="email" 
+                name="email" 
+                placeholder="Email Address" 
+                className="inputfield" 
+                onChange={handleinput}
+                value={userdata.email}
+                disabled={loading}
+              />
+            </div>
+            <div className="input-wrapper">
+              <input 
+                type="text" 
+                name="phone" 
+                placeholder="Phone Number (e.g., +1234567890)" 
+                className="inputfield" 
+                onChange={handleinput}
+                value={userdata.phone}
+                disabled={loading}
+              />
+            </div>
+            <div className="input-wrapper">
+              <input 
+                type="password" 
+                name="password" 
+                placeholder="Password" 
+                className="inputfield" 
+                onChange={handleinput}
+                value={userdata.password}
+                disabled={loading}
+              />
+            </div>
+            <div className="input-wrapper">
+              <input 
+                type="password" 
+                name="confirmPassword" 
+                placeholder="Confirm Password" 
+                className="inputfield" 
+                onChange={handleinput}
+                value={userdata.confirmPassword}
+                disabled={loading}
+              />
+            </div>
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="success-message">
+                Registration successful! Redirecting to login...
+              </div>
+            )}
+            <button 
+              type="submit" 
+              className="actionbutton" 
+              disabled={loading}
+              style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+            >
+              {loading ? 'Creating Account...' : 'Sign Up'}
+            </button>
+          </form>
+          <p className="bottomtext">
+            Already have an account? <span className="linktext" onClick={() => switchpage('signin')}>Login</span>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

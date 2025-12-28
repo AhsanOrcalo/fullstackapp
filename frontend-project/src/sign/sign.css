@@ -7,12 +7,169 @@
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
+/* New Split Layout Container */
+.auth-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Left Side - Welcome Section */
+.auth-welcome-section {
+  flex: 1;
+  background: linear-gradient(135deg, #4318ff 0%, #3311db 50%, #1e293b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-welcome-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.welcome-content {
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
+  animation: slideInLeft 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.welcome-title {
+  font-size: 48px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 20px;
+  line-height: 1.2;
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.welcome-subtitle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 40px;
+  line-height: 1.6;
+  animation: fadeInUp 1s ease-out 0.4s both;
+}
+
+.welcome-features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeInUp 1s ease-out 0.6s both;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 16px;
+  animation: fadeInUp 1s ease-out both;
+}
+
+.feature-item:nth-child(1) {
+  animation-delay: 0.8s;
+}
+
+.feature-item:nth-child(2) {
+  animation-delay: 1s;
+}
+
+.feature-item:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+.feature-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Right Side - Form Section */
+.auth-form-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  overflow-y: auto;
+}
+
 .maincard {
   background: #1e293b;
   padding: 40px;
   border-radius: 16px;
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.animated-form {
+  animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .title {
@@ -22,6 +179,18 @@
   margin-bottom: 30px;
   color: #ffffff;
 }
+
+.input-wrapper {
+  margin-bottom: 20px;
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.input-wrapper:nth-child(1) { animation-delay: 0.1s; }
+.input-wrapper:nth-child(2) { animation-delay: 0.2s; }
+.input-wrapper:nth-child(3) { animation-delay: 0.3s; }
+.input-wrapper:nth-child(4) { animation-delay: 0.4s; }
+.input-wrapper:nth-child(5) { animation-delay: 0.5s; }
+.input-wrapper:nth-child(6) { animation-delay: 0.6s; }
 
 .inputfield {
   width: 100%;
@@ -33,11 +202,13 @@
   background-color: #334155; /* Dark input background */
   color: #ffffff; /* Light input text */
   outline: none;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
 }
 
 .inputfield:focus {
-  border-color: #3b82f6; /* Blue border on focus */
+  border-color: #4318ff; /* Purple border on focus */
+  box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 /* Selection class remove kar di hai kyunki ab dropdown nahi hai */
@@ -45,7 +216,7 @@
 .actionbutton {
   width: 100%;
   padding: 14px;
-  background: #3b82f6; /* Bright blue button */
+  background: #4318ff; /* Purple button */
   color: white;
   border: none;
   border-radius: 8px;
@@ -53,11 +224,38 @@
   font-weight: 700;
   cursor: pointer;
   margin-top: 25px;
-  transition: background 0.3s;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.6s ease-out 0.7s both;
+  position: relative;
+  overflow: hidden;
+}
+
+.actionbutton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.actionbutton:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .actionbutton:hover {
-  background: #2563eb;
+  background: #3311db;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(67, 24, 255, 0.3);
+}
+
+.actionbutton:active {
+  transform: translateY(0);
 }
 
 .bottomtext {
@@ -89,4 +287,89 @@
 
 .forgetlink:hover {
   color: #60a5fa;
+}
+
+.error-message {
+  color: #ff4444;
+  font-size: 14px;
+  margin-top: 10px;
+  text-align: center;
+  padding: 10px;
+  background: rgba(255, 68, 68, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  animation: shake 0.5s ease-in-out;
+}
+
+.success-message {
+  color: #44ff44;
+  font-size: 14px;
+  margin-top: 10px;
+  text-align: center;
+  padding: 10px;
+  background: rgba(68, 255, 68, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(68, 255, 68, 0.3);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .auth-container {
+    flex-direction: column;
+  }
+
+  .auth-welcome-section {
+    padding: 40px 30px;
+    min-height: 40vh;
+  }
+
+  .welcome-title {
+    font-size: 36px;
+  }
+
+  .welcome-subtitle {
+    font-size: 16px;
+  }
+
+  .auth-form-section {
+    padding: 20px;
+  }
+
+  .maincard {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-welcome-section {
+    padding: 30px 20px;
+    min-height: 35vh;
+  }
+
+  .welcome-title {
+    font-size: 28px;
+  }
+
+  .welcome-subtitle {
+    font-size: 14px;
+  }
+
+  .welcome-features {
+    gap: 15px;
+  }
+
+  .feature-item {
+    font-size: 14px;
+  }
+
+  .maincard {
+    padding: 30px 20px;
+  }
 }
