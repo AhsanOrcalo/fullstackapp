@@ -226,6 +226,18 @@ export const addFundsToUser = async (userId, amount) => {
   }
 };
 
+// Get user funds API (User only)
+export const getUserFunds = async () => {
+  try {
+    const response = await apiRequest('/auth/funds', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get all purchases API (Admin only)
 export const getAllPurchases = async () => {
   try {

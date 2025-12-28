@@ -341,5 +341,29 @@ export class UsersService implements OnModuleInit {
       },
     };
   }
+
+  async getUserFunds(userId: string): Promise<{ currentBalance: number; totalDeposits: number; minimumDeposit: number; pendingPayments: any[] }> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const currentBalance = parseFloat(user.balance?.toString() || '0');
+    // For now, total deposits equals current balance (since funds are added directly by admin)
+    // In the future, this can be calculated from a transaction history table
+    const totalDeposits = currentBalance;
+    const minimumDeposit = 10.0; // Minimum deposit amount
+    const pendingPayments: any[] = []; // Can be implemented later with payment system
+
+    return {
+      currentBalance,
+      totalDeposits,
+      minimumDeposit,
+      pendingPayments,
+    };
+  }
 }
 

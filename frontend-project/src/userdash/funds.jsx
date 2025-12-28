@@ -1,14 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getUserFunds } from '../services/api';
+import { FaDollarSign, FaFileAlt, FaMoneyBillWave } from 'react-icons/fa';
 
 const Funds = () => {
-  // Real data aane par yahan object pass hoga
-  const [pendingPayment] = useState(null); 
+  const [fundsData, setFundsData] = useState({
+    currentBalance: 0,
+    totalDeposits: 0,
+    minimumDeposit: 10.0,
+    pendingPayments: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchFundsData();
+  }, []);
+
+  const fetchFundsData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await getUserFunds();
+      setFundsData(data);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch funds data');
+      console.error('Error fetching funds data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+    }).format(price || 0);
+  };
+
+  const pendingPayment = fundsData.pendingPayments && fundsData.pendingPayments.length > 0 
+    ? fundsData.pendingPayments[0] 
+    : null; 
 
   return (
     <div className="fundsbox">
       {/* Header Section */}
       <div className="fundsheader" style={{ marginBottom: '25px' }}>
-        <h2 className="toptitle">Add Funds</h2>
+        <h2 className="toptitle">Funds</h2>
         <p className="subtitle">Add funds to your account balance</p>
       </div>
 
@@ -17,25 +55,83 @@ const Funds = () => {
         <div className="statcard">
           <div className="cardinfo">
             <p className="cardtitle">Current Balance</p>
-            <h1 className="cardvalue">$0.00</h1>
+            {loading ? (
+              <h1 className="cardvalue">...</h1>
+            ) : error ? (
+              <h1 className="cardvalue" style={{ color: '#ef4444', fontSize: '20px' }}>
+                Error
+              </h1>
+            ) : (
+              <h1 className="cardvalue">{formatPrice(fundsData.currentBalance)}</h1>
+            )}
           </div>
-          <span className="cardicon">💰</span>
+          <div className="cardicon" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            fontSize: '32px',
+            color: '#f1c40f'
+          }}>
+            <FaDollarSign />
+          </div>
         </div>
         <div className="statcard">
           <div className="cardinfo">
             <p className="cardtitle">Total Deposits</p>
-            <h1 className="cardvalue">$0.00</h1>
+            {loading ? (
+              <h1 className="cardvalue">...</h1>
+            ) : error ? (
+              <h1 className="cardvalue" style={{ color: '#ef4444', fontSize: '20px' }}>
+                Error
+              </h1>
+            ) : (
+              <h1 className="cardvalue">{formatPrice(fundsData.totalDeposits)}</h1>
+            )}
           </div>
-          <span className="cardicon">📋</span>
+          <div className="cardicon" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            fontSize: '32px',
+            color: 'var(--text-main)'
+          }}>
+            <FaFileAlt />
+          </div>
         </div>
         <div className="statcard">
           <div className="cardinfo">
             <p className="cardtitle">Minimum Deposit</p>
-            <h1 className="cardvalue">$10.00</h1>
+            <h1 className="cardvalue">{formatPrice(fundsData.minimumDeposit)}</h1>
           </div>
-          <span className="cardicon">💵</span>
+          <div className="cardicon" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            fontSize: '32px',
+            color: 'var(--text-main)'
+          }}>
+            <FaMoneyBillWave />
+          </div>
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div style={{
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          border: '1px solid #ef4444',
+          borderRadius: '8px',
+          padding: '15px',
+          marginBottom: '20px',
+          color: '#ef4444',
+        }}>
+          <p style={{ margin: '0 0 10px 0', fontWeight: '600' }}>Error loading funds data</p>
+          <p style={{ margin: '0 0 15px 0', fontSize: '14px' }}>{error}</p>
+          <button className="applybtn" onClick={fetchFundsData} style={{ marginTop: '10px' }}>
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Main Payment Section */}
       <div className="datasection payment-detail-card">
@@ -46,15 +142,20 @@ const Funds = () => {
               <p className="infotext" style={{marginTop: '10px'}}>No pending payments at the moment.</p>
             ) : (
               <>
-                <p className="infotext">Amount: <strong>${pendingPayment.amount}</strong></p>
+                <p className="infotext">Amount: <strong>{formatPrice(pendingPayment.amount)}</strong></p>
                 <p className="infotext">Status: <span className="statusbadge pending">{pendingPayment.status}</span></p>
               </>
             )}
           </div>
           
           {/* FIXED: Using Blue Theme 'applybtn' instead of green 'fastbutton' */}
-          <button className="applybtn" style={{height: 'fit-content', padding: '10px 20px'}}>
-            Check Status
+          <button 
+            className="applybtn" 
+            style={{height: 'fit-content', padding: '10px 20px'}}
+            onClick={fetchFundsData}
+            disabled={loading}
+          >
+            {loading ? 'Checking...' : 'Check Status'}
           </button>
         </div>
 

@@ -413,5 +413,39 @@ export class UsersController {
   async addFunds(@Param('userId') userId: string, @Body() addFundsDto: AddFundsDto) {
     return this.usersService.addFunds(userId, addFundsDto.amount);
   }
+
+  @Get('funds')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.USER)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get user funds information (User only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'User funds information retrieved successfully',
+    schema: {
+      example: {
+        currentBalance: 100.0,
+        totalDeposits: 100.0,
+        minimumDeposit: 10.0,
+        pendingPayments: [],
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - User access required',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async getUserFunds(@Request() req: any) {
+    return this.usersService.getUserFunds(req.user.userId);
+  }
 }
 
