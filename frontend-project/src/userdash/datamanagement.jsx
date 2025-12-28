@@ -22,6 +22,9 @@ const DataManagement = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState({ success: 0, failed: 0, total: 0 });
+  const [showImportModal, setShowImportModal] = useState(false);
   
   // Filter state - simplified to only search and score filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,6 +86,179 @@ const DataManagement = () => {
       currency: 'USD',
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  // Export to CSV
+  const handleExport = () => {
+    try {
+      // Prepare CSV headers
+      const headers = [
+        'First Name',
+        'Last Name',
+        'Email',
+        'Address',
+        'City',
+        'State',
+        'ZIP',
+        'DOB',
+        'SSN',
+        'Price',
+        'Score',
+        'Created At'
+      ];
+
+      // Convert leads to CSV rows
+      const csvRows = [
+        headers.join(','),
+        ...leads.map(lead => {
+          const row = [
+            `"${(lead.firstName || '').replace(/"/g, '""')}"`,
+            `"${(lead.lastName || '').replace(/"/g, '""')}"`,
+            `"${(lead.email || '').replace(/"/g, '""')}"`,
+            `"${(lead.address || '').replace(/"/g, '""')}"`,
+            `"${(lead.city || '').replace(/"/g, '""')}"`,
+            `"${(lead.state || '').replace(/"/g, '""')}"`,
+            `"${(lead.zip || '').replace(/"/g, '""')}"`,
+            `"${lead.dob ? new Date(lead.dob).toISOString().split('T')[0] : ''}"`,
+            `"${(lead.ssn || '').replace(/"/g, '""')}"`,
+            lead.price || 0,
+            lead.score || '',
+            `"${lead.createdAt ? new Date(lead.createdAt).toISOString() : ''}"`
+          ];
+          return row.join(',');
+        })
+      ];
+
+      // Create CSV content
+      const csvContent = csvRows.join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      alert('Failed to export data: ' + err.message);
+      console.error('Export error:', err);
+    }
+  };
+
+  // Import from CSV
+  const handleImport = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.name.endsWith('.csv')) {
+      alert('Please select a CSV file');
+      return;
+    }
+
+    try {
+      setImporting(true);
+      setImportStatus({ success: 0, failed: 0, total: 0 });
+
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        alert('CSV file is empty or invalid');
+        setImporting(false);
+        return;
+      }
+
+      // Parse CSV (skip header row)
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const dataRows = lines.slice(1);
+
+      let successCount = 0;
+      let failedCount = 0;
+
+      for (let i = 0; i < dataRows.length; i++) {
+        const row = dataRows[i];
+        if (!row.trim()) continue;
+
+        try {
+          // Parse CSV row (handle quoted values)
+          const values = [];
+          let current = '';
+          let inQuotes = false;
+          
+          for (let j = 0; j < row.length; j++) {
+            const char = row[j];
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              values.push(current.trim());
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          values.push(current.trim());
+
+          // Map values to lead object
+          const leadData = {
+            firstName: values[0]?.replace(/"/g, '') || '',
+            lastName: values[1]?.replace(/"/g, '') || '',
+            email: values[2]?.replace(/"/g, '') || '',
+            address: values[3]?.replace(/"/g, '') || '',
+            city: values[4]?.replace(/"/g, '') || '',
+            state: values[5]?.replace(/"/g, '') || '',
+            zip: values[6]?.replace(/"/g, '') || '',
+            dob: values[7]?.replace(/"/g, '') || '',
+            ssn: values[8]?.replace(/"/g, '') || '',
+            price: parseFloat(values[9]) || 0,
+            score: values[10] ? parseInt(values[10]) : null,
+          };
+
+          // Validate required fields
+          if (!leadData.firstName || !leadData.lastName || !leadData.email) {
+            failedCount++;
+            continue;
+          }
+
+          // Add lead via API
+          await addLead(leadData);
+          successCount++;
+
+          // Update status
+          setImportStatus({
+            success: successCount,
+            failed: failedCount,
+            total: dataRows.length
+          });
+        } catch (err) {
+          failedCount++;
+          console.error(`Error importing row ${i + 1}:`, err);
+        }
+      }
+
+      setImportStatus({
+        success: successCount,
+        failed: failedCount,
+        total: dataRows.length
+      });
+
+      // Refresh leads list
+      await fetchLeads();
+
+      // Show completion message
+      alert(`Import completed!\nSuccess: ${successCount}\nFailed: ${failedCount}`);
+      setShowImportModal(false);
+    } catch (err) {
+      alert('Failed to import file: ' + err.message);
+      console.error('Import error:', err);
+    } finally {
+      setImporting(false);
+      // Reset file input
+      event.target.value = '';
+    }
   };
 
   const handleInputChange = (e) => {
@@ -272,11 +448,21 @@ const DataManagement = () => {
             <FaDatabase />
             <span>Sample Data</span>
           </button>
-          <button className="dm-btn">
+          <button 
+            className="dm-btn"
+            onClick={() => {
+              setShowImportModal(true);
+              setImportStatus({ success: 0, failed: 0, total: 0 });
+            }}
+          >
             <FaUpload />
             <span>Import</span>
           </button>
-          <button className="dm-btn">
+          <button 
+            className="dm-btn"
+            onClick={handleExport}
+            disabled={loading || leads.length === 0}
+          >
             <FaDownload />
             <span>Export</span>
           </button>
@@ -746,6 +932,126 @@ const DataManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-card)',
+            padding: '30px',
+            borderRadius: '20px',
+            width: '90%',
+            maxWidth: '500px',
+            boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 20px 0', 
+              color: 'var(--text-main)',
+              fontSize: '20px',
+              fontWeight: '700'
+            }}>
+              Import Leads from CSV
+            </h3>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                color: 'var(--text-secondary)',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                Select CSV File
+              </label>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleImport}
+                disabled={importing}
+                style={{
+                  width: '100%',
+                  padding: '12px 15px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--input-bg)',
+                  color: 'var(--text-color)',
+                  fontSize: '15px',
+                  outline: 'none',
+                  cursor: importing ? 'not-allowed' : 'pointer'
+                }}
+              />
+              <p style={{
+                margin: '10px 0 0 0',
+                color: 'var(--text-sub)',
+                fontSize: '12px'
+              }}>
+                CSV format: First Name, Last Name, Email, Address, City, State, ZIP, DOB, SSN, Price, Score
+              </p>
+            </div>
+
+            {importing && (
+              <div style={{
+                marginBottom: '20px',
+                padding: '15px',
+                backgroundColor: 'rgba(67, 24, 255, 0.1)',
+                borderRadius: '10px'
+              }}>
+                <p style={{ margin: '0 0 10px 0', color: 'var(--text-main)', fontWeight: '600' }}>
+                  Importing... Please wait
+                </p>
+                {importStatus.total > 0 && (
+                  <div>
+                    <p style={{ margin: '5px 0', color: 'var(--text-sub)', fontSize: '14px' }}>
+                      Progress: {importStatus.success + importStatus.failed} / {importStatus.total}
+                    </p>
+                    <p style={{ margin: '5px 0', color: '#10b981', fontSize: '14px' }}>
+                      ✓ Success: {importStatus.success}
+                    </p>
+                    {importStatus.failed > 0 && (
+                      <p style={{ margin: '5px 0', color: '#ef4444', fontSize: '14px' }}>
+                        ✗ Failed: {importStatus.failed}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportStatus({ success: 0, failed: 0, total: 0 });
+                }}
+                disabled={importing}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-main)',
+                  cursor: importing ? 'not-allowed' : 'pointer',
+                  fontWeight: '600',
+                  opacity: importing ? 0.5 : 1
+                }}
+              >
+                {importing ? 'Importing...' : 'Cancel'}
+              </button>
+            </div>
           </div>
         </div>
       )}
