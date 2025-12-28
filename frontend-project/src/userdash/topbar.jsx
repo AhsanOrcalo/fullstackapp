@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getUserData, getUserDashboardStats } from '../services/api';
-import { FaDollarSign } from 'react-icons/fa';
+import { FaDollarSign, FaBars, FaTimes } from 'react-icons/fa';
 
-const Topbar = ({ title, logout, setview }) => {
+const Topbar = ({ title, logout, setview, sidebarOpen, setSidebarOpen }) => {
   // Get user data to determine role
   const userData = getUserData();
   const userRole = userData?.role || 'user';
@@ -35,22 +35,43 @@ const Topbar = ({ title, logout, setview }) => {
 
   return (
     <div className="topbar">
-      {/* Click karne par Dashboard par le jaye ga */}
-      <div className="top-title-container" onClick={() => setview('Dashboard')}>
-        <h2 className="toptitle animated-shimmer-title">
-          {title}
-        </h2>
+      <div className="topbar-left">
+        {/* Mobile Menu Toggle Button */}
+        <button 
+          className="mobile-menu-toggle"
+          onClick={() => setSidebarOpen && setSidebarOpen(!sidebarOpen)}
+          aria-label="Toggle menu"
+        >
+          {sidebarOpen ? <FaTimes /> : <FaBars />}
+        </button>
+        
+        {/* Balance Display - Parallel to hamburger icon on mobile */}
+        {isUser && (
+          <div className="balancebox-mobile" onClick={() => setview('Payments')}>
+            <FaDollarSign className="coin-icon" /> 
+            <span className="balance-text-mobile">{formatPrice(balance)}</span>
+          </div>
+        )}
+        
+        {/* Click karne par Dashboard par le jaye ga */}
+        <div className="top-title-container" onClick={() => setview('Dashboard')}>
+          <h2 className="toptitle animated-shimmer-title">
+            {title}
+          </h2>
+        </div>
       </div>
       
       <div className="topright">
+        {/* Balance Display - Desktop Only */}
         {isUser && (
-          <div className="balancebox" onClick={() => setview('Payments')}>
+          <div className="balancebox-desktop" onClick={() => setview('Payments')}>
             <FaDollarSign className="coin-icon" /> 
-            {formatPrice(balance)}
+            <span className="balance-text">{formatPrice(balance)}</span>
           </div>
         )}
 
-        <button className="logoutbutton" onClick={logout}>Logout</button>
+        {/* Logout Button - Desktop Only */}
+        <button className="logoutbutton-desktop" onClick={logout}>Logout</button>
       </div>
     </div>
   );

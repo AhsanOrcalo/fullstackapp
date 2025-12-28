@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // FIXED: useEffect hata diya warning khatam karne ke liye
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './sidebar.jsx';
 import Topbar from './topbar.jsx';
@@ -20,6 +20,7 @@ import './userdashboard.css';
 const Userdashboard = ({ logout }) => {
   const [view, setview] = useState('Dashboard');
   const [theme, setTheme] = useState('dark'); // Default theme dark
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar state
 
   // Get user data to determine role
   const userData = getUserData();
@@ -31,18 +32,55 @@ const Userdashboard = ({ logout }) => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
+  // Close sidebar when view changes on mobile
+  const handleViewChange = (newView) => {
+    setview(newView);
+    if (window.innerWidth <= 768) {
+      setSidebarOpen(false);
+    }
+  };
+
+  // Handle window resize - close sidebar on desktop, keep state on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     /* Theme class 'light-mode' tabhi lagay gi jab theme === 'light' ho ga */
     <div className={`dashboardbox ${theme === 'light' ? 'light-mode' : ''}`}>
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
       <Sidebar 
-        setview={setview} 
+        setview={handleViewChange} 
         activeview={view} 
         theme={theme} 
-        toggleTheme={toggleTheme} 
+        toggleTheme={toggleTheme}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        logout={logout}
       />
       
       <div className="mainarea">
-        <Topbar title={view} logout={logout} setview={setview} />
+        <Topbar 
+          title={view} 
+          logout={logout} 
+          setview={handleViewChange}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
         
         <div style={{ padding: '30px', flex: 1 }}>
           <AnimatePresence mode="wait">

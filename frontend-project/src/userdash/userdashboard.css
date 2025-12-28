@@ -55,6 +55,50 @@
   color: var(--sidebar-text);
   overflow-y: auto;
   flex-shrink: 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 1000;
+}
+
+.sidebar-mobile-header {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-clr);
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--sidebar-text);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .brandname {
@@ -139,6 +183,35 @@
   top: 0;
   z-index: 10;
   border-bottom: 1px solid var(--border-clr);
+  gap: 15px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-main);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+  background-color: var(--border-clr);
+}
+
+.mobile-menu-toggle:active {
+  transform: scale(0.95);
 }
 
 .toptitle {
@@ -172,7 +245,8 @@
   gap: 15px;
 }
 
-.balancebox {
+/* Balance Box - Desktop */
+.balancebox-desktop {
   background-color: var(--primary-blue);
   color: white;
   padding: 10px 20px;
@@ -188,10 +262,43 @@
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.balancebox:hover {
+.balancebox-desktop:hover {
   background-color: var(--hover-blue);
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(67, 24, 255, 0.4);
+}
+
+/* Balance Box - Mobile (next to hamburger) */
+.balancebox-mobile {
+  display: none;
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 15px;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: nowrap;
+}
+
+.balancebox-mobile:hover {
+  background-color: var(--hover-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(67, 24, 255, 0.3);
+}
+
+.balance-text-mobile {
+  display: inline;
+}
+
+/* Legacy support - hide on mobile */
+.balancebox {
+  display: none;
 }
 
 .coin-icon {
@@ -220,7 +327,8 @@
   box-shadow: 0 6px 15px rgba(67, 24, 255, 0.4);
 }
 
-.logoutbutton {
+/* Logout Button - Desktop */
+.logoutbutton-desktop {
   background-color: var(--success-color);
   color: var(--white);
   border: none;
@@ -232,10 +340,15 @@
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.logoutbutton:hover {
+.logoutbutton-desktop:hover {
   background-color: #ff4757;
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(255, 71, 87, 0.4);
+}
+
+/* Legacy support - hide on mobile */
+.logoutbutton {
+  display: none;
 }
 
 .statsrow {
@@ -1348,6 +1461,42 @@ html, .mainarea {
   border-top: 1px solid var(--border-clr);
 }
 
+/* Sidebar Logout Button - Mobile Only */
+.sidebar-logout-btn {
+  display: none; /* Hidden by default, shown on mobile */
+  width: 100%;
+  background-color: var(--success-color);
+  color: var(--white);
+  border: none;
+  padding: 15px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex-direction: row;
+}
+
+.sidebar-logout-btn:hover {
+  background-color: #ff4757;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 71, 87, 0.3);
+}
+
+.sidebar-logout-btn .navicon {
+  color: var(--white);
+  font-size: 16px;
+}
+
+.sidebar-logout-btn .navtext {
+  color: var(--white);
+  font-weight: 600;
+}
+
 /* Theme Toggle Box - Main Container */
 .theme-toggle-box {
   display: flex;
@@ -1504,22 +1653,10 @@ input:checked + .slider:before {
   width: 24px;
 }
 
+/* Cart Layout Responsive */
 @media (max-width: 1100px) { 
   .cartlayout { flex-direction: column; } 
   .rightarea, .leftarea { width: 100%; } 
-}
-
-@media (max-width: 768px) {
-  .payment-methods-grid {
-    grid-template-columns: 1fr;
-  }
-  .qr-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .sidebar { display: none; }
-  .topbar { padding: 0 15px; }
 }
 
 /* Admin Dashboard Responsive Grid */
@@ -1530,23 +1667,321 @@ input:checked + .slider:before {
   margin-bottom: 30px;
 }
 
-/* Medium screens: 3 columns */
-@media (max-width: 1200px) {
+/* ============================================================
+   RESPONSIVE DESIGN - MOBILE & TABLET
+   ============================================================ */
+
+/* Tablet Styles (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+  }
+  
+  .topbar {
+    padding: 15px 20px;
+  }
+  
+  .toptitle {
+    font-size: 24px;
+  }
+  
   .admin-metric-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-}
-
-/* Small screens: 2 columns */
-@media (max-width: 768px) {
-  .admin-metric-grid {
-    grid-template-columns: repeat(2, 1fr);
+  
+  .statsrow {
+    flex-direction: column;
+  }
+  
+  .statcard {
+    width: 100%;
+  }
+  
+  .mainarea > div[style*="padding"] {
+    padding: 20px !important;
   }
 }
 
-/* Very small screens: 1 column */
+/* Mobile Styles (max-width: 768px) */
+@media (max-width: 768px) {
+  .dashboardbox {
+    position: relative;
+  }
+  
+  /* Sidebar - Hidden by default, slides in on mobile */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    max-width: 85vw;
+    transform: translateX(-100%);
+    box-shadow: none;
+    z-index: 1000;
+  }
+  
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .sidebar-mobile-header {
+    display: flex;
+  }
+  
+  .sidebar-close-btn {
+    display: block;
+  }
+  
+  .sidebar-overlay {
+    display: block;
+  }
+  
+  /* Main area takes full width on mobile */
+  .mainarea {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  /* Topbar - Mobile responsive */
+  .topbar {
+    padding: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .topbar-left {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .mobile-menu-toggle {
+    display: block;
+    flex-shrink: 0;
+  }
+  
+  /* Balance next to hamburger on mobile */
+  .balancebox-mobile {
+    display: flex !important;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .balancebox-desktop {
+    display: none;
+  }
+  
+  .balance-text-mobile {
+    display: inline;
+  }
+  
+  .toptitle {
+    font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .topright {
+    display: none; /* Hide topright on mobile */
+  }
+  
+  .logoutbutton-desktop {
+    display: none; /* Hide desktop logout button on mobile */
+  }
+  
+  /* Show sidebar logout button on mobile */
+  .sidebar-logout-btn {
+    display: flex !important;
+  }
+  
+  /* Content padding adjustment */
+  .mainarea > div[style*="padding"] {
+    padding: 15px !important;
+  }
+  
+  /* Cards and grids */
+  .admin-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  
+  .statsrow {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .statcard {
+    width: 100%;
+  }
+  
+  /* Payment methods grid */
+  .payment-methods-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Table responsive */
+  .tablewrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 800px;
+  }
+  
+  /* Filter sections */
+  .sold-data-filter-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .sold-data-filter-field {
+    width: 100%;
+  }
+  
+  .sold-data-check-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Data Management filters */
+  .dm-search-box {
+    width: 100% !important;
+  }
+  
+  /* Quick actions grid */
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Small Mobile Styles (max-width: 480px) */
 @media (max-width: 480px) {
+  .sidebar {
+    width: 260px;
+    max-width: 90vw;
+  }
+  
+  .topbar {
+    padding: 12px;
+  }
+  
+  .toptitle {
+    font-size: 18px;
+  }
+  
   .admin-metric-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .balancebox-mobile {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .balance-text-mobile {
+    font-size: 11px;
+  }
+  
+  .sidebar-logout-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  /* Quick actions grid */
+  .topbar-left + .topright {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  /* Cards padding */
+  .statcard,
+  .sold-data-card {
+    padding: 15px;
+  }
+  
+  /* Form modals */
+  .modal-content,
+  .modal-overlay > div {
+    width: 95% !important;
+    padding: 20px !important;
+  }
+  
+  /* Search and filter sections */
+  .dm-search-box,
+  .searchbar {
+    width: 100% !important;
+  }
+  
+  /* Navigation items */
+  .navitem {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .navtext {
+    font-size: 14px;
+  }
+  
+  .brandname {
+    font-size: 20px;
+  }
+  
+  /* Header sections responsive */
+  .browsetop,
+  .ordersheader,
+  .fundsheader {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 15px;
+  }
+  
+  /* Button groups */
+  .topbar-left + .topright {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  
+  /* Filter rows */
+  .sold-data-filter-row,
+  .dm-toolbar-left {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  /* Action buttons */
+  .dm-action-bar {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .dm-btn,
+  .applybtn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* All page content padding */
+  .browsebox,
+  .ordersbox,
+  .fundsbox,
+  .paymentsbox,
+  .datasection {
+    padding: 15px !important;
   }
 }

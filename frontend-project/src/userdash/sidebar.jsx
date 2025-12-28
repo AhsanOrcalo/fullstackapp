@@ -1,8 +1,8 @@
 import React from 'react';
 import { getUserData } from '../services/api';
-import { FaHome, FaDatabase, FaUsers, FaCheckCircle, FaCog, FaMoon, FaSun, FaShoppingCart, FaFileAlt, FaCreditCard, FaDollarSign, FaComments } from 'react-icons/fa';
+import { FaHome, FaDatabase, FaUsers, FaCheckCircle, FaCog, FaMoon, FaSun, FaShoppingCart, FaFileAlt, FaCreditCard, FaDollarSign, FaComments, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 
-const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
+const Sidebar = ({ setview, activeview, theme, toggleTheme, sidebarOpen, setSidebarOpen, logout }) => {
   // Get user data to determine role
   const userData = getUserData();
   const userRole = userData?.role || 'user';
@@ -30,12 +30,23 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
   const menuItems = userRole === 'admin' ? adminMenuItems : userMenuItems;
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
       <div>
-        {/* Brand Name */}
-        <div className="brandname">
+        {/* Mobile Close Button */}
+        <div className="sidebar-mobile-header">
+          <div className="brandname">
             <FaDatabase style={{color: '#4318ff'}} />
             <span>Data Leads</span>
+          </div>
+          {setSidebarOpen && (
+            <button 
+              className="sidebar-close-btn"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close menu"
+            >
+              <FaTimes />
+            </button>
+          )}
         </div>
         
         {/* Menu Items Loop */}
@@ -79,6 +90,17 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
           <FaCog className="navicon" />
           <span className="navtext">Settings</span>
         </div>
+
+        {/* Logout Button - Mobile Only */}
+        {logout && (
+          <button 
+            className="sidebar-logout-btn"
+            onClick={logout}
+          >
+            <FaSignOutAlt className="navicon" />
+            <span className="navtext">Logout</span>
+          </button>
+        )}
       </div>
     </div>
   );
