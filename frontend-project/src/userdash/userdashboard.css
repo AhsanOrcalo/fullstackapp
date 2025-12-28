@@ -181,7 +181,7 @@
   background-color: var(--bg-main);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100; /* Increased to be above table headers */
   border-bottom: 1px solid var(--border-clr);
   gap: 15px;
 }
@@ -789,7 +789,7 @@ th {
   background-color: rgba(255, 255, 255, 0.05);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 5; /* Lower than topbar */
 }
 
 .applybtn {
@@ -927,7 +927,7 @@ table thead th {
   padding: 15px 10px;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 5; /* Lower than topbar */
   border-bottom: 2px solid var(--border-clr);
   text-align: left;
 }
@@ -1842,6 +1842,14 @@ input:checked + .slider:before {
     min-width: 800px;
   }
   
+  /* Fix table header overlap with topbar on mobile */
+  table thead th,
+  .data-table thead th,
+  th {
+    top: 70px !important; /* Account for topbar height on mobile */
+    z-index: 5 !important; /* Lower than topbar z-index: 100 */
+  }
+  
   /* Filter sections */
   .sold-data-filter-row {
     flex-direction: column;
@@ -1886,6 +1894,13 @@ input:checked + .slider:before {
   .admin-metric-grid {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+  
+  /* Adjust table header position for smaller topbar on very small screens */
+  table thead th,
+  .data-table thead th,
+  th {
+    top: 60px !important; /* Smaller topbar height on very small screens */
   }
   
   .balancebox-mobile {
