@@ -87,13 +87,14 @@ export class UsersService implements OnModuleInit {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create user with default role 'user'
+    // Create user with default role 'user' and balance 0
     const newUser = this.usersRepository.create({
       userName,
       email,
       phoneNumber,
       password: hashedPassword,
       role: Role.USER, // Default role is 'user'
+      balance: 0.0, // New users start with 0 balance
     });
 
     await this.usersRepository.save(newUser);
@@ -188,13 +189,16 @@ export class UsersService implements OnModuleInit {
     };
   }
 
-  async getAllUsers(): Promise<{ id: string; userName: string; email: string; phoneNumber: string; role: Role; createdAt: Date }[]> {
+  async getAllUsers(): Promise<{ id: string; userName: string; email: string; phoneNumber: string; role: Role; balance: number; createdAt: Date }[]> {
     // Return all users without password field, excluding admin users
     const users = await this.usersRepository.find({
       where: { role: Role.USER },
-      select: ['id', 'userName', 'email', 'phoneNumber', 'role', 'createdAt'],
+      select: ['id', 'userName', 'email', 'phoneNumber', 'role', 'balance', 'createdAt'],
     });
-    return users;
+    return users.map(user => ({
+      ...user,
+      balance: parseFloat(user.balance?.toString() || '0'),
+    }));
   }
 
   async getProfile(userId: string): Promise<{ id: string; userName: string; email: string; phoneNumber: string; role: Role; createdAt: Date }> {
@@ -308,6 +312,33 @@ export class UsersService implements OnModuleInit {
 
     return {
       message: 'If the email exists, a temporary password has been sent to your email address.',
+    };
+  }
+
+  async addFunds(userId: string, amount: number): Promise<{ message: string; user: { id: string; userName: string; balance: number } }> {
+    if (amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Add funds to user balance
+    user.balance = (parseFloat(user.balance.toString()) || 0) + amount;
+    await this.usersRepository.save(user);
+
+    return {
+      message: 'Funds added successfully',
+      user: {
+        id: user.id,
+        userName: user.userName,
+        balance: parseFloat(user.balance.toString()),
+      },
     };
   }
 }

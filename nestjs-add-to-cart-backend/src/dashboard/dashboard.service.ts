@@ -114,9 +114,12 @@ export class DashboardService {
         return sum + (purchase.lead?.price || 0);
       }, 0);
 
-      // For now, available balance is set to 0.0
-      // In a real system, this would come from a user balance field or payment system
-      const availableBalance = 0.0;
+      // Get user balance from user entity
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
+
+      const availableBalance = user ? parseFloat(user.balance?.toString() || '0') : 0.0;
 
       return {
         dataPurchased,

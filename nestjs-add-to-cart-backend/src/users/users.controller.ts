@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Put, Body, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Post, Get, Put, Body, Param, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -7,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
+import { AddFundsDto } from './dto/add-funds.dto';
 import { Roles } from './decorators/roles.decorator';
 import { RolesGuard } from './guards/roles.guard';
 import { Role } from './enums/role.enum';
@@ -351,6 +352,66 @@ export class UsersController {
   })
   async updateProfile(@Request() req: any, @Body() updateProfileDto: UpdateProfileDto) {
     return this.usersService.updateProfile(req.user.userId, updateProfileDto);
+  }
+
+  @Put('users/:userId/add-funds')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Add funds to user balance (Admin only)' })
+  @ApiParam({
+    name: 'userId',
+    description: 'ID of the user to add funds to',
+    example: '1234567890',
+  })
+  @ApiBody({ type: AddFundsDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Funds added successfully',
+    schema: {
+      example: {
+        message: 'Funds added successfully',
+        user: {
+          id: '1234567890',
+          userName: 'john_doe',
+          balance: 100.0,
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid amount (must be greater than 0)',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: 'Amount must be greater than 0',
+        error: 'Bad Request',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User not found',
+        error: 'Not Found',
+      },
+    },
+  })
+  async addFunds(@Param('userId') userId: string, @Body() addFundsDto: AddFundsDto) {
+    return this.usersService.addFunds(userId, addFundsDto.amount);
   }
 }
 

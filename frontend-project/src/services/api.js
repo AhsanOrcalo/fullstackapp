@@ -213,6 +213,19 @@ export const getAllUsers = async () => {
   }
 };
 
+// Add funds to user API (Admin only)
+export const addFundsToUser = async (userId, amount) => {
+  try {
+    const response = await apiRequest(`/auth/users/${userId}/add-funds`, {
+      method: 'PUT',
+      body: JSON.stringify({ amount }),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get all purchases API (Admin only)
 export const getAllPurchases = async () => {
   try {

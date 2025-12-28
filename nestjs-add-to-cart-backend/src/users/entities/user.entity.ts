@@ -24,6 +24,14 @@ export class User {
   })
   role: Role;
 
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0.0,
+  })
+  balance: number;
+
   @CreateDateColumn()
   createdAt: Date;
 }

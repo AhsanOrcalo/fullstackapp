@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { getAllUsers } from '../services/api';
+import { getAllUsers, addFundsToUser } from '../services/api';
+import { FaDollarSign, FaPlus } from 'react-icons/fa';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [addingFunds, setAddingFunds] = useState(null);
+  const [fundAmount, setFundAmount] = useState('');
+  const [showAddFundModal, setShowAddFundModal] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -37,6 +41,36 @@ const UserManagement = () => {
       });
     } catch {
       return dateString;
+    }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+    }).format(price || 0);
+  };
+
+  const handleAddFunds = async (userId) => {
+    const amount = parseFloat(fundAmount);
+    if (!amount || amount <= 0) {
+      alert('Please enter a valid amount greater than 0');
+      return;
+    }
+
+    try {
+      setAddingFunds(userId);
+      await addFundsToUser(userId, amount);
+      setFundAmount('');
+      setShowAddFundModal(null);
+      await fetchUsers(); // Refresh users list
+      alert('Funds added successfully!');
+    } catch (err) {
+      alert(err.message || 'Failed to add funds');
+      console.error('Error adding funds:', err);
+    } finally {
+      setAddingFunds(null);
     }
   };
 
@@ -82,7 +116,9 @@ const UserManagement = () => {
                   <th>Email</th>
                   <th>Phone Number</th>
                   <th>Role</th>
+                  <th>Balance</th>
                   <th>Registered Date</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,8 +146,34 @@ const UserManagement = () => {
                         {user.role || 'user'}
                       </span>
                     </td>
+                    <td style={{ 
+                      color: 'var(--primary-blue)', 
+                      fontWeight: '600',
+                      fontSize: '14px'
+                    }}>
+                      {formatPrice(user.balance)}
+                    </td>
                     <td style={{ color: 'var(--text-sub)', fontSize: '14px' }}>
                       {formatDate(user.createdAt)}
+                    </td>
+                    <td>
+                      <button
+                        className="applybtn"
+                        onClick={() => {
+                          setShowAddFundModal(user.id);
+                          setFundAmount('');
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <FaPlus style={{ fontSize: '10px' }} />
+                        Add Fund
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -120,6 +182,107 @@ const UserManagement = () => {
           </div>
         )}
       </div>
+
+      {/* Add Fund Modal */}
+      {showAddFundModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-card)',
+            padding: '30px',
+            borderRadius: '20px',
+            width: '90%',
+            maxWidth: '400px',
+            boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 20px 0', 
+              color: 'var(--text-main)',
+              fontSize: '20px',
+              fontWeight: '700'
+            }}>
+              Add Funds
+            </h3>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                color: 'var(--text-secondary)',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                Amount ($)
+              </label>
+              <input
+                type="number"
+                value={fundAmount}
+                onChange={(e) => setFundAmount(e.target.value)}
+                placeholder="Enter amount"
+                min="0.01"
+                step="0.01"
+                style={{
+                  width: '100%',
+                  padding: '12px 15px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--input-bg)',
+                  color: 'var(--text-color)',
+                  fontSize: '15px',
+                  outline: 'none'
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddFunds(showAddFundModal);
+                  }
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowAddFundModal(null);
+                  setFundAmount('');
+                }}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-main)',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="applybtn"
+                onClick={() => handleAddFunds(showAddFundModal)}
+                disabled={addingFunds === showAddFundModal || !fundAmount || parseFloat(fundAmount) <= 0}
+                style={{
+                  padding: '10px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FaDollarSign />
+                {addingFunds === showAddFundModal ? 'Adding...' : 'Add Funds'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
