@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { getUserPurchases } from '../services/api';
+import { FaSearch, FaSync, FaFileExcel } from 'react-icons/fa';
 
 const Orders = () => {
   const [purchasedata, setPurchasedata] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchPurchases();
@@ -33,11 +36,51 @@ const Orders = () => {
         lead: purchase.lead,
       })) : [];
       setPurchasedata(transformedData);
+      setFilteredData(transformedData);
     } catch (err) {
       setError(err.message || 'Failed to fetch purchases');
       console.error('Error fetching purchases:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setFilteredData(purchasedata);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = purchasedata.filter(item => {
+      const searchableText = `
+        ${item.fname || ''} 
+        ${item.lname || ''} 
+        ${item.email || ''} 
+        ${item.address || ''} 
+        ${item.city || ''} 
+        ${item.state || ''} 
+        ${item.zip || ''} 
+        ${item.phone || ''}
+      `.toLowerCase();
+
+      return searchableText.includes(query);
+    });
+
+    setFilteredData(filtered);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    // If search is cleared, show all data
+    if (!e.target.value.trim()) {
+      setFilteredData(purchasedata);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
@@ -58,23 +101,36 @@ const Orders = () => {
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button className="applybtn" onClick={fetchPurchases} disabled={loading}>
-            {loading ? 'Loading...' : '🔄 Refresh'}
+            <FaSync style={{ marginRight: '5px' }} />
+            {loading ? 'Loading...' : 'Refresh'}
           </button>
-          <button className="applybtn">
-            <span>📄 Export to Excel</span>
-          </button>
+          {/* <button className="applybtn">
+            <FaFileExcel style={{ marginRight: '5px' }} />
+            Export to Excel
+          </button> */}
         </div>
       </div>
 
       <div className="searchsection">
         <div className="searchbar">
+          <FaSearch style={{ 
+            color: 'var(--text-sub)', 
+            fontSize: '16px', 
+            marginLeft: '15px',
+            marginRight: '10px'
+          }} />
           <input 
             type="text" 
             placeholder="Search records by name, email, location or phone..." 
             className="ordersearch"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onKeyPress={handleKeyPress}
+            style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent' }}
           />
-          <button className="applybtn">
-            🔍 Search
+          <button className="applybtn" onClick={handleSearch}>
+            <FaSearch style={{ marginRight: '5px' }} />
+            Search
           </button>
         </div>
       </div>
@@ -96,27 +152,29 @@ const Orders = () => {
             <table>
               <thead>
                 <tr>
-                  <th>First Name</th>
-                  <th>Last Name</th>
-                  <th>Address</th>
-                  <th>City</th>
-                  <th>State</th>
+                  <th>FIRST NAME</th>
+                  <th>LAST NAME</th>
+                  <th>ADDRESS</th>
+                  <th>CITY</th>
+                  <th>STATE</th>
                   <th>ZIP</th>
                   <th>DOB</th>
                   <th>SSN</th>
-                  <th>Email</th>
-                  <th>Price</th>
-                  <th>Purchased Date</th>
-                  <th>Actions</th>
+                  <th>EMAIL</th>
+                  <th>PRICE</th>
+                  <th>PURCHASED DATE</th>
+                  <th>ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
-                {purchasedata.length === 0 ? (
+                {filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan="12" className="emptyrow">No purchased records found.</td>
+                    <td colSpan="12" className="emptyrow">
+                      {searchQuery ? 'No records found matching your search.' : 'No purchased records found.'}
+                    </td>
                   </tr>
                 ) : (
-                  purchasedata.map((item) => (
+                  filteredData.map((item) => (
                     <tr key={item.id}>
                       <td>{item.fname}</td>
                       <td>{item.lname}</td>

@@ -133,9 +133,9 @@ const Browsedata = () => {
           </p>
         </div>
         <div className="topbuttons" style={{ display: 'flex', gap: '10px' }}>
-          <button className="applybtn" onClick={handleSelectAll}>
+          {/* <button className="applybtn" onClick={handleSelectAll}>
             {selectedLeads.size === leads.length && leads.length > 0 ? 'Deselect All' : 'Select All'}
-          </button>
+          </button> */}
           <button 
             className="applybtn" 
             disabled={selectedLeads.size === 0}

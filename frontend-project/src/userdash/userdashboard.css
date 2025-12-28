@@ -1151,6 +1151,7 @@ table tbody td {
 
 .searchbar {
   display: flex;
+  align-items: center;
   gap: 10px;
   background: var(--bg-card);
   padding: 15px;
