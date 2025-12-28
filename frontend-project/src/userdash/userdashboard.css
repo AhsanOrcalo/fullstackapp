@@ -34,6 +34,38 @@
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
+/* Global Scrollbar Styling - Theme Matched */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: var(--bg-main);
+  border-radius: 5px;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: var(--border-clr);
+  border-radius: 5px;
+  border: 2px solid var(--bg-main);
+  transition: background 0.3s ease;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-blue);
+}
+
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-clr) var(--bg-main);
+}
+
 .dashboardbox {
   display: flex;
   height: 100vh;
@@ -57,7 +89,33 @@
   flex-shrink: 0;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   z-index: 1000;
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) var(--bg-side);
 }
+
+/* Sidebar Scrollbar - Theme Matched */
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: var(--bg-side);
+  border-radius: 5px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  border: 2px solid var(--bg-side);
+  transition: background 0.3s ease;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 
 .sidebar-mobile-header {
   display: none;
@@ -880,29 +938,31 @@ th {
 }
 
 /* Custom Scrollbar for Table Wrapper */
+/* Table Wrapper Scrollbar - Theme Matched */
 .tablewrapper::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 .tablewrapper::-webkit-scrollbar-track {
   background: var(--bg-card);
-  border-radius: 10px;
+  border-radius: 5px;
 }
 
 .tablewrapper::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+  background: var(--border-clr);
+  border-radius: 5px;
   border: 2px solid var(--bg-card);
+  transition: background 0.3s ease;
 }
 
 .tablewrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--primary-blue);
 }
 
 .tablewrapper {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) var(--bg-card);
+  scrollbar-color: var(--border-clr) var(--bg-card);
 }
 
 /* Regular Table Styling (applies to all tables) */
@@ -1398,19 +1458,22 @@ html, .mainarea {
   scroll-behavior: smooth;
 }
 
+/* Main Area Scrollbar - Theme Matched */
 .mainarea::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 .mainarea::-webkit-scrollbar-track {
   background: var(--bg-main);
+  border-radius: 5px;
 }
 
 .mainarea::-webkit-scrollbar-thumb {
   background: var(--border-clr);
-  border-radius: 10px;
+  border-radius: 5px;
   border: 2px solid var(--bg-main);
+  transition: background 0.3s ease;
 }
 
 .mainarea::-webkit-scrollbar-thumb:hover {
