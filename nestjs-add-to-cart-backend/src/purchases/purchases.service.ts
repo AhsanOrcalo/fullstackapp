@@ -74,5 +74,76 @@ export class PurchasesService {
     });
     return !!purchase;
   }
+
+  async getSoldDataAnalytics(dateFrom?: string, dateTo?: string) {
+    // Get all purchases with relations
+    let purchases = await this.purchasesRepository.find({
+      relations: ['lead', 'user'],
+      order: { purchasedAt: 'DESC' },
+    });
+
+    // Filter by date range if provided
+    if (dateFrom || dateTo) {
+      const fromDate = dateFrom ? new Date(dateFrom) : null;
+      const toDate = dateTo ? new Date(dateTo) : null;
+      
+      purchases = purchases.filter((purchase) => {
+        const purchaseDate = new Date(purchase.purchasedAt);
+        if (fromDate && purchaseDate < fromDate) return false;
+        if (toDate) {
+          const toDateEnd = new Date(toDate);
+          toDateEnd.setHours(23, 59, 59, 999);
+          if (purchaseDate > toDateEnd) return false;
+        }
+        return true;
+      });
+    }
+
+    // Calculate total data sold (lifetime)
+    const totalDataSold = await this.purchasesRepository.count();
+
+    // Calculate today's sold
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todaysSold = await this.purchasesRepository
+      .createQueryBuilder('purchase')
+      .where('purchase.purchasedAt >= :today', { today })
+      .andWhere('purchase.purchasedAt < :tomorrow', { tomorrow })
+      .getCount();
+
+    // Calculate monthly sold (current month)
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    
+    const monthlySold = await this.purchasesRepository
+      .createQueryBuilder('purchase')
+      .where('purchase.purchasedAt >= :startOfMonth', { startOfMonth })
+      .andWhere('purchase.purchasedAt < :startOfNextMonth', { startOfNextMonth })
+      .getCount();
+
+    // Format dates for display
+    const todayFormatted = today.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const monthFormatted = today.toLocaleDateString('en-GB', {
+      month: 'long',
+      year: 'numeric',
+    });
+
+    return {
+      totalDataSold,
+      todaysSold,
+      monthlySold,
+      todayDate: todayFormatted,
+      monthDate: monthFormatted,
+      filteredPurchases: purchases,
+    };
+  }
 }
 

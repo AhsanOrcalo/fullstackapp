@@ -305,6 +305,216 @@
   color: white;
 }
 
+/* Sold Data Analytics Cards */
+.sold-data-card {
+  background-color: var(--bg-card);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border-clr);
+  min-height: 180px;
+  justify-content: flex-start;
+}
+
+.sold-data-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.sold-data-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.sold-data-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 8px;
+}
+
+.sold-data-label {
+  color: var(--text-sub);
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.sold-data-value {
+  color: var(--text-main);
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sold-data-subtitle {
+  color: var(--text-sub);
+  font-size: 12px;
+  margin: 0;
+  margin-top: 4px;
+}
+
+/* Filter Sales by Date Section */
+.sold-data-filter-card {
+  background-color: var(--bg-card);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-clr);
+  margin-bottom: 30px;
+}
+
+.sold-data-filter-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.sold-data-filter-icon {
+  color: #4318ff;
+  font-size: 20px;
+}
+
+.sold-data-filter-title {
+  color: var(--text-main);
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sold-data-filter-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.sold-data-filter-field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.sold-data-filter-label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sold-data-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.sold-data-date-input {
+  width: 100%;
+  padding: 12px 45px 12px 15px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-clr);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  height: 44px;
+}
+
+.sold-data-date-input:focus {
+  border-color: #4318ff;
+  box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1);
+  background-color: var(--bg-card);
+}
+
+.sold-data-date-input::placeholder {
+  color: var(--text-sub);
+  opacity: 0.7;
+}
+
+/* Style date input when empty to show placeholder-like appearance */
+.sold-data-date-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.sold-data-date-input::-webkit-datetime-edit-text {
+  color: var(--text-sub);
+  opacity: 0.7;
+}
+
+.sold-data-date-input::-webkit-datetime-edit-month-field,
+.sold-data-date-input::-webkit-datetime-edit-day-field,
+.sold-data-date-input::-webkit-datetime-edit-year-field {
+  color: var(--text-sub);
+  opacity: 0.7;
+}
+
+.sold-data-date-input:not(:valid)::-webkit-datetime-edit {
+  color: var(--text-sub);
+  opacity: 0.7;
+}
+
+.sold-data-calendar-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-sub);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.sold-data-check-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(5, 205, 153, 0.2);
+  min-width: 150px;
+  justify-content: center;
+  height: fit-content;
+}
+
+.sold-data-check-button:hover {
+  background-color: #04b385;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(5, 205, 153, 0.3);
+}
+
+.sold-data-check-button:active {
+  transform: translateY(0);
+}
+
+.sold-data-check-button svg {
+  font-size: 16px;
+}
+
 .datasection {
   background-color: var(--bg-card);
   padding: 30px;
@@ -526,6 +736,60 @@ table {
   border-collapse: collapse;
   background-color: var(--bg-card);
   min-width: 1200px;
+}
+
+/* Data Table Styling (for Sold Data) */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--bg-card);
+}
+
+.data-table thead th {
+  background-color: #f7f9fc;
+  color: var(--text-main);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 15px 10px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  border-bottom: 2px solid var(--border-clr);
+  text-align: left;
+}
+
+.light-mode .data-table thead th {
+  background-color: #1b254b;
+  color: #fff;
+  border-bottom: 1px solid #2b3674;
+}
+
+.data-table tbody tr {
+  background-color: var(--white);
+  border-bottom: 1px solid var(--border-clr);
+  transition: all 0.2s ease;
+}
+
+.light-mode .data-table tbody tr {
+  background-color: #111c44;
+  border-bottom: 1px solid #2b3674;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f0f4ff;
+  transform: scale(1.002);
+}
+
+.light-mode .data-table tbody tr:hover {
+  background-color: #1b254b;
+}
+
+.data-table td {
+  padding: 12px 10px;
+  color: var(--text-main);
+  font-size: 14px;
+  vertical-align: middle;
 }
 
 th {

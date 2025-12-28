@@ -1,39 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { getAllPurchases } from '../services/api';
+import { getSoldDataAnalytics } from '../services/api';
+import { FaChartLine, FaCalendarDay, FaCalendarAlt, FaFilter, FaSearch, FaHistory } from 'react-icons/fa';
 
 const SoldData = () => {
-  const [purchases, setPurchases] = useState([]);
+  const [analytics, setAnalytics] = useState({
+    totalDataSold: 0,
+    todaysSold: 0,
+    monthlySold: 0,
+    todayDate: '',
+    monthDate: '',
+    filteredPurchases: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
-    fetchPurchases();
+    fetchAnalytics();
   }, []);
 
-  const fetchPurchases = async () => {
+  const fetchAnalytics = async () => {
     try {
       setLoading(true);
       setError('');
-      const data = await getAllPurchases();
-      setPurchases(Array.isArray(data) ? data : []);
+      const data = await getSoldDataAnalytics(dateFrom || undefined, dateTo || undefined);
+      setAnalytics(data);
     } catch (err) {
-      setError(err.message || 'Failed to fetch sold leads');
-      console.error('Error fetching purchases:', err);
+      setError(err.message || 'Failed to fetch sold data analytics');
+      console.error('Error fetching analytics:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCheckSales = () => {
+    fetchAnalytics();
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
         month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+        year: 'numeric',
       });
     } catch {
       return dateString;
@@ -41,109 +53,228 @@ const SoldData = () => {
   };
 
   const formatPrice = (price) => {
+    if (!price) return '$0.00';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(price);
+      minimumFractionDigits: 2,
+    }).format(price / 100); // Assuming price is stored in cents
   };
 
+  const formatOrderId = (id) => {
+    if (!id) return 'N/A';
+    return `#${id.substring(0, 4)}`;
+  };
+
+  const purchases = analytics.filteredPurchases || [];
+
   return (
-    <div className="browsebox">
-      <div className="browsetop" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div>
-          <h2 style={{ color: 'var(--text-main)', margin: 0, fontSize: '24px', fontWeight: '700' }}>
-            Sold Data
-          </h2>
-          <p className="subtitle" style={{ marginTop: '5px' }}>
-            {purchases.length} {purchases.length === 1 ? 'lead sold' : 'leads sold'}
-          </p>
-        </div>
-        <button className="applybtn" onClick={fetchPurchases} disabled={loading}>
-          {loading ? 'Loading...' : '🔄 Refresh'}
-        </button>
+    <div style={{ width: '100%', padding: '0' }}>
+      {/* Header Section */}
+      <div style={{ marginBottom: '30px' }}>
+        <h1 style={{ 
+          color: 'var(--text-main)', 
+          margin: '0 0 10px 0', 
+          fontSize: '32px', 
+          fontWeight: '700' 
+        }}>
+          Sold Data Analytics
+        </h1>
+        <p style={{ 
+          color: 'var(--text-sub)', 
+          margin: '0', 
+          fontSize: '16px' 
+        }}>
+          Overview of total sales and performance.
+        </p>
       </div>
 
-      <div className="tablecard">
-        {loading ? (
-          <div className="nodata">
-            <p style={{ color: 'var(--text-sub)' }}>Loading sold leads...</p>
+      {/* Loading State */}
+      {loading && !error && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: 'var(--text-sub)' 
+        }}>
+          Loading analytics data...
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div style={{ 
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          border: '1px solid #ef4444',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '30px',
+          color: '#ef4444',
+        }}>
+          <p style={{ margin: '0 0 10px 0', fontWeight: '600' }}>Error loading analytics</p>
+          <p style={{ margin: '0 0 15px 0', fontSize: '14px' }}>{error}</p>
+          <button 
+            className="applybtn" 
+            onClick={fetchAnalytics}
+            style={{ marginTop: '10px' }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && (
+        <>
+          {/* Key Metric Cards */}
+          <div className="admin-metric-grid" style={{ marginBottom: '30px' }}>
+            <div className="sold-data-card">
+              <div className="sold-data-icon" style={{backgroundColor: '#4318ff'}}>
+                <FaChartLine />
+              </div>
+              <div className="sold-data-content">
+                <span className="sold-data-label">Total Data Sold</span>
+                <h2 className="sold-data-value">
+                  {analytics.totalDataSold.toLocaleString()}
+                </h2>
+                <p className="sold-data-subtitle">Lifetime Sales</p>
+              </div>
+            </div>
+
+            <div className="sold-data-card">
+              <div className="sold-data-icon" style={{backgroundColor: '#28c76f'}}>
+                <FaCalendarDay />
+              </div>
+              <div className="sold-data-content">
+                <span className="sold-data-label">Today's Sold</span>
+                <h2 className="sold-data-value">
+                  {analytics.todaysSold}
+                </h2>
+                <p className="sold-data-subtitle">{analytics.todayDate || 'Today'}</p>
+              </div>
+            </div>
+
+            <div className="sold-data-card">
+              <div className="sold-data-icon" style={{backgroundColor: '#ff9f43'}}>
+                <FaCalendarAlt />
+              </div>
+              <div className="sold-data-content">
+                <span className="sold-data-label">Monthly Sold</span>
+                <h2 className="sold-data-value">
+                  {analytics.monthlySold.toLocaleString()}
+                </h2>
+                <p className="sold-data-subtitle">{analytics.monthDate || 'This Month'}</p>
+              </div>
+            </div>
           </div>
-        ) : error ? (
-          <div className="nodata">
-            <p style={{ color: '#ef4444' }}>{error}</p>
-            <button className="applybtn" onClick={fetchPurchases} style={{ marginTop: '15px' }}>
-              Retry
-            </button>
+
+          {/* Filter Sales by Date Section */}
+          <div className="sold-data-filter-card">
+            <div className="sold-data-filter-header">
+              <FaFilter className="sold-data-filter-icon" />
+              <h3 className="sold-data-filter-title">Filter Sales by Date</h3>
+            </div>
+            
+            <div className="sold-data-filter-row">
+              <div className="sold-data-filter-field">
+                <label className="sold-data-filter-label">From Date</label>
+                <div className="sold-data-input-wrapper">
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="sold-data-date-input"
+                    placeholder="dd/mm/yyyy"
+                  />
+                  <FaCalendarDay className="sold-data-calendar-icon" />
+                </div>
+              </div>
+
+              <div className="sold-data-filter-field">
+                <label className="sold-data-filter-label">To Date</label>
+                <div className="sold-data-input-wrapper">
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="sold-data-date-input"
+                    placeholder="dd/mm/yyyy"
+                  />
+                  <FaCalendarDay className="sold-data-calendar-icon" />
+                </div>
+              </div>
+
+              <button 
+                className="sold-data-check-button" 
+                onClick={handleCheckSales}
+              >
+                <FaSearch />
+                <span>Check Sale</span>
+              </button>
+            </div>
           </div>
-        ) : purchases.length === 0 ? (
-          <div className="nodata">
-            No leads have been sold yet. Sales will appear here once users purchase leads.
+
+          {/* Recent Transactions Table */}
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <div className="icon-box" style={{backgroundColor: '#4318ff', marginBottom: 0, width: '35px', height: '35px'}}>
+                <FaHistory style={{ fontSize: '16px' }} />
+              </div>
+              <h3 style={{ 
+                color: 'var(--text-main)', 
+                margin: 0, 
+                fontSize: '18px', 
+                fontWeight: '700' 
+              }}>
+                Recent Transactions
+              </h3>
+            </div>
+
+            {purchases.length === 0 ? (
+              <div className="nodata">
+                No transactions found for the selected date range.
+              </div>
+            ) : (
+              <div className="tablewrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>ORDER ID</th>
+                      <th>BUYER NAME</th>
+                      <th>SERVICE</th>
+                      <th>PRICE</th>
+                      <th>DATE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {purchases.map((purchase) => (
+                      <tr key={purchase.id}>
+                        <td style={{ color: '#4318ff', fontWeight: '600', fontFamily: 'monospace' }}>
+                          {formatOrderId(purchase.id)}
+                        </td>
+                        <td style={{ color: 'var(--text-main)', fontWeight: '500' }}>
+                          {purchase.user?.userName || 'N/A'}
+                        </td>
+                        <td style={{ color: 'var(--text-main)' }}>
+                          {purchase.lead?.firstName && purchase.lead?.lastName 
+                            ? `${purchase.lead.firstName} ${purchase.lead.lastName}`
+                            : 'OnePay'}
+                        </td>
+                        <td style={{ color: '#28c76f', fontWeight: '600' }}>
+                          {purchase.lead ? formatPrice(purchase.lead.price) : '$0.00'}
+                        </td>
+                        <td style={{ color: 'var(--text-main)' }}>
+                          {formatDate(purchase.purchasedAt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="tablewrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Purchase ID</th>
-                  <th>Lead Name</th>
-                  <th>Lead Email</th>
-                  <th>Address</th>
-                  <th>City</th>
-                  <th>State</th>
-                  <th>ZIP</th>
-                  <th>Price</th>
-                  <th>Buyer</th>
-                  <th>Buyer Email</th>
-                  <th>Sold Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {purchases.map((purchase) => (
-                  <tr key={purchase.id}>
-                    <td style={{ color: 'var(--text-sub)', fontSize: '12px', fontFamily: 'monospace' }}>
-                      {purchase.id.substring(0, 8)}...
-                    </td>
-                    <td>
-                      {purchase.lead ? (
-                        <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>
-                          {purchase.lead.firstName} {purchase.lead.lastName}
-                        </span>
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
-                    <td>{purchase.lead?.email || 'N/A'}</td>
-                    <td>{purchase.lead?.address || 'N/A'}</td>
-                    <td>{purchase.lead?.city || 'N/A'}</td>
-                    <td>{purchase.lead?.state || 'N/A'}</td>
-                    <td>{purchase.lead?.zip || 'N/A'}</td>
-                    <td style={{ color: 'var(--primary-blue)', fontWeight: '600' }}>
-                      {purchase.lead ? formatPrice(purchase.lead.price || 0) : 'N/A'}
-                    </td>
-                    <td>
-                      {purchase.user ? (
-                        <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>
-                          {purchase.user.userName}
-                        </span>
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
-                    <td>{purchase.user?.email || 'N/A'}</td>
-                    <td style={{ color: 'var(--text-sub)', fontSize: '14px' }}>
-                      {formatDate(purchase.purchasedAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };
 
 export default SoldData;
-

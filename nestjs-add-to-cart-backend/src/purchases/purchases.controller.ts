@@ -1,4 +1,4 @@
-import { Controller, Post, Put, Get, Param, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Put, Get, Param, Query, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { PurchasesService } from './purchases.service';
@@ -345,6 +345,41 @@ export class PurchasesController {
     );
 
     return purchasesWithDetails;
+  }
+
+  @Get('analytics')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get sold data analytics (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Sold data analytics retrieved successfully',
+    schema: {
+      example: {
+        totalDataSold: 5420,
+        todaysSold: 42,
+        monthlySold: 1150,
+        todayDate: '26 Dec 2025',
+        monthDate: 'December 2025',
+        filteredPurchases: [],
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async getSoldDataAnalytics(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.purchasesService.getSoldDataAnalytics(dateFrom, dateTo);
   }
 }
 

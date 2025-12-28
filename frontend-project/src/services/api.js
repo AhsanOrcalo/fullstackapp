@@ -398,3 +398,22 @@ export const forgetPassword = async (email) => {
   }
 };
 
+// Get sold data analytics API (Admin only)
+export const getSoldDataAnalytics = async (dateFrom, dateTo) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (dateFrom) queryParams.append('dateFrom', dateFrom);
+    if (dateTo) queryParams.append('dateTo', dateTo);
+    
+    const queryString = queryParams.toString();
+    const endpoint = `/purchases/analytics${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiRequest(endpoint, {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
