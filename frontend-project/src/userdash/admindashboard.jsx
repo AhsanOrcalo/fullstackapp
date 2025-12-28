@@ -66,6 +66,8 @@ const AdminDashboard = ({ setview }) => {
       subtitle: 'Registered users',
       icon: FaUsers,
       color: '#7367f0',
+      bgColor: 'linear-gradient(135deg, rgba(115, 103, 240, 0.25) 0%, rgba(115, 103, 240, 0.15) 100%)',
+      shadowColor: 'rgba(115, 103, 240, 0.4)',
     },
     {
       title: 'Total Records',
@@ -73,6 +75,8 @@ const AdminDashboard = ({ setview }) => {
       subtitle: 'Data entries',
       icon: FaFileAlt,
       color: '#00cfe8',
+      bgColor: 'linear-gradient(135deg, rgba(0, 207, 232, 0.25) 0%, rgba(0, 207, 232, 0.15) 100%)',
+      shadowColor: 'rgba(0, 207, 232, 0.4)',
     },
     {
       title: 'Recent Activity',
@@ -80,6 +84,8 @@ const AdminDashboard = ({ setview }) => {
       subtitle: 'Last 5 records',
       icon: FaClock,
       color: '#ff9f43',
+      bgColor: 'linear-gradient(135deg, rgba(255, 159, 67, 0.25) 0%, rgba(255, 159, 67, 0.15) 100%)',
+      shadowColor: 'rgba(255, 159, 67, 0.4)',
     },
     {
       title: 'System Status',
@@ -87,6 +93,10 @@ const AdminDashboard = ({ setview }) => {
       subtitle: stats.systemStatus === 'Active' ? 'All systems operational' : 'Some APIs not working',
       icon: FaServer,
       color: stats.systemStatus === 'Active' ? '#28c76f' : '#ef4444',
+      bgColor: stats.systemStatus === 'Active' 
+        ? 'linear-gradient(135deg, rgba(40, 199, 111, 0.25) 0%, rgba(40, 199, 111, 0.15) 100%)'
+        : 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.15) 100%)',
+      shadowColor: stats.systemStatus === 'Active' ? 'rgba(40, 199, 111, 0.4)' : 'rgba(239, 68, 68, 0.4)',
     },
     {
       title: 'Sold (700+)',
@@ -94,6 +104,8 @@ const AdminDashboard = ({ setview }) => {
       subtitle: 'Completed orders with score ≥ 700',
       icon: FaCheckCircle,
       color: '#3b82f6',
+      bgColor: 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%)',
+      shadowColor: 'rgba(59, 130, 246, 0.4)',
     },
     {
       title: 'Sold (800+)',
@@ -101,6 +113,8 @@ const AdminDashboard = ({ setview }) => {
       subtitle: 'Completed orders with score ≥ 800',
       icon: FaCheckCircle,
       color: '#3b82f6',
+      bgColor: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0.15) 100%)',
+      shadowColor: 'rgba(99, 102, 241, 0.4)',
     },
     {
       title: 'Available (700+)',
@@ -108,6 +122,8 @@ const AdminDashboard = ({ setview }) => {
       subtitle: 'Not purchased, admin-created',
       icon: FaDatabase,
       color: '#10b981',
+      bgColor: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.15) 100%)',
+      shadowColor: 'rgba(16, 185, 129, 0.4)',
     },
     {
       title: 'Available (800+)',
@@ -115,6 +131,8 @@ const AdminDashboard = ({ setview }) => {
       subtitle: 'Not purchased, admin-created',
       icon: FaDatabase,
       color: '#10b981',
+      bgColor: 'linear-gradient(135deg, rgba(5, 150, 105, 0.25) 0%, rgba(5, 150, 105, 0.15) 100%)',
+      shadowColor: 'rgba(5, 150, 105, 0.4)',
     },
   ];
 
@@ -253,19 +271,22 @@ const AdminDashboard = ({ setview }) => {
                 whileHover={{ scale: 1.05, y: -5 }}
                 transition={{ type: "spring", stiffness: 300 }}
                 style={{
-                  backgroundColor: 'var(--bg-card)',
+                  background: card.bgColor,
+                  backgroundColor: 'var(--bg-card)', // Fallback
                   padding: '25px',
                   borderRadius: '12px',
                   border: '1px solid var(--border-clr)',
                   transition: 'transform 0.2s, box-shadow 0.2s',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: `0 8px 24px ${card.shadowColor}, 0 4px 8px rgba(0, 0, 0, 0.1)`,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                  e.currentTarget.style.boxShadow = `0 12px 32px ${card.shadowColor}, 0 6px 12px rgba(0, 0, 0, 0.15)`;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.boxShadow = `0 8px 24px ${card.shadowColor}, 0 4px 8px rgba(0, 0, 0, 0.1)`;
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

@@ -107,6 +107,10 @@ const UserDashboardComponent = () => {
       <motion.div className="statsrow" variants={containerVariants}>
         <motion.div 
           className="statcard"
+          style={{
+            background: 'linear-gradient(135deg, rgba(67, 24, 255, 0.25) 0%, rgba(67, 24, 255, 0.15) 100%)',
+            boxShadow: '0 8px 24px rgba(67, 24, 255, 0.4), 0 4px 8px rgba(0, 0, 0, 0.1)',
+          }}
           variants={cardVariants}
           whileHover={{ scale: 1.05, y: -5 }}
           transition={{ type: "spring", stiffness: 300 }}
@@ -147,6 +151,10 @@ const UserDashboardComponent = () => {
         </motion.div>
         <motion.div 
           className="statcard"
+          style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.15) 100%)',
+            boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4), 0 4px 8px rgba(0, 0, 0, 0.1)',
+          }}
           variants={cardVariants}
           whileHover={{ scale: 1.05, y: -5 }}
           transition={{ type: "spring", stiffness: 300 }}

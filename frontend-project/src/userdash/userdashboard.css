@@ -424,8 +424,10 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   color: var(--text-main);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-clr);
 }
 
 .cardtitle {
