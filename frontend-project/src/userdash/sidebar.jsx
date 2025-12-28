@@ -1,5 +1,6 @@
 import React from 'react';
 import { getUserData } from '../services/api';
+import { FaHome, FaDatabase, FaUsers, FaCheckCircle, FaCog, FaMoon, FaSun, FaShoppingCart, FaFileAlt, FaCreditCard, FaDollarSign, FaComments } from 'react-icons/fa';
 
 const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
   // Get user data to determine role
@@ -8,21 +9,21 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
 
   // Define menu items based on role
   const userMenuItems = [
-    { name: 'Dashboard', icon: '🏠' },
-    { name: 'Browse Data', icon: '🗂️' },
-    { name: 'Cart', icon: '🛒' },
-    { name: 'Orders', icon: '📋' },
-    { name: 'Payments', icon: '💳' },
-    { name: 'Funds', icon: '💰' },
-    { name: 'Enquiries', icon: '💬' },
+    { name: 'Dashboard', icon: FaHome },
+    { name: 'Browse Data', icon: FaDatabase },
+    { name: 'Cart', icon: FaShoppingCart },
+    { name: 'Orders', icon: FaFileAlt },
+    { name: 'Payments', icon: FaCreditCard },
+    { name: 'Funds', icon: FaDollarSign },
+    { name: 'Enquiries', icon: FaComments },
   ];
 
   const adminMenuItems = [
-    { name: 'Dashboard', icon: '🏠' },
-    { name: 'Data Management', icon: '🗂️' },
-    { name: 'User Management', icon: '👥' },
-    { name: 'Sold Data', icon: '📊' },
-    { name: 'Enquiries', icon: '💬' },
+    { name: 'Dashboard', icon: FaHome },
+    { name: 'Data Management', icon: FaDatabase },
+    { name: 'User Management', icon: FaUsers },
+    { name: 'Sold Data', icon: FaCheckCircle },
+    { name: 'Enquiries', icon: FaComments },
   ];
 
   // Select menu items based on role
@@ -33,29 +34,36 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
       <div>
         {/* Brand Name */}
         <div className="brandname">
-            <span style={{color: '#3b82f6', marginRight: '10px'}}>🚀</span>
-            FreshData
+            <FaDatabase style={{color: '#4318ff'}} />
+            <span>Company Name</span>
         </div>
         
         {/* Menu Items Loop */}
-        {menuItems.map(item => (
-          <div 
-            key={item.name} 
-            className={`navitem ${activeview === item.name ? 'activeitem' : ''}`}
-            onClick={() => setview(item.name)}
-          >
-            <span className="navicon">{item.icon}</span>
-            <span className="navtext">{item.name}</span>
-          </div>
-        ))}
+        {menuItems.map(item => {
+          const IconComponent = item.icon;
+          return (
+            <div 
+              key={item.name} 
+              className={`navitem ${activeview === item.name ? 'activeitem' : ''}`}
+              onClick={() => setview(item.name)}
+            >
+              <IconComponent className="navicon" />
+              <span className="navtext">{item.name}</span>
+            </div>
+          );
+        })}
       </div>
       
       <div className="sidebar-bottom">
         {/* Professional Theme Toggle Box */}
         <div className={`theme-toggle-box ${theme === 'light' ? 'light-active' : ''}`} onClick={toggleTheme}>
             <div className="toggle-content">
-                <span className="toggle-icon">{theme === 'dark' ? '🌙' : '☀️'}</span>
-                <span className="toggle-label">{theme === 'dark' ? 'Dark' : 'Light'}</span>
+                {theme === 'dark' ? (
+                  <FaMoon style={{ color: '#f1c40f' }} className="toggle-icon" />
+                ) : (
+                  <FaSun style={{ color: '#ff9f43' }} className="toggle-icon" />
+                )}
+                <span className="toggle-label">Theme</span>
             </div>
             <div className="switch-pill">
                 <div className="pill-circle"></div>
@@ -68,8 +76,8 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
           onClick={() => setview('Settings')}
           style={{marginTop: '10px'}}
         >
-          <span className="navicon">⚙️</span>
-          <span className="navtext">Account Settings</span>
+          <FaCog className="navicon" />
+          <span className="navtext">Settings</span>
         </div>
       </div>
     </div>

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getDashboardStats } from '../services/api';
 import { getUserData } from '../services/api';
+import { 
+  FaUsers, FaFileAlt, FaClock, FaServer, FaChartLine, FaDatabase, FaCheckCircle
+} from 'react-icons/fa';
 
 const AdminDashboard = ({ setview }) => {
   const [stats, setStats] = useState({
@@ -47,56 +50,56 @@ const AdminDashboard = ({ setview }) => {
       title: 'Total Users',
       value: stats.totalUsers,
       subtitle: 'Registered users',
-      icon: '👥',
-      color: '#8b5cf6',
+      icon: FaUsers,
+      color: '#7367f0',
     },
     {
       title: 'Total Records',
       value: stats.totalRecords,
       subtitle: 'Data entries',
-      icon: '📄',
-      color: '#06b6d4',
+      icon: FaFileAlt,
+      color: '#00cfe8',
     },
     {
       title: 'Recent Activity',
       value: stats.recentActivity,
       subtitle: 'Last 5 records',
-      icon: '🕐',
-      color: '#f59e0b',
+      icon: FaClock,
+      color: '#ff9f43',
     },
     {
       title: 'System Status',
       value: stats.systemStatus,
       subtitle: stats.systemStatus === 'Active' ? 'All systems operational' : 'Some APIs not working',
-      icon: '🖥️',
-      color: stats.systemStatus === 'Active' ? '#10b981' : '#ef4444',
+      icon: FaServer,
+      color: stats.systemStatus === 'Active' ? '#28c76f' : '#ef4444',
     },
     {
       title: 'Sold (700+)',
       value: stats.soldData700Plus,
       subtitle: 'Completed orders with score ≥ 700',
-      icon: '✅',
+      icon: FaCheckCircle,
       color: '#3b82f6',
     },
     {
       title: 'Sold (800+)',
       value: stats.soldData800Plus,
       subtitle: 'Completed orders with score ≥ 800',
-      icon: '✅',
+      icon: FaCheckCircle,
       color: '#3b82f6',
     },
     {
       title: 'Available (700+)',
       value: stats.availableData700Plus,
       subtitle: 'Not purchased, admin-created',
-      icon: '📦',
+      icon: FaDatabase,
       color: '#10b981',
     },
     {
       title: 'Available (800+)',
       value: stats.availableData800Plus,
       subtitle: 'Not purchased, admin-created',
-      icon: '📦',
+      icon: FaDatabase,
       color: '#10b981',
     },
   ];
@@ -105,23 +108,23 @@ const AdminDashboard = ({ setview }) => {
     {
       title: 'Manage Data',
       description: 'Add, edit, or delete records',
-      icon: '🗂️',
+      icon: FaDatabase,
       view: 'Data Management',
-      color: '#ef4444',
+      color: '#ea5455',
     },
     {
       title: 'Manage Users',
       description: 'View and manage user accounts',
-      icon: '👥',
+      icon: FaUsers,
       view: 'User Management',
-      color: '#10b981',
+      color: '#28c76f',
     },
     {
       title: 'View Sold Data',
       description: 'View all sold records',
-      icon: '📊',
+      icon: FaChartLine,
       view: 'Sold Data',
-      color: '#3b82f6',
+      color: '#00cfe8',
     },
   ];
 
@@ -210,7 +213,9 @@ const AdminDashboard = ({ setview }) => {
                       gap: '10px', 
                       marginBottom: '10px' 
                     }}>
-                      <span style={{ fontSize: '24px' }}>{card.icon}</span>
+                      <div className="icon-box" style={{backgroundColor: card.color}}>
+                        {React.createElement(card.icon)}
+                      </div>
                       <p style={{ 
                         color: 'var(--text-sub)', 
                         fontSize: '14px', 
@@ -280,17 +285,8 @@ const AdminDashboard = ({ setview }) => {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <div style={{
-                      width: '50px',
-                      height: '50px',
-                      borderRadius: '12px',
-                      backgroundColor: `${action.color}20`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '24px',
-                    }}>
-                      {action.icon}
+                    <div className="icon-box-large" style={{backgroundColor: action.color}}>
+                      {React.createElement(action.icon)}
                     </div>
                     <div style={{ flex: 1 }}>
                       <h3 style={{ 
