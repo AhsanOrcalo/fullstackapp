@@ -622,7 +622,30 @@
   box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border-clr);
   min-height: 200px;
-  overflow: hidden; 
+  overflow: hidden;
+  padding: 0;
+}
+
+/* Table Card Header (if needed for record count display) */
+.tablecard-header {
+  padding: 20px 30px;
+  border-bottom: 1px solid var(--border-clr);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tablecard-header h3 {
+  color: var(--text-main);
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tablecard-record-count {
+  color: var(--text-sub);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .nodata {
@@ -632,17 +655,28 @@
   font-weight: 600;
 }
 
+/* General Table Styling - Applied to all tables */
 td {
-  padding: 15px;
+  padding: 12px 15px;
   text-align: left;
-  border-bottom: 1px solid var(--border-clr);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   color: var(--text-main);
+  font-size: 14px;
+  background-color: transparent;
 }
 
 th { 
-  color: var(--text-sub); 
-  font-size: 13px; 
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .applybtn {
@@ -726,27 +760,53 @@ th {
 .tablewrapper {
   max-height: 500px;
   overflow: auto;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 20px 20px;
   width: 100%;
   overflow-x: auto;
+  background-color: var(--bg-card);
 }
 
+/* Custom Scrollbar for Table Wrapper */
+.tablewrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.tablewrapper::-webkit-scrollbar-track {
+  background: var(--bg-card);
+  border-radius: 10px;
+}
+
+.tablewrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 2px solid var(--bg-card);
+}
+
+.tablewrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.tablewrapper {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) var(--bg-card);
+}
+
+/* Regular Table Styling (applies to all tables) */
 table {
   width: 100%;
   border-collapse: collapse;
-  background-color: var(--bg-card);
+  background-color: transparent;
   min-width: 1200px;
 }
 
-/* Data Table Styling (for Sold Data) */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: var(--bg-card);
+/* Table Header Styling */
+table thead {
+  background-color: #f7f9fc;
 }
 
-.data-table thead th {
-  background-color: #f7f9fc;
+table thead th {
+  background-color: #f7f9fc; /* Light Grey Header */
   color: var(--text-main);
   font-weight: 700;
   text-transform: uppercase;
@@ -754,37 +814,97 @@ table {
   padding: 15px 10px;
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 10;
   border-bottom: 2px solid var(--border-clr);
   text-align: left;
 }
 
-.light-mode .data-table thead th {
+/* Table Body Styling */
+table tbody tr {
+  background-color: var(--white);
+  border-bottom: 1px solid var(--border-clr);
+  transition: all 0.2s ease;
+}
+
+table tbody tr:hover {
+  background-color: #f0f4ff; /* Light Blue Hover */
+  transform: scale(1.002);
+}
+
+table tbody tr.selected {
+  background-color: rgba(67, 24, 255, 0.15);
+}
+
+table tbody td {
+  color: var(--text-main);
+  padding: 12px 10px;
+  font-size: 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-clr);
+}
+
+/* Light Mode Table Adjustments */
+.light-mode table thead {
+  background-color: #1b254b;
+}
+
+.light-mode table thead th {
   background-color: #1b254b;
   color: #fff;
   border-bottom: 1px solid #2b3674;
 }
 
+.light-mode table tbody tr {
+  background-color: #111c44;
+  border-bottom: 1px solid #2b3674;
+}
+
+.light-mode table tbody tr:hover {
+  background-color: #1b254b;
+}
+
+/* Scrollable Container */
+.table-container {
+  overflow-x: auto; /* Horizontal scroll rahega agar screen choti ho */
+  overflow-y: visible; /* Vertical scroll khatam */
+  max-height: none; /* Height restriction removed */
+}
+
+/* Table Structure */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Table Header */
+.data-table thead th {
+  background-color: #f7f9fc; /* Light Grey Header */
+  color: var(--text-main);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 15px 10px;
+  position: sticky; /* Header stays visible on scroll */
+  top: 0;
+  z-index: 5;
+  border-bottom: 2px solid var(--border-clr);
+  text-align: left;
+}
+
+/* Table Rows */
 .data-table tbody tr {
   background-color: var(--white);
   border-bottom: 1px solid var(--border-clr);
   transition: all 0.2s ease;
 }
 
-.light-mode .data-table tbody tr {
-  background-color: #111c44;
-  border-bottom: 1px solid #2b3674;
-}
-
+/* Row Hover Effect */
 .data-table tbody tr:hover {
-  background-color: #f0f4ff;
+  background-color: #f0f4ff; /* Light Blue Hover */
   transform: scale(1.002);
 }
 
-.light-mode .data-table tbody tr:hover {
-  background-color: #1b254b;
-}
-
+/* Table Cells */
 .data-table td {
   padding: 12px 10px;
   color: var(--text-main);
@@ -792,15 +912,31 @@ table {
   vertical-align: middle;
 }
 
-th {
-  position: sticky;
-  top: 0;
-  background-color: var(--bg-card);
-  z-index: 10;
-  padding: 15px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-clr);
+/* Custom Checkbox */
+.custom-checkbox {
+  width: 16px; 
+  height: 16px; 
+  accent-color: var(--primary-blue);
+  cursor: pointer;
 }
+
+/* Table Dark Mode Support */
+.light-mode .data-table thead th {
+  background-color: #1b254b;
+  color: #fff;
+  border-bottom: 1px solid #2b3674;
+}
+
+.light-mode .data-table tbody tr {
+  background-color: #111c44;
+  border-bottom: 1px solid #2b3674;
+}
+
+.light-mode .data-table tbody tr:hover {
+  background-color: #1b254b;
+}
+
+/* Removed duplicate th styling - now handled in table thead th above */
 
 .cartbox { width: 100%; }
 .cartheader { margin-bottom: 25px; }
