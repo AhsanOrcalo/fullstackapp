@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getUserDashboardStats, getAllLeads } from '../services/api';
 import { getUserData } from '../services/api';
 import { FaChartBar, FaDollarSign } from 'react-icons/fa';
@@ -73,11 +74,43 @@ const UserDashboardComponent = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.9 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-    <div>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* Stats Cards Row */}
-      <div className="statsrow">
-        <div className="statcard">
+      <motion.div className="statsrow" variants={containerVariants}>
+        <motion.div 
+          className="statcard"
+          variants={cardVariants}
+          whileHover={{ scale: 1.05, y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
           <div className="cardinfo">
             <p className="cardtitle">Data Purchased</p>
             {loading ? (
@@ -87,20 +120,37 @@ const UserDashboardComponent = () => {
                 Error
               </h1>
             ) : (
-              <h1 className="cardvalue">{stats.dataPurchased}</h1>
+              <motion.h1 
+                className="cardvalue"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+              >
+                {stats.dataPurchased}
+              </motion.h1>
             )}
           </div>
-          <div className="cardicon" style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            fontSize: '32px',
-            color: 'var(--text-main)'
-          }}>
+          <motion.div 
+            className="cardicon" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '32px',
+              color: 'var(--text-main)'
+            }}
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
             <FaChartBar />
-          </div>
-        </div>
-        <div className="statcard">
+          </motion.div>
+        </motion.div>
+        <motion.div 
+          className="statcard"
+          variants={cardVariants}
+          whileHover={{ scale: 1.05, y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
           <div className="cardinfo">
             <p className="cardtitle">Available Balance</p>
             {loading ? (
@@ -110,28 +160,52 @@ const UserDashboardComponent = () => {
                 Error
               </h1>
             ) : (
-              <h1 className="cardvalue">{formatPrice(stats.availableBalance)}</h1>
+              <motion.h1 
+                className="cardvalue"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: "spring" }}
+              >
+                {formatPrice(stats.availableBalance)}
+              </motion.h1>
             )}
           </div>
-          <div className="cardicon" style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            fontSize: '32px',
-            color: '#f1c40f'
-          }}>
+          <motion.div 
+            className="cardicon" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '32px',
+              color: '#f1c40f'
+            }}
+            animate={{ rotate: [0, -10, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
             <FaDollarSign />
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
       {/* All Data Available Section */}
-      <div className="datasection" style={{ marginTop: '30px' }}>
+      <motion.div 
+        className="datasection" 
+        style={{ marginTop: '30px' }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.4 }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 className="sectiontitle">All Data Available</h2>
-          <button className="applybtn" onClick={fetchAvailableLeads} disabled={leadsLoading}>
+          <motion.button 
+            className="applybtn" 
+            onClick={fetchAvailableLeads} 
+            disabled={leadsLoading}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             {leadsLoading ? 'Loading...' : '🔄 Refresh'}
-          </button>
+          </motion.button>
         </div>
 
         {leadsError && (
@@ -160,7 +234,12 @@ const UserDashboardComponent = () => {
             <p style={{ color: 'var(--text-sub)' }}>No data records found at the moment.</p>
           </div>
         ) : (
-          <div className="tablewrapper">
+          <motion.div 
+            className="tablewrapper"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
             <table>
               <thead>
                 <tr>
@@ -178,8 +257,14 @@ const UserDashboardComponent = () => {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => (
-                  <tr key={lead.id}>
+                {leads.map((lead, index) => (
+                  <motion.tr 
+                    key={lead.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                    whileHover={{ backgroundColor: 'rgba(67, 24, 255, 0.1)', scale: 1.01 }}
+                  >
                     <td>{lead.firstName || 'N/A'}</td>
                     <td>{lead.lastName || 'N/A'}</td>
                     <td>{lead.email || 'N/A'}</td>
@@ -204,14 +289,14 @@ const UserDashboardComponent = () => {
                       )}
                     </td>
                     <td>{formatDate(lead.createdAt)}</td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

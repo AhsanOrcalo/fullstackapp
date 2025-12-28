@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getUserFunds } from '../services/api';
 import { FaDollarSign, FaFileAlt, FaMoneyBillWave } from 'react-icons/fa';
 
@@ -42,17 +43,56 @@ const Funds = () => {
     ? fundsData.pendingPayments[0] 
     : null; 
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.9 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-    <div className="fundsbox">
+    <motion.div 
+      className="fundsbox"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* Header Section */}
-      <div className="fundsheader" style={{ marginBottom: '25px' }}>
+      <motion.div 
+        className="fundsheader" 
+        style={{ marginBottom: '25px' }}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <h2 className="toptitle">Funds</h2>
         <p className="subtitle">Add funds to your account balance</p>
-      </div>
+      </motion.div>
 
       {/* Stats Cards Row */}
-      <div className="statsrow">
-        <div className="statcard">
+      <motion.div className="statsrow" variants={containerVariants}>
+        <motion.div 
+          className="statcard"
+          variants={cardVariants}
+          whileHover={{ scale: 1.05, y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
           <div className="cardinfo">
             <p className="cardtitle">Current Balance</p>
             {loading ? (
@@ -74,8 +114,13 @@ const Funds = () => {
           }}>
             <FaDollarSign />
           </div>
-        </div>
-        <div className="statcard">
+        </motion.div>
+        <motion.div 
+          className="statcard"
+          variants={cardVariants}
+          whileHover={{ scale: 1.05, y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
           <div className="cardinfo">
             <p className="cardtitle">Total Deposits</p>
             {loading ? (
@@ -85,35 +130,57 @@ const Funds = () => {
                 Error
               </h1>
             ) : (
-              <h1 className="cardvalue">{formatPrice(fundsData.totalDeposits)}</h1>
+              <motion.h1 
+                className="cardvalue"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+              >
+                {formatPrice(fundsData.totalDeposits)}
+              </motion.h1>
             )}
           </div>
-          <div className="cardicon" style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            fontSize: '32px',
-            color: 'var(--text-main)'
-          }}>
+          <motion.div 
+            className="cardicon" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '32px',
+              color: 'var(--text-main)'
+            }}
+            animate={{ rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
             <FaFileAlt />
-          </div>
-        </div>
-        <div className="statcard">
+          </motion.div>
+        </motion.div>
+        <motion.div 
+          className="statcard"
+          variants={cardVariants}
+          whileHover={{ scale: 1.05, y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
           <div className="cardinfo">
             <p className="cardtitle">Minimum Deposit</p>
             <h1 className="cardvalue">{formatPrice(fundsData.minimumDeposit)}</h1>
           </div>
-          <div className="cardicon" style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            fontSize: '32px',
-            color: 'var(--text-main)'
-          }}>
+          <motion.div 
+            className="cardicon" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '32px',
+              color: 'var(--text-main)'
+            }}
+            animate={{ rotate: [0, -5, 5, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
             <FaMoneyBillWave />
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
       {/* Error Display */}
       {error && (
@@ -134,7 +201,12 @@ const Funds = () => {
       )}
 
       {/* Main Payment Section */}
-      <div className="datasection payment-detail-card">
+      <motion.div 
+        className="datasection payment-detail-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.4 }}
+      >
         <div className="payment-top-row">
           <div className="pending-info">
             <h3 className="filtertitle">Pending Payment</h3>
@@ -149,14 +221,16 @@ const Funds = () => {
           </div>
           
           {/* FIXED: Using Blue Theme 'applybtn' instead of green 'fastbutton' */}
-          <button 
+          <motion.button 
             className="applybtn" 
             style={{height: 'fit-content', padding: '10px 20px'}}
             onClick={fetchFundsData}
             disabled={loading}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             {loading ? 'Checking...' : 'Check Status'}
-          </button>
+          </motion.button>
         </div>
 
         {pendingPayment && (
@@ -191,8 +265,8 @@ const Funds = () => {
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

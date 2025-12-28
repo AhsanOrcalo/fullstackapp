@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getDashboardStats } from '../services/api';
 import { getUserData } from '../services/api';
 import { 
@@ -34,12 +35,25 @@ const AdminDashboard = ({ setview }) => {
       setLoading(true);
       setError('');
       const data = await getDashboardStats();
-      setStats(data);
+      // Ensure all required fields are present
+      setStats({
+        totalUsers: data?.totalUsers ?? 0,
+        totalRecords: data?.totalRecords ?? 0,
+        recentActivity: data?.recentActivity ?? 0,
+        systemStatus: data?.systemStatus ?? 'Active',
+        soldData700Plus: data?.soldData700Plus ?? 0,
+        soldData800Plus: data?.soldData800Plus ?? 0,
+        availableData700Plus: data?.availableData700Plus ?? 0,
+        availableData800Plus: data?.availableData800Plus ?? 0,
+      });
     } catch (err) {
       setError(err.message || 'Failed to fetch dashboard stats');
       console.error('Error fetching dashboard stats:', err);
-      // Set system status to error if API fails
-      setStats(prev => ({ ...prev, systemStatus: 'Error' }));
+      // Keep default stats even on error so cards still show
+      setStats(prev => ({ 
+        ...prev, 
+        systemStatus: 'Error' 
+      }));
     } finally {
       setLoading(false);
     }
@@ -128,10 +142,43 @@ const AdminDashboard = ({ setview }) => {
     },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.9 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-    <div style={{ padding: '0' }}>
+    <motion.div 
+      style={{ padding: '0' }}
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* Header Section */}
-      <div style={{ marginBottom: '30px' }}>
+      <motion.div 
+        style={{ marginBottom: '30px' }}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <h1 style={{ 
           color: 'var(--text-main)', 
           margin: '0 0 10px 0', 
@@ -147,48 +194,64 @@ const AdminDashboard = ({ setview }) => {
         }}>
           Welcome back, {userName}! Here's what's happening with your data today.
         </p>
-      </div>
+      </motion.div>
 
-      {/* Loading State */}
-      {loading && !error && (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '40px', 
-          color: 'var(--text-sub)' 
-        }}>
-          Loading dashboard data...
-        </div>
-      )}
-
-      {/* Error State */}
+      {/* Error State - Show above cards if there's an error */}
       {error && (
-        <div style={{ 
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid #ef4444',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '30px',
-          color: '#ef4444',
-        }}>
+        <motion.div 
+          style={{ 
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid #ef4444',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '30px',
+            color: '#ef4444',
+          }}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <p style={{ margin: '0 0 10px 0', fontWeight: '600' }}>Error loading dashboard</p>
           <p style={{ margin: '0 0 15px 0', fontSize: '14px' }}>{error}</p>
-          <button 
+          <motion.button 
             className="applybtn" 
             onClick={fetchDashboardStats}
             style={{ marginTop: '10px' }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             Retry
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
 
-      {/* Metric Cards Grid */}
-      {!loading && (
-        <>
-          <div className="admin-metric-grid">
+      {/* Loading State - Show only when loading and no error */}
+      {loading && !error && (
+        <motion.div 
+          style={{ 
+            textAlign: 'center', 
+            padding: '40px', 
+            color: 'var(--text-sub)' 
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          Loading dashboard data...
+        </motion.div>
+      )}
+
+      {/* Metric Cards Grid - Always show */}
+      <motion.div 
+        className="admin-metric-grid"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
             {metricCards.map((card, index) => (
-              <div
+              <motion.div
                 key={index}
+                variants={cardVariants}
+                whileHover={{ scale: 1.05, y: -5 }}
+                transition={{ type: "spring", stiffness: 300 }}
                 style={{
                   backgroundColor: 'var(--bg-card)',
                   padding: '25px',
@@ -242,77 +305,88 @@ const AdminDashboard = ({ setview }) => {
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+      </motion.div>
 
-          {/* Quick Actions Section */}
-          <div style={{ marginTop: '40px' }}>
-            <h2 style={{ 
-              color: 'var(--text-main)', 
-              margin: '0 0 20px 0', 
-              fontSize: '24px', 
-              fontWeight: '700' 
-            }}>
-              Quick Actions
-            </h2>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-              gap: '20px' 
-            }}>
-              {quickActions.map((action, index) => (
-                <div
-                  key={index}
-                  onClick={() => setview(action.view)}
-                  style={{
-                    backgroundColor: 'var(--bg-card)',
-                    padding: '25px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-clr)',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.2)';
-                    e.currentTarget.style.borderColor = action.color;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.borderColor = 'var(--border-clr)';
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <div className="icon-box-large" style={{backgroundColor: action.color}}>
-                      {React.createElement(action.icon)}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ 
-                        color: 'var(--text-main)', 
-                        margin: '0 0 5px 0', 
-                        fontSize: '18px', 
-                        fontWeight: '600' 
-                      }}>
-                        {action.title}
-                      </h3>
-                      <p style={{ 
-                        color: 'var(--text-sub)', 
-                        margin: 0, 
-                        fontSize: '14px' 
-                      }}>
-                        {action.description}
-                      </p>
-                    </div>
-                  </div>
+      {/* Quick Actions Section - Always show */}
+      <motion.div 
+        style={{ marginTop: '40px' }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.4 }}
+      >
+        <h2 style={{ 
+          color: 'var(--text-main)', 
+          margin: '0 0 20px 0', 
+          fontSize: '24px', 
+          fontWeight: '700' 
+        }}>
+          Quick Actions
+        </h2>
+        <motion.div 
+          style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+            gap: '20px' 
+          }}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {quickActions.map((action, index) => (
+            <motion.div
+              key={index}
+              variants={cardVariants}
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setview(action.view)}
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                padding: '25px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-clr)',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.2)';
+                e.currentTarget.style.borderColor = action.color;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.borderColor = 'var(--border-clr)';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div className="icon-box-large" style={{backgroundColor: action.color}}>
+                  {React.createElement(action.icon)}
                 </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ 
+                    color: 'var(--text-main)', 
+                    margin: '0 0 5px 0', 
+                    fontSize: '18px', 
+                    fontWeight: '600' 
+                  }}>
+                    {action.title}
+                  </h3>
+                  <p style={{ 
+                    color: 'var(--text-sub)', 
+                    margin: 0, 
+                    fontSize: '14px' 
+                  }}>
+                    {action.description}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 

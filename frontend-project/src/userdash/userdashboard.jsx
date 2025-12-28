@@ -1,4 +1,5 @@
 import React, { useState } from 'react'; // FIXED: useEffect hata diya warning khatam karne ke liye
+import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './sidebar.jsx';
 import Topbar from './topbar.jsx';
 import Browsedata from './browsedata.jsx';
@@ -44,46 +45,160 @@ const Userdashboard = ({ logout }) => {
         <Topbar title={view} logout={logout} setview={setview} />
         
         <div style={{ padding: '30px', flex: 1 }}>
-          {/* 1. Dashboard View */}
-          {view === 'Dashboard' && (
-            <>
-              {isAdmin ? (
-                <AdminDashboard setview={setview} />
-              ) : (
-                <UserDashboardComponent />
-              )}
-            </>
-          )}
+          <AnimatePresence mode="wait">
+            {/* 1. Dashboard View */}
+            {view === 'Dashboard' && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {isAdmin ? (
+                  <AdminDashboard setview={setview} />
+                ) : (
+                  <UserDashboardComponent />
+                )}
+              </motion.div>
+            )}
 
-          {/* 2. Page Components */}
-          {view === 'Browse Data' && <Browsedata />}
-          {view === 'Cart' && <Cart setview={setview} />}
-          {view === 'Orders' && <Orders />}
-          {view === 'Payments' && <Payments />}
-          {view === 'Funds' && <Funds />}
-          {view === 'Settings' && <Accountsettings />}
-          {view === 'Data Management' && <DataManagement />}
-          {view === 'User Management' && <UserManagement />}
-          {view === 'Sold Data' && <SoldData />}
-          {view === 'Enquiries' && <Enquiries />}
+            {/* 2. Page Components */}
+            {view === 'Browse Data' && (
+              <motion.div
+                key="browsedata"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Browsedata />
+              </motion.div>
+            )}
+            {view === 'Cart' && (
+              <motion.div
+                key="cart"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Cart setview={setview} />
+              </motion.div>
+            )}
+            {view === 'Orders' && (
+              <motion.div
+                key="orders"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Orders />
+              </motion.div>
+            )}
+            {view === 'Payments' && (
+              <motion.div
+                key="payments"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Payments />
+              </motion.div>
+            )}
+            {view === 'Funds' && (
+              <motion.div
+                key="funds"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Funds />
+              </motion.div>
+            )}
+            {view === 'Settings' && (
+              <motion.div
+                key="settings"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Accountsettings />
+              </motion.div>
+            )}
+            {view === 'Data Management' && (
+              <motion.div
+                key="datamanagement"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <DataManagement />
+              </motion.div>
+            )}
+            {view === 'User Management' && (
+              <motion.div
+                key="usermanagement"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <UserManagement />
+              </motion.div>
+            )}
+            {view === 'Sold Data' && (
+              <motion.div
+                key="solddata"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <SoldData />
+              </motion.div>
+            )}
+            {view === 'Enquiries' && (
+              <motion.div
+                key="enquiries"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Enquiries />
+              </motion.div>
+            )}
 
-          {/* 3. Placeholder Logic */}
-          {view !== 'Dashboard' && 
-           view !== 'Browse Data' && 
-           view !== 'Cart' && 
-           view !== 'Orders' && 
-           view !== 'Payments' && 
-           view !== 'Funds' && 
-           view !== 'Settings' &&
-           view !== 'Data Management' &&
-           view !== 'User Management' &&
-           view !== 'Sold Data' &&
-           view !== 'Enquiries' && ( 
-            <div>
-              <h1 style={{ color: 'var(--text-main)' }}>{view} Page</h1>
-              <p style={{ color: 'var(--text-sub)' }}>This section is coming soon.</p>
-            </div>
-          )}
+            {/* 3. Placeholder Logic */}
+            {view !== 'Dashboard' && 
+             view !== 'Browse Data' && 
+             view !== 'Cart' && 
+             view !== 'Orders' && 
+             view !== 'Payments' && 
+             view !== 'Funds' && 
+             view !== 'Settings' &&
+             view !== 'Data Management' &&
+             view !== 'User Management' &&
+             view !== 'Sold Data' &&
+             view !== 'Enquiries' && (
+              <motion.div
+                key="placeholder"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <h1 style={{ color: 'var(--text-main)' }}>{view} Page</h1>
+                <p style={{ color: 'var(--text-sub)' }}>This section is coming soon.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

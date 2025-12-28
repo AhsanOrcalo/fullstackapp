@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getAllUsers, addFundsToUser } from '../services/api';
 import { FaDollarSign, FaPlus } from 'react-icons/fa';
 
@@ -122,8 +123,14 @@ const UserManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
+                {users.map((user, index) => (
+                  <motion.tr 
+                    key={user.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                    whileHover={{ backgroundColor: 'rgba(67, 24, 255, 0.1)', scale: 1.01 }}
+                  >
                     <td style={{ color: 'var(--text-sub)', fontSize: '12px', fontFamily: 'monospace' }}>
                       {user.id.substring(0, 8)}...
                     </td>
@@ -175,7 +182,7 @@ const UserManagement = () => {
                         Add Fund
                       </button>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>

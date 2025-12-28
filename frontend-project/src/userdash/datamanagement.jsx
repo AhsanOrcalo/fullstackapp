@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { getAllLeads, addLead } from '../services/api';
 import { FaSearch, FaFileAlt, FaDatabase, FaUpload, FaDownload, FaPlus } from 'react-icons/fa';
 
@@ -448,10 +449,38 @@ const DataManagement = () => {
     setFormErrors({});
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-    <div style={{ width: '100%', padding: '0' }}>
+    <motion.div 
+      style={{ width: '100%', padding: '0' }}
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       {/* Header Section with Buttons in Parallel */}
-      <div style={{ 
+      <motion.div 
+        style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'flex-start',
@@ -479,39 +508,38 @@ const DataManagement = () => {
         </div>
 
         {/* Action Buttons */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '10px', 
-          flexWrap: 'wrap',
-          alignItems: 'flex-start'
-        }}>
-          {/* <button className="dm-btn">
-            <FaFileAlt />
-            <span>Templates</span>
-          </button>
-          <button className="dm-btn">
-            <FaDatabase />
-            <span>Sample Data</span>
-          </button> */}
-          <button 
+        <motion.div 
+          style={{ 
+            display: 'flex', 
+            gap: '10px', 
+            flexWrap: 'wrap',
+            alignItems: 'flex-start'
+          }}
+          variants={itemVariants}
+        >
+          <motion.button 
             className="dm-btn"
             onClick={() => {
               setShowImportModal(true);
               setImportStatus({ success: 0, failed: 0, total: 0 });
             }}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
           >
             <FaUpload />
             <span>Import</span>
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             className="dm-btn"
             onClick={handleExport}
             disabled={loading || leads.length === 0}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
           >
             <FaDownload />
             <span>Export</span>
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             className="applybtn"
             onClick={() => setShowForm(true)}
             style={{ 
@@ -520,21 +548,26 @@ const DataManagement = () => {
               gap: '8px',
               padding: '10px 18px'
             }}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
           >
             <FaPlus />
             <span>Add Record</span>
-          </button>
-        </div>
-      </div>
+          </motion.button>
+        </motion.div>
+      </motion.div>
 
       {/* Search and Filter Section */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '15px', 
-        alignItems: 'center',
-        marginBottom: '20px',
-        flexWrap: 'wrap'
-      }}>
+      <motion.div 
+        style={{ 
+          display: 'flex', 
+          gap: '15px', 
+          alignItems: 'center',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
+        }}
+        variants={itemVariants}
+      >
         {/* Search Bar - Smaller */}
         <div style={{ 
           width: '300px',
@@ -636,7 +669,7 @@ const DataManagement = () => {
         }}>
           {leads.length} records
         </div>
-      </div>
+      </motion.div>
 
       <div className="tablecard">
         {loading ? (
@@ -1135,7 +1168,7 @@ const DataManagement = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

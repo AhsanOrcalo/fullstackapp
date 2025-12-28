@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getSoldDataAnalytics } from '../services/api';
 import { FaChartLine, FaCalendarDay, FaCalendarAlt, FaFilter, FaSearch, FaHistory } from 'react-icons/fa';
 

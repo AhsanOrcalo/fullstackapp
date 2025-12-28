@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { changePassword, getUserData, getProfile, updateProfile } from '../services/api';
 
 const Accountsettings = () => {

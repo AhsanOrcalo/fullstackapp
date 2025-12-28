@@ -35,7 +35,7 @@ const Sidebar = ({ setview, activeview, theme, toggleTheme }) => {
         {/* Brand Name */}
         <div className="brandname">
             <FaDatabase style={{color: '#4318ff'}} />
-            <span>Company Name</span>
+            <span>Data Leads</span>
         </div>
         
         {/* Menu Items Loop */}

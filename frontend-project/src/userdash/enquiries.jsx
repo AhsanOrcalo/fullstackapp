@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getUserEnquiries, getAllEnquiries, createEnquiry, closeEnquiry, respondToEnquiry } from '../services/api';
 import { getUserData } from '../services/api';
 
