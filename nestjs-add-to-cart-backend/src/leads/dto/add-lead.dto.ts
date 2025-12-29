@@ -93,6 +93,16 @@ export class AddLeadDto {
   email: string;
 
   @ApiProperty({
+    description: 'Phone number of the lead',
+    example: '123-456-7890',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @Matches(/^[\d\s\-\(\)]+$/, { message: 'Phone number must contain only digits, spaces, hyphens, and parentheses' })
+  phone?: string;
+
+  @ApiProperty({
     description: 'Score of the lead',
     example: 750,
     minimum: 300,

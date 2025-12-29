@@ -12,6 +12,7 @@ const DataManagement = () => {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     address: '',
     city: '',
     state: '',
@@ -142,6 +143,7 @@ const DataManagement = () => {
         'First Name',
         'Last Name',
         'Email',
+        'Phone',
         'Address',
         'City',
         'State',
@@ -161,6 +163,7 @@ const DataManagement = () => {
             `"${(lead.firstName || '').replace(/"/g, '""')}"`,
             `"${(lead.lastName || '').replace(/"/g, '""')}"`,
             `"${(lead.email || '').replace(/"/g, '""')}"`,
+            `"${(lead.phone || '').replace(/"/g, '""')}"`,
             `"${(lead.address || '').replace(/"/g, '""')}"`,
             `"${(lead.city || '').replace(/"/g, '""')}"`,
             `"${(lead.state || '').replace(/"/g, '""')}"`,
@@ -253,14 +256,15 @@ const DataManagement = () => {
             firstName: values[0]?.replace(/"/g, '') || '',
             lastName: values[1]?.replace(/"/g, '') || '',
             email: values[2]?.replace(/"/g, '') || '',
-            address: values[3]?.replace(/"/g, '') || '',
-            city: values[4]?.replace(/"/g, '') || '',
-            state: values[5]?.replace(/"/g, '') || '',
-            zip: values[6]?.replace(/"/g, '') || '',
-            dob: values[7]?.replace(/"/g, '') || '',
-            ssn: values[8]?.replace(/"/g, '') || '',
-            price: parseFloat(values[9]) || 0,
-            score: values[10] ? parseInt(values[10]) : null,
+            phone: values[3]?.replace(/"/g, '') || '',
+            address: values[4]?.replace(/"/g, '') || '',
+            city: values[5]?.replace(/"/g, '') || '',
+            state: values[6]?.replace(/"/g, '') || '',
+            zip: values[7]?.replace(/"/g, '') || '',
+            dob: values[8]?.replace(/"/g, '') || '',
+            ssn: values[9]?.replace(/"/g, '') || '',
+            price: parseFloat(values[10]) || 0,
+            score: values[11] ? parseInt(values[11]) : null,
           };
 
           // Validate required fields
@@ -392,6 +396,7 @@ const DataManagement = () => {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim(),
+        phone: formData.phone.trim() || undefined,
         address: formData.address.trim(),
         city: formData.city.trim(),
         state: formData.state.trim(),
@@ -409,6 +414,7 @@ const DataManagement = () => {
         firstName: '',
         lastName: '',
         email: '',
+        phone: '',
         address: '',
         city: '',
         state: '',
@@ -437,6 +443,7 @@ const DataManagement = () => {
       firstName: '',
       lastName: '',
       email: '',
+      phone: '',
       address: '',
       city: '',
       state: '',
@@ -706,6 +713,9 @@ const DataManagement = () => {
                   <th>DOB</th>
                   <th>SSN</th>
                   <th>MAIL</th>
+                  <th>PHONE</th>
+                  <th>PRICE</th>
+                  <th>SCORE</th>
                   <th>STATUS</th>
                 </tr>
               </thead>
@@ -726,6 +736,22 @@ const DataManagement = () => {
                     <td>{lead.dob ? new Date(lead.dob).getFullYear() : 'N/A'}</td>
                     <td>{lead.ssn || 'N/A'}</td>
                     <td>{lead.email || 'N/A'}</td>
+                    <td>{lead.phone || 'N/A'}</td>
+                    <td style={{ color: 'var(--primary-blue)', fontWeight: '600' }}>
+                      {formatPrice(lead.price || 0)}
+                    </td>
+                    <td>
+                      {lead.score ? (
+                        <span style={{ 
+                          color: lead.score >= 800 ? '#10b981' : lead.score >= 700 ? '#3b82f6' : '#ef4444',
+                          fontWeight: '600'
+                        }}>
+                          {lead.score}
+                        </span>
+                      ) : (
+                        'N/A'
+                      )}
+                    </td>
                     <td>
                       <span style={{
                         display: 'inline-block',
@@ -858,6 +884,25 @@ const DataManagement = () => {
                 {formErrors.email && (
                   <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', display: 'block' }}>
                     {formErrors.email}
+                  </span>
+                )}
+              </div>
+
+              <div className="filtergroup" style={{ marginBottom: '15px' }}>
+                <label style={{ color: 'var(--text-main)', marginBottom: '8px', display: 'block', fontWeight: '600' }}>
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="filterinput"
+                  placeholder="123-456-7890"
+                />
+                {formErrors.phone && (
+                  <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', display: 'block' }}>
+                    {formErrors.phone}
                   </span>
                 )}
               </div>
@@ -1131,7 +1176,7 @@ const DataManagement = () => {
                 color: 'var(--text-sub)',
                 fontSize: '12px'
               }}>
-                CSV format: First Name, Last Name, Email, Address, City, State, ZIP, DOB, SSN, Price, Score
+                CSV format: First Name, Last Name, Email, Phone, Address, City, State, ZIP, DOB, SSN, Price, Score
               </p>
             </div>
 

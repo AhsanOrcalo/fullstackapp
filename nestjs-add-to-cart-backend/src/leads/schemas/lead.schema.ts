@@ -35,6 +35,9 @@ export class Lead {
   @Prop({ required: true })
   email: string;
 
+  @Prop({ required: false })
+  phone?: string;
+
   @Prop({ type: Number, required: false })
   score?: number;
 

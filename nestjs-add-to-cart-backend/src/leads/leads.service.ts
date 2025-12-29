@@ -24,6 +24,7 @@ export class LeadsService {
       dob: new Date(addLeadDto.dob),
       ssn: addLeadDto.ssn,
       email: addLeadDto.email,
+      phone: addLeadDto.phone,
       score: addLeadDto.score,
     });
 
