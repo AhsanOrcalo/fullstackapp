@@ -88,7 +88,11 @@ export class PurchasesController {
     },
   })
   async purchaseLead(@Request() req: any, @Param('leadId') leadId: string) {
-    return this.purchasesService.purchaseLead(req.user.userId, leadId);
+    const result = await this.purchasesService.purchaseLead(req.user.userId, leadId);
+    return {
+      ...result,
+      message: `Lead purchased successfully. Remaining balance: $${result.remainingBalance.toFixed(2)}`,
+    };
   }
 
   @Put('lead/:leadId')
@@ -179,13 +183,18 @@ export class PurchasesController {
     const purchaseResult = await this.purchasesService.purchaseLead(req.user.userId, leadId);
     const lead = await this.leadsService.getLeadById(leadId);
     
+    const leadObj = lead ? (lead.toObject ? lead.toObject() : lead) : null;
+    
     return {
       message: purchaseResult.message,
-      lead: {
-        ...lead,
+      lead: leadObj ? {
+        ...leadObj,
+        id: (lead as any)._id?.toString() || (lead as any).id,
         isPurchased: true,
-      },
+        status: 'unavailable',
+      } : null,
       purchase: purchaseResult.purchase,
+      remainingBalance: purchaseResult.remainingBalance,
     };
   }
 

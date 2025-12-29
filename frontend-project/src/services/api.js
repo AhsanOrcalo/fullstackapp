@@ -256,6 +256,15 @@ export const purchaseLead = async (leadId) => {
     const response = await apiRequest(`/purchases/lead/${leadId}`, {
       method: 'POST',
     });
+    // Extract remainingBalance from message or response
+    if (response.remainingBalance !== undefined) {
+      return response;
+    }
+    // Try to extract from message if not in response
+    const balanceMatch = response.message?.match(/Remaining balance: \$([\d.]+)/);
+    if (balanceMatch) {
+      response.remainingBalance = parseFloat(balanceMatch[1]);
+    }
     return response;
   } catch (error) {
     throw error;

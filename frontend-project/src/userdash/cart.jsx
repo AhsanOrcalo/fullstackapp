@@ -50,17 +50,34 @@ const Cart = ({ setview }) => {
 
     setCheckoutLoading(true);
     const itemsToPurchase = cartitems.filter(item => selectedItems.has(item.id));
-    const purchasePromises = itemsToPurchase.map(item => purchaseLead(item.id));
     
     try {
-      await Promise.all(purchasePromises);
+      // Purchase items sequentially to get remaining balance from each purchase
+      let lastRemainingBalance = null;
+      for (const item of itemsToPurchase) {
+        const result = await purchaseLead(item.id);
+        // Extract remaining balance from response
+        if (result.remainingBalance !== undefined) {
+          lastRemainingBalance = result.remainingBalance;
+        }
+      }
+      
       // Remove purchased items from cart
       selectedItems.forEach(itemId => {
         removeFromCart(itemId);
       });
       setSelectedItems(new Set());
       loadCart();
-      alert('Purchase successful! Items have been added to your orders.');
+      
+      // Show success message with remaining balance
+      const balanceMsg = lastRemainingBalance !== null 
+        ? ` Remaining balance: $${lastRemainingBalance.toFixed(2)}`
+        : '';
+      alert(`Purchase successful! Items have been added to your orders.${balanceMsg}`);
+      
+      // Trigger balance refresh by dispatching a custom event
+      window.dispatchEvent(new CustomEvent('balanceUpdated'));
+      
       setview('Orders');
     } catch (error) {
       alert(error.message || 'Failed to complete purchase. Please try again.');

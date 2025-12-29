@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Purchase, PurchaseDocument } from './schemas/purchase.schema';
 import { LeadsService } from '../leads/leads.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class PurchasesService {
@@ -10,9 +11,10 @@ export class PurchasesService {
     @InjectModel(Purchase.name)
     private purchaseModel: Model<PurchaseDocument>,
     private leadsService: LeadsService,
+    private usersService: UsersService,
   ) {}
 
-  async purchaseLead(userId: string, leadId: string): Promise<{ message: string; purchase: Purchase }> {
+  async purchaseLead(userId: string, leadId: string): Promise<{ message: string; purchase: Purchase; remainingBalance: number }> {
     // Check if lead exists
     const lead = await this.leadsService.getLeadById(leadId);
     if (!lead) {
@@ -28,6 +30,35 @@ export class PurchasesService {
       throw new ConflictException('Lead already purchased by this user');
     }
 
+    // Check if lead is already purchased by someone else
+    const isPurchasedByAnyone = await this.isLeadPurchased(leadId);
+    if (isPurchasedByAnyone) {
+      throw new ConflictException('This lead is no longer available');
+    }
+
+    // Get user to check balance
+    const user = await this.usersService.findOneById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Get lead price
+    const leadPrice = parseFloat(lead.price?.toString() || '0');
+    if (leadPrice <= 0) {
+      throw new BadRequestException('Invalid lead price');
+    }
+
+    // Check if user has sufficient balance
+    const currentBalance = parseFloat(user.balance?.toString() || '0');
+    if (currentBalance < leadPrice) {
+      throw new BadRequestException(`Insufficient balance. Required: $${leadPrice.toFixed(2)}, Available: $${currentBalance.toFixed(2)}`);
+    }
+
+    // Deduct funds from user balance
+    const newBalance = currentBalance - leadPrice;
+    user.balance = newBalance;
+    await user.save();
+
     // Create purchase
     const newPurchase = new this.purchaseModel({
       userId: new Types.ObjectId(userId),
@@ -39,6 +70,7 @@ export class PurchasesService {
     return {
       message: 'Lead purchased successfully',
       purchase: savedPurchase,
+      remainingBalance: newBalance,
     };
   }
 

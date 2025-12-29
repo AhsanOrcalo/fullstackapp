@@ -12,6 +12,17 @@ const Topbar = ({ title, logout, setview, sidebarOpen, setSidebarOpen }) => {
   useEffect(() => {
     if (isUser) {
       fetchBalance();
+      
+      // Listen for balance update events (e.g., after purchase)
+      const handleBalanceUpdate = () => {
+        fetchBalance();
+      };
+      
+      window.addEventListener('balanceUpdated', handleBalanceUpdate);
+      
+      return () => {
+        window.removeEventListener('balanceUpdated', handleBalanceUpdate);
+      };
     }
   }, [isUser]);
 

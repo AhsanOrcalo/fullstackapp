@@ -706,6 +706,7 @@ const DataManagement = () => {
                   <th>DOB</th>
                   <th>SSN</th>
                   <th>MAIL</th>
+                  <th>STATUS</th>
                 </tr>
               </thead>
               <tbody>
@@ -725,6 +726,24 @@ const DataManagement = () => {
                     <td>{lead.dob ? new Date(lead.dob).getFullYear() : 'N/A'}</td>
                     <td>{lead.ssn || 'N/A'}</td>
                     <td>{lead.email || 'N/A'}</td>
+                    <td>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        backgroundColor: (lead.status === 'available' || !lead.status) 
+                          ? 'rgba(16, 185, 129, 0.2)' 
+                          : 'rgba(239, 68, 68, 0.2)',
+                        color: (lead.status === 'available' || !lead.status) 
+                          ? '#10b981' 
+                          : '#ef4444',
+                      }}>
+                        {lead.status || 'available'}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>

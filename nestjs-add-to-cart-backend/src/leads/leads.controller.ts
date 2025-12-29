@@ -197,11 +197,16 @@ export class LeadsController {
           ? await this.purchasesService.isLeadPurchased(leadId)
           : undefined;
         const leadObj = (lead as any).toObject ? (lead as any).toObject() : lead;
+        
+        // Determine status: 'available' if not purchased by anyone, 'unavailable' if purchased
+        const status = isPurchasedByAnyone ? 'unavailable' : 'available';
+        
         return {
           ...leadObj,
           id: (lead as any)._id?.toString() || (lead as any).id,
           isPurchased,
           isPurchasedByAnyone,
+          status,
         };
       }),
     );
