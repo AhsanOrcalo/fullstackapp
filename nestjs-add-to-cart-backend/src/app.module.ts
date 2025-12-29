@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -14,11 +15,40 @@ import { Enquiry } from './enquiries/entities/enquiry.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'sqlite',
-      database: 'database.sqlite',
-      entities: [User, Lead, Purchase, Enquiry],
-      synchronize: true, // Set to false in production and use migrations
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const dbType = configService.get<string>('DB_TYPE', 'sqlite');
+        const isProduction = configService.get<string>('NODE_ENV') === 'production';
+
+        if (dbType === 'mysql') {
+          return {
+            type: 'mysql',
+            host: configService.get<string>('DB_HOST', 'localhost'),
+            port: configService.get<number>('DB_PORT', 3306),
+            username: configService.get<string>('DB_USERNAME'),
+            password: configService.get<string>('DB_PASSWORD'),
+            database: configService.get<string>('DB_DATABASE'),
+            entities: [User, Lead, Purchase, Enquiry],
+            synchronize: !isProduction, // false in production, use migrations
+            logging: !isProduction,
+          };
+        } else {
+          // SQLite for development
+          return {
+            type: 'sqlite',
+            database: configService.get<string>('DB_DATABASE', 'database.sqlite'),
+            entities: [User, Lead, Purchase, Enquiry],
+            synchronize: true,
+            logging: !isProduction,
+          };
+        }
+      },
+      inject: [ConfigService],
     }),
     UsersModule,
     LeadsModule,
