@@ -254,11 +254,10 @@ const UserDashboardComponent = () => {
                   <th>First Name</th>
                   <th>Last Name</th>
                   <th>Email</th>
-                  <th>Address</th>
                   <th>City</th>
                   <th>State</th>
                   <th>ZIP</th>
-                  <th>DOB</th>
+                  <th>Year of Birth</th>
                   <th>Price</th>
                   <th>Score</th>
                   <th>Created At</th>
@@ -275,12 +274,11 @@ const UserDashboardComponent = () => {
                   >
                     <td>{lead.firstName || 'N/A'}</td>
                     <td>{lead.lastName || 'N/A'}</td>
-                    <td>{lead.email || 'N/A'}</td>
-                    <td>{lead.address || 'N/A'}</td>
+                    {/* <td>{lead.email || 'N/A'}</td> */}
                     <td>{lead.city || 'N/A'}</td>
                     <td>{lead.state || 'N/A'}</td>
                     <td>{lead.zip || 'N/A'}</td>
-                    <td>{formatDate(lead.dob)}</td>
+                    <td>{lead.dob ? new Date(lead.dob).getFullYear() : 'N/A'}</td>
                     <td style={{ color: 'var(--primary-blue)', fontWeight: '600' }}>
                       {formatPrice(lead.price || 0)}
                     </td>

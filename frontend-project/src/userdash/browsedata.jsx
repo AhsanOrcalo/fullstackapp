@@ -101,11 +101,7 @@ const Browsedata = () => {
     if (!dateString) return 'N/A';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
+      return date.getFullYear().toString();
     } catch {
       return dateString;
     }
@@ -315,10 +311,10 @@ const Browsedata = () => {
                   </th>
                   <th>First Name</th>
                   <th>Last Name</th>
-                  <th>Email</th>
+                  {/* <th>Email</th> */}
                   <th>City</th>
                   <th>State</th>
-                  <th>DOB</th>
+                  <th>Year of Birth</th>
                   <th>ZIP Code</th>
                   <th>Score</th>
                   <th>Price</th>
@@ -338,7 +334,7 @@ const Browsedata = () => {
                     </td>
                     <td>{lead.firstName || 'N/A'}</td>
                     <td>{lead.lastName || 'N/A'}</td>
-                    <td>{lead.email || 'N/A'}</td>
+                    {/* <td>{lead.email || 'N/A'}</td> */}
                     <td>{lead.city || 'N/A'}</td>
                     <td>{lead.state || 'N/A'}</td>
                     <td>{formatDate(lead.dob)}</td>
