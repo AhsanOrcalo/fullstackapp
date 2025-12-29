@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Purchase } from './entities/purchase.entity';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Purchase, PurchaseDocument } from './schemas/purchase.schema';
 import { LeadsService } from '../leads/leads.service';
 
 @Injectable()
 export class PurchasesService {
   constructor(
-    @InjectRepository(Purchase)
-    private purchasesRepository: Repository<Purchase>,
+    @InjectModel(Purchase.name)
+    private purchaseModel: Model<PurchaseDocument>,
     private leadsService: LeadsService,
   ) {}
 
@@ -20,20 +20,21 @@ export class PurchasesService {
     }
 
     // Check if user already purchased this lead
-    const existingPurchase = await this.purchasesRepository.findOne({
-      where: { userId, leadId },
+    const existingPurchase = await this.purchaseModel.findOne({
+      userId: new Types.ObjectId(userId),
+      leadId: new Types.ObjectId(leadId),
     });
     if (existingPurchase) {
       throw new ConflictException('Lead already purchased by this user');
     }
 
     // Create purchase
-    const newPurchase = this.purchasesRepository.create({
-      userId,
-      leadId,
+    const newPurchase = new this.purchaseModel({
+      userId: new Types.ObjectId(userId),
+      leadId: new Types.ObjectId(leadId),
     });
 
-    const savedPurchase = await this.purchasesRepository.save(newPurchase);
+    const savedPurchase = await newPurchase.save();
 
     return {
       message: 'Lead purchased successfully',
@@ -41,66 +42,68 @@ export class PurchasesService {
     };
   }
 
-  async getUserPurchases(userId: string): Promise<Purchase[]> {
-    return this.purchasesRepository.find({
-      where: { userId },
-      relations: ['lead'],
-    });
+  async getUserPurchases(userId: string): Promise<PurchaseDocument[]> {
+    return this.purchaseModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .populate('leadId')
+      .exec();
   }
 
-  async getAllPurchases(): Promise<Purchase[]> {
-    return this.purchasesRepository.find({
-      relations: ['user', 'lead'],
-    });
+  async getAllPurchases(): Promise<PurchaseDocument[]> {
+    return this.purchaseModel
+      .find()
+      .populate('userId')
+      .populate('leadId')
+      .exec();
   }
 
   async isLeadPurchasedByUser(userId: string, leadId: string): Promise<boolean> {
-    const purchase = await this.purchasesRepository.findOne({
-      where: { userId, leadId },
+    const purchase = await this.purchaseModel.findOne({
+      userId: new Types.ObjectId(userId),
+      leadId: new Types.ObjectId(leadId),
     });
     return !!purchase;
   }
 
-  async getPurchasesByLeadId(leadId: string): Promise<Purchase[]> {
-    return this.purchasesRepository.find({
-      where: { leadId },
-      relations: ['user'],
-    });
+  async getPurchasesByLeadId(leadId: string): Promise<PurchaseDocument[]> {
+    return this.purchaseModel
+      .find({ leadId: new Types.ObjectId(leadId) })
+      .populate('userId')
+      .exec();
   }
 
   async isLeadPurchased(leadId: string): Promise<boolean> {
-    const purchase = await this.purchasesRepository.findOne({
-      where: { leadId },
+    const purchase = await this.purchaseModel.findOne({
+      leadId: new Types.ObjectId(leadId),
     });
     return !!purchase;
   }
 
   async getSoldDataAnalytics(dateFrom?: string, dateTo?: string) {
-    // Get all purchases with relations
-    let purchases = await this.purchasesRepository.find({
-      relations: ['lead', 'user'],
-      order: { purchasedAt: 'DESC' },
-    });
-
-    // Filter by date range if provided
+    // Build date filter
+    const dateFilter: any = {};
     if (dateFrom || dateTo) {
-      const fromDate = dateFrom ? new Date(dateFrom) : null;
-      const toDate = dateTo ? new Date(dateTo) : null;
-      
-      purchases = purchases.filter((purchase) => {
-        const purchaseDate = new Date(purchase.purchasedAt);
-        if (fromDate && purchaseDate < fromDate) return false;
-        if (toDate) {
-          const toDateEnd = new Date(toDate);
-          toDateEnd.setHours(23, 59, 59, 999);
-          if (purchaseDate > toDateEnd) return false;
-        }
-        return true;
-      });
+      dateFilter.purchasedAt = {};
+      if (dateFrom) {
+        dateFilter.purchasedAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        dateFilter.purchasedAt.$lte = toDate;
+      }
     }
 
+    // Get all purchases with relations
+    let purchases = await this.purchaseModel
+      .find(dateFilter)
+      .populate('leadId')
+      .populate('userId')
+      .sort({ purchasedAt: -1 })
+      .exec();
+
     // Calculate total data sold (lifetime)
-    const totalDataSold = await this.purchasesRepository.count();
+    const totalDataSold = await this.purchaseModel.countDocuments();
 
     // Calculate today's sold
     const today = new Date();
@@ -108,21 +111,17 @@ export class PurchasesService {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-    const todaysSold = await this.purchasesRepository
-      .createQueryBuilder('purchase')
-      .where('purchase.purchasedAt >= :today', { today })
-      .andWhere('purchase.purchasedAt < :tomorrow', { tomorrow })
-      .getCount();
+    const todaysSold = await this.purchaseModel.countDocuments({
+      purchasedAt: { $gte: today, $lt: tomorrow },
+    });
 
     // Calculate monthly sold (current month)
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const startOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
     
-    const monthlySold = await this.purchasesRepository
-      .createQueryBuilder('purchase')
-      .where('purchase.purchasedAt >= :startOfMonth', { startOfMonth })
-      .andWhere('purchase.purchasedAt < :startOfNextMonth', { startOfNextMonth })
-      .getCount();
+    const monthlySold = await this.purchaseModel.countDocuments({
+      purchasedAt: { $gte: startOfMonth, $lt: startOfNextMonth },
+    });
 
     // Format dates for display
     const todayFormatted = today.toLocaleDateString('en-GB', {
@@ -146,4 +145,3 @@ export class PurchasesService {
     };
   }
 }
-

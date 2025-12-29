@@ -1,19 +1,19 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { AddLeadDto } from './dto/add-lead.dto';
 import { FilterLeadsDto } from './dto/filter-leads.dto';
-import { Lead } from './entities/lead.entity';
+import { Lead, LeadDocument } from './schemas/lead.schema';
 
 @Injectable()
 export class LeadsService {
   constructor(
-    @InjectRepository(Lead)
-    private leadsRepository: Repository<Lead>,
+    @InjectModel(Lead.name)
+    private leadModel: Model<LeadDocument>,
   ) {}
 
   async addLead(addLeadDto: AddLeadDto): Promise<{ message: string; lead: Lead }> {
-    const newLead = this.leadsRepository.create({
+    const newLead = new this.leadModel({
       firstName: addLeadDto.firstName,
       lastName: addLeadDto.lastName,
       price: addLeadDto.price,
@@ -27,7 +27,7 @@ export class LeadsService {
       score: addLeadDto.score,
     });
 
-    const savedLead = await this.leadsRepository.save(newLead);
+    const savedLead = await newLead.save();
 
     return {
       message: 'Lead added successfully',
@@ -36,83 +36,68 @@ export class LeadsService {
   }
 
   async getAllLeads(filters?: FilterLeadsDto): Promise<Lead[]> {
-    const queryBuilder = this.leadsRepository.createQueryBuilder('lead');
+    const query: any = {};
 
     if (filters) {
       // Filter by name (searches in firstName and lastName)
       if (filters.name) {
-        queryBuilder.andWhere(
-          '(LOWER(lead.firstName) LIKE LOWER(:name) OR LOWER(lead.lastName) LIKE LOWER(:name))',
-          { name: `%${filters.name}%` },
-        );
+        query.$or = [
+          { firstName: { $regex: filters.name, $options: 'i' } },
+          { lastName: { $regex: filters.name, $options: 'i' } },
+        ];
       }
 
       // Filter by city
       if (filters.city) {
-        queryBuilder.andWhere('LOWER(lead.city) LIKE LOWER(:city)', {
-          city: `%${filters.city}%`,
-        });
+        query.city = { $regex: filters.city, $options: 'i' };
       }
 
       // Filter by date of birth range
       if (filters.dobFrom || filters.dobTo) {
-        if (filters.dobFrom && filters.dobTo) {
-          const fromDate = `${filters.dobFrom}-01-01`;
-          const toDate = `${filters.dobTo}-12-31`;
-          queryBuilder.andWhere('lead.dob BETWEEN :fromDate AND :toDate', {
-            fromDate,
-            toDate,
-          });
-        } else if (filters.dobFrom) {
-          const fromDate = `${filters.dobFrom}-01-01`;
-          queryBuilder.andWhere('lead.dob >= :fromDate', {
-            fromDate,
-          });
-        } else if (filters.dobTo) {
-          const toDate = `${filters.dobTo}-12-31`;
-          queryBuilder.andWhere('lead.dob <= :toDate', {
-            toDate,
-          });
+        query.dob = {};
+        if (filters.dobFrom) {
+          const fromDate = new Date(`${filters.dobFrom}-01-01`);
+          query.dob.$gte = fromDate;
+        }
+        if (filters.dobTo) {
+          const toDate = new Date(`${filters.dobTo}-12-31`);
+          toDate.setHours(23, 59, 59, 999);
+          query.dob.$lte = toDate;
         }
       }
 
       // Filter by zip code
       if (filters.zip) {
-        queryBuilder.andWhere('lead.zip LIKE :zip', {
-          zip: `%${filters.zip}%`,
-        });
+        query.zip = { $regex: filters.zip, $options: 'i' };
       }
 
       // Filter by state
       if (filters.state) {
-        queryBuilder.andWhere('LOWER(lead.state) LIKE LOWER(:state)', {
-          state: `%${filters.state}%`,
-        });
+        query.state = { $regex: filters.state, $options: 'i' };
       }
 
       // Filter by score
       if (filters.scoreFilter) {
         const minScore = filters.scoreFilter === '700+' ? 700 : 800;
-        queryBuilder.andWhere('lead.score >= :minScore', { minScore });
-      }
-
-      // Sort by price
-      if (filters.priceSort) {
-        if (filters.priceSort === 'high-to-low') {
-          queryBuilder.orderBy('lead.price', 'DESC');
-        } else {
-          queryBuilder.orderBy('lead.price', 'ASC');
-        }
+        query.score = { $gte: minScore };
       }
     }
 
-    return queryBuilder.getMany();
+    let queryBuilder = this.leadModel.find(query);
+
+    // Sort by price
+    if (filters?.priceSort) {
+      if (filters.priceSort === 'high-to-low') {
+        queryBuilder = queryBuilder.sort({ price: -1 });
+      } else {
+        queryBuilder = queryBuilder.sort({ price: 1 });
+      }
+    }
+
+    return queryBuilder.exec();
   }
 
-  async getLeadById(leadId: string): Promise<Lead | null> {
-    return this.leadsRepository.findOne({
-      where: { id: leadId },
-    });
+  async getLeadById(leadId: string): Promise<LeadDocument | null> {
+    return this.leadModel.findById(leadId);
   }
 }
-

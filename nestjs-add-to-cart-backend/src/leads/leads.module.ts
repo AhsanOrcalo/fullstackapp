@@ -1,15 +1,15 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { LeadsController } from './leads.controller';
 import { LeadsService } from './leads.service';
 import { RolesGuard } from '../users/guards/roles.guard';
 import { PurchasesModule } from '../purchases/purchases.module';
-import { Lead } from './entities/lead.entity';
+import { Lead, LeadSchema } from './schemas/lead.schema';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Lead]),
+    MongooseModule.forFeature([{ name: Lead.name, schema: LeadSchema }]),
     PassportModule,
     forwardRef(() => PurchasesModule),
   ],

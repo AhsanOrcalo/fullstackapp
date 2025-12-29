@@ -173,7 +173,8 @@ export class LeadsController {
       // Filter out leads that have been purchased by anyone
       const leadsWithPurchaseStatus = await Promise.all(
         leads.map(async (lead) => {
-          const isPurchasedByAnyone = await this.purchasesService.isLeadPurchased(lead.id);
+          const leadId = (lead as any)._id?.toString() || (lead as any).id;
+          const isPurchasedByAnyone = await this.purchasesService.isLeadPurchased(leadId);
           return {
             lead,
             isPurchasedByAnyone,
@@ -190,12 +191,15 @@ export class LeadsController {
     // For admins, also add isPurchasedByAnyone to show if lead is sold to anyone
     const leadsWithPurchaseStatus = await Promise.all(
       availableLeads.map(async (lead) => {
-        const isPurchased = await this.purchasesService.isLeadPurchasedByUser(userId, lead.id);
+        const leadId = (lead as any)._id?.toString() || (lead as any).id;
+        const isPurchased = await this.purchasesService.isLeadPurchasedByUser(userId, leadId);
         const isPurchasedByAnyone = userRole === Role.ADMIN 
-          ? await this.purchasesService.isLeadPurchased(lead.id)
+          ? await this.purchasesService.isLeadPurchased(leadId)
           : undefined;
+        const leadObj = (lead as any).toObject ? (lead as any).toObject() : lead;
         return {
-          ...lead,
+          ...leadObj,
+          id: (lead as any)._id?.toString() || (lead as any).id,
           isPurchased,
           isPurchasedByAnyone,
         };

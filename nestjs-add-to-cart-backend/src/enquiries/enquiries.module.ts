@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { EnquiriesController } from './enquiries.controller';
 import { EnquiriesService } from './enquiries.service';
 import { RolesGuard } from '../users/guards/roles.guard';
-import { Enquiry } from './entities/enquiry.entity';
+import { Enquiry, EnquirySchema } from './schemas/enquiry.schema';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Enquiry]),
+    MongooseModule.forFeature([{ name: Enquiry.name, schema: EnquirySchema }]),
     PassportModule,
   ],
   controllers: [EnquiriesController],

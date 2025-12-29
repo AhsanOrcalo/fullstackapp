@@ -249,10 +249,18 @@ export class PurchasesController {
     // Enrich purchases with lead details
     const purchasesWithLeads = await Promise.all(
       purchases.map(async (purchase) => {
-        const lead = await this.leadsService.getLeadById(purchase.leadId);
+        const leadId = (purchase.leadId as any)?.toString() || purchase.leadId;
+        const lead = await this.leadsService.getLeadById(leadId);
+        const purchaseObj = purchase.toObject ? purchase.toObject() : purchase;
         return {
-          ...purchase,
-          lead: lead || null,
+          ...purchaseObj,
+          id: (purchase as any)._id?.toString() || (purchase as any).id,
+          leadId: leadId,
+          userId: (purchase.userId as any)?.toString() || purchase.userId,
+          lead: lead ? {
+            ...(lead.toObject ? lead.toObject() : lead),
+            id: (lead as any)._id?.toString() || (lead as any).id,
+          } : null,
         };
       }),
     );
@@ -327,14 +335,23 @@ export class PurchasesController {
     // Enrich purchases with lead and user details
     const purchasesWithDetails = await Promise.all(
       purchases.map(async (purchase) => {
-        const lead = await this.leadsService.getLeadById(purchase.leadId);
-        const user = await this.usersService.findOneById(purchase.userId);
+        const leadId = (purchase.leadId as any)?.toString() || purchase.leadId;
+        const userId = (purchase.userId as any)?.toString() || purchase.userId;
+        const lead = await this.leadsService.getLeadById(leadId);
+        const user = await this.usersService.findOneById(userId);
+        const purchaseObj = purchase.toObject ? purchase.toObject() : purchase;
         return {
-          ...purchase,
-          lead: lead || null,
+          ...purchaseObj,
+          id: (purchase as any)._id?.toString() || (purchase as any).id,
+          leadId: leadId,
+          userId: userId,
+          lead: lead ? {
+            ...(lead.toObject ? lead.toObject() : lead),
+            id: (lead as any)._id?.toString() || (lead as any).id,
+          } : null,
           user: user
             ? {
-                id: user.id,
+                id: (user as any)._id?.toString() || (user as any).id,
                 userName: user.userName,
                 email: user.email,
                 role: user.role,

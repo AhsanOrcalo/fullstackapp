@@ -1,16 +1,16 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { PurchasesController } from './purchases.controller';
 import { PurchasesService } from './purchases.service';
 import { RolesGuard } from '../users/guards/roles.guard';
 import { LeadsModule } from '../leads/leads.module';
 import { UsersModule } from '../users/users.module';
-import { Purchase } from './entities/purchase.entity';
+import { Purchase, PurchaseSchema } from './schemas/purchase.schema';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Purchase]),
+    MongooseModule.forFeature([{ name: Purchase.name, schema: PurchaseSchema }]),
     PassportModule,
     forwardRef(() => LeadsModule),
     UsersModule,

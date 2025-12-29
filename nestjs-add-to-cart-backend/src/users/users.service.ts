@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, UnauthorizedException, OnModuleInit, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
@@ -8,15 +8,15 @@ import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
-import { User } from './entities/user.entity';
+import { User, UserDocument } from './schemas/user.schema';
 import { Role } from './enums/role.enum';
 import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    @InjectModel(User.name)
+    private userModel: Model<UserDocument>,
     private jwtService: JwtService,
     private emailService: EmailService,
   ) {}
@@ -28,9 +28,7 @@ export class UsersService implements OnModuleInit {
 
   private async createInitialAdmin() {
     // Check if admin already exists
-    const adminExists = await this.usersRepository.findOne({
-      where: { role: Role.ADMIN },
-    });
+    const adminExists = await this.userModel.findOne({ role: Role.ADMIN });
     if (adminExists) {
       return;
     }
@@ -39,7 +37,7 @@ export class UsersService implements OnModuleInit {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash('admin123', saltRounds); // Change this password in production
 
-    const adminUser = this.usersRepository.create({
+    const adminUser = new this.userModel({
       userName: 'admin',
       email: 'admin@example.com',
       phoneNumber: '+1234567890',
@@ -47,7 +45,7 @@ export class UsersService implements OnModuleInit {
       role: Role.ADMIN,
     });
 
-    await this.usersRepository.save(adminUser);
+    await adminUser.save();
     console.log('Initial admin user created. Username: admin, Password: admin123');
   }
 
@@ -60,25 +58,19 @@ export class UsersService implements OnModuleInit {
     }
 
     // Check if username already exists
-    const existingUserByUsername = await this.usersRepository.findOne({
-      where: { userName },
-    });
+    const existingUserByUsername = await this.userModel.findOne({ userName });
     if (existingUserByUsername) {
       throw new ConflictException('Username already exists');
     }
 
     // Check if email already exists
-    const existingUserByEmail = await this.usersRepository.findOne({
-      where: { email },
-    });
+    const existingUserByEmail = await this.userModel.findOne({ email });
     if (existingUserByEmail) {
       throw new ConflictException('Email already exists');
     }
 
     // Check if phone number already exists
-    const existingUserByPhone = await this.usersRepository.findOne({
-      where: { phoneNumber },
-    });
+    const existingUserByPhone = await this.userModel.findOne({ phoneNumber });
     if (existingUserByPhone) {
       throw new ConflictException('Phone number already exists');
     }
@@ -88,7 +80,7 @@ export class UsersService implements OnModuleInit {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create user with default role 'user' and balance 0
-    const newUser = this.usersRepository.create({
+    const newUser = new this.userModel({
       userName,
       email,
       phoneNumber,
@@ -97,12 +89,12 @@ export class UsersService implements OnModuleInit {
       balance: 0.0, // New users start with 0 balance
     });
 
-    await this.usersRepository.save(newUser);
+    await newUser.save();
 
     return {
       message: 'User registered successfully',
       user: {
-        id: newUser.id,
+        id: newUser._id.toString(),
         userName: newUser.userName,
         email: newUser.email,
         phoneNumber: newUser.phoneNumber,
@@ -115,9 +107,7 @@ export class UsersService implements OnModuleInit {
     const { userName, password } = loginDto;
 
     // Find user
-    const user = await this.usersRepository.findOne({
-      where: { userName },
-    });
+    const user = await this.userModel.findOne({ userName });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -129,32 +119,28 @@ export class UsersService implements OnModuleInit {
     }
 
     // Generate JWT token with role included
-    const payload = { sub: user.id, userName: user.userName, role: user.role };
+    const payload = { sub: user._id.toString(), userName: user.userName, role: user.role };
     const access_token = this.jwtService.sign(payload);
 
     return {
       access_token,
       user: {
-        id: user.id,
+        id: user._id.toString(),
         userName: user.userName,
         role: user.role,
       },
     };
   }
 
-  async findOneById(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({
-      where: { id },
-    });
+  async findOneById(id: string): Promise<UserDocument | null> {
+    return this.userModel.findById(id);
   }
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
     const { oldPassword, newPassword, confirmPassword } = changePasswordDto;
 
     // Find user
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-    });
+    const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -182,7 +168,7 @@ export class UsersService implements OnModuleInit {
 
     // Update user password
     user.password = hashedPassword;
-    await this.usersRepository.save(user);
+    await user.save();
 
     return {
       message: 'Password changed successfully',
@@ -191,36 +177,40 @@ export class UsersService implements OnModuleInit {
 
   async getAllUsers(): Promise<{ id: string; userName: string; email: string; phoneNumber: string; role: Role; balance: number; createdAt: Date }[]> {
     // Return all users without password field, excluding admin users
-    const users = await this.usersRepository.find({
-      where: { role: Role.USER },
-      select: ['id', 'userName', 'email', 'phoneNumber', 'role', 'balance', 'createdAt'],
-    });
+    const users = await this.userModel.find({ role: Role.USER }).select('-password');
     return users.map(user => ({
-      ...user,
+      id: user._id.toString(),
+      userName: user.userName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
       balance: parseFloat(user.balance?.toString() || '0'),
+      createdAt: user.createdAt || new Date(),
     }));
   }
 
   async getProfile(userId: string): Promise<{ id: string; userName: string; email: string; phoneNumber: string; role: Role; createdAt: Date }> {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-      select: ['id', 'userName', 'email', 'phoneNumber', 'role', 'createdAt'],
-    });
+    const user = await this.userModel.findById(userId).select('-password');
     
     if (!user) {
       throw new NotFoundException('User not found');
     }
     
-    return user;
+    return {
+      id: user._id.toString(),
+      userName: user.userName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      createdAt: user.createdAt || new Date(),
+    };
   }
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<{ message: string; user: { id: string; userName: string; email: string; phoneNumber: string; role: Role } }> {
     const { userName, email } = updateProfileDto;
 
     // Find user
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-    });
+    const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -232,9 +222,7 @@ export class UsersService implements OnModuleInit {
 
     // Check if username is being changed and if it already exists
     if (userName && userName !== user.userName) {
-      const existingUserByUsername = await this.usersRepository.findOne({
-        where: { userName },
-      });
+      const existingUserByUsername = await this.userModel.findOne({ userName });
       if (existingUserByUsername) {
         throw new ConflictException('Username already exists');
       }
@@ -243,9 +231,7 @@ export class UsersService implements OnModuleInit {
 
     // Check if email is being changed and if it already exists
     if (email && email !== user.email) {
-      const existingUserByEmail = await this.usersRepository.findOne({
-        where: { email },
-      });
+      const existingUserByEmail = await this.userModel.findOne({ email });
       if (existingUserByEmail) {
         throw new ConflictException('Email already exists');
       }
@@ -253,12 +239,12 @@ export class UsersService implements OnModuleInit {
     }
 
     // Save updated user
-    await this.usersRepository.save(user);
+    await user.save();
 
     return {
       message: 'Profile updated successfully',
       user: {
-        id: user.id,
+        id: user._id.toString(),
         userName: user.userName,
         email: user.email,
         phoneNumber: user.phoneNumber,
@@ -271,9 +257,7 @@ export class UsersService implements OnModuleInit {
     const { email } = forgetPasswordDto;
 
     // Find user by email
-    const user = await this.usersRepository.findOne({
-      where: { email },
-    });
+    const user = await this.userModel.findOne({ email });
 
     // For security, don't reveal if email exists or not
     // Always return success message to prevent email enumeration
@@ -303,7 +287,7 @@ export class UsersService implements OnModuleInit {
 
     // Update user password
     user.password = hashedPassword;
-    await this.usersRepository.save(user);
+    await user.save();
 
     // Send email with temporary password
     // Note: Email service will handle errors and log appropriately
@@ -320,9 +304,7 @@ export class UsersService implements OnModuleInit {
       throw new BadRequestException('Amount must be greater than 0');
     }
 
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-    });
+    const user = await this.userModel.findById(userId);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -330,12 +312,12 @@ export class UsersService implements OnModuleInit {
 
     // Add funds to user balance
     user.balance = (parseFloat(user.balance.toString()) || 0) + amount;
-    await this.usersRepository.save(user);
+    await user.save();
 
     return {
       message: 'Funds added successfully',
       user: {
-        id: user.id,
+        id: user._id.toString(),
         userName: user.userName,
         balance: parseFloat(user.balance.toString()),
       },
@@ -343,9 +325,7 @@ export class UsersService implements OnModuleInit {
   }
 
   async getUserFunds(userId: string): Promise<{ currentBalance: number; totalDeposits: number; minimumDeposit: number; pendingPayments: any[] }> {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-    });
+    const user = await this.userModel.findById(userId);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -366,4 +346,3 @@ export class UsersService implements OnModuleInit {
     };
   }
 }
-
