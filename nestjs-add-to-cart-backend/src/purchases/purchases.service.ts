@@ -51,7 +51,7 @@ export class PurchasesService {
     // Check if user has sufficient balance
     const currentBalance = parseFloat(user.balance?.toString() || '0');
     if (currentBalance < leadPrice) {
-      throw new BadRequestException(`Insufficient balance. Required: $${leadPrice.toFixed(2)}, Available: $${currentBalance.toFixed(2)}`);
+      throw new BadRequestException(`Not enough balance. You need $${leadPrice.toFixed(2)} but you only have $${currentBalance.toFixed(2)}. Please add funds to your account.`);
     }
 
     // Deduct funds from user balance

@@ -67,6 +67,8 @@ const UserManagement = () => {
       setShowAddFundModal(null);
       await fetchUsers(); // Refresh users list
       alert('Funds added successfully!');
+      // Trigger balance update event for the user (if they're logged in)
+      window.dispatchEvent(new CustomEvent('balanceUpdated'));
     } catch (err) {
       alert(err.message || 'Failed to add funds');
       console.error('Error adding funds:', err);
