@@ -269,9 +269,16 @@ const Enquiries = () => {
           </div>
         ) : (
           <div style={{ padding: '20px' }}>
-            {enquiries.map((enquiry) => (
+            {enquiries.map((enquiry) => {
+              // Ensure we have a valid ID
+              const enquiryId = enquiry.id || enquiry._id || (enquiry._id && enquiry._id.toString ? enquiry._id.toString() : null);
+              if (!enquiryId) {
+                console.error('Enquiry missing ID:', enquiry);
+                return null;
+              }
+              return (
               <div
-                key={enquiry.id}
+                key={enquiryId}
                 style={{
                   backgroundColor: 'var(--bg-card)',
                   border: '1px solid var(--border-clr)',
@@ -333,7 +340,7 @@ const Enquiries = () => {
                   </div>
                 ) : isAdmin && (
                   <div style={{ marginTop: '15px' }}>
-                    {respondingTo === enquiry.id ? (
+                    {respondingTo === enquiryId ? (
                       <div style={{
                         padding: '15px',
                         backgroundColor: 'var(--bg-input)',
@@ -384,7 +391,7 @@ const Enquiries = () => {
                             Cancel
                           </button>
                           <button
-                            onClick={() => handleRespond(enquiry.id)}
+                            onClick={() => handleRespond(enquiryId)}
                             className="applybtn"
                             disabled={submitting}
                             style={{ padding: '8px 20px', fontSize: '14px' }}
@@ -396,7 +403,7 @@ const Enquiries = () => {
                     ) : (
                       <button
                         className="applybtn"
-                        onClick={() => setRespondingTo(enquiry.id)}
+                        onClick={() => setRespondingTo(enquiryId)}
                         style={{ padding: '8px 20px', fontSize: '14px' }}
                       >
                         Respond to Enquiry
@@ -409,7 +416,7 @@ const Enquiries = () => {
                   <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
                     <button
                       className="applybtn"
-                      onClick={() => handleCloseEnquiry(enquiry.id)}
+                      onClick={() => handleCloseEnquiry(enquiryId)}
                       style={{ padding: '8px 20px', fontSize: '14px' }}
                     >
                       Close Enquiry
@@ -417,7 +424,8 @@ const Enquiries = () => {
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>

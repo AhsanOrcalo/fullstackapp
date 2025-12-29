@@ -25,7 +25,12 @@ export class EnquiriesController {
     description: 'Enquiry created successfully',
   })
   async createEnquiry(@Request() req: any, @Body() createEnquiryDto: CreateEnquiryDto) {
-    return this.enquiriesService.createEnquiry(req.user.userId, createEnquiryDto);
+    const enquiry = await this.enquiriesService.createEnquiry(req.user.userId, createEnquiryDto);
+    const enquiryObj = enquiry.toObject ? enquiry.toObject() : enquiry;
+    return {
+      ...enquiryObj,
+      id: (enquiry as any)._id?.toString() || (enquiry as any).id,
+    };
   }
 
   @Get()
@@ -39,7 +44,18 @@ export class EnquiriesController {
     description: 'List of user enquiries',
   })
   async getUserEnquiries(@Request() req: any) {
-    return this.enquiriesService.getUserEnquiries(req.user.userId);
+    const enquiries = await this.enquiriesService.getUserEnquiries(req.user.userId);
+    return enquiries.map((enquiry) => {
+      const enquiryObj = enquiry.toObject ? enquiry.toObject() : enquiry;
+      const userId = enquiry.userId ? (typeof enquiry.userId === 'object' && (enquiry.userId as any)._id 
+        ? (enquiry.userId as any)._id.toString() 
+        : enquiry.userId.toString()) : null;
+      return {
+        ...enquiryObj,
+        id: (enquiry as any)._id?.toString() || (enquiry as any).id,
+        userId: userId,
+      };
+    });
   }
 
   @Get('all')
@@ -53,7 +69,32 @@ export class EnquiriesController {
     description: 'List of all enquiries',
   })
   async getAllEnquiries() {
-    return this.enquiriesService.getAllEnquiries();
+    const enquiries = await this.enquiriesService.getAllEnquiries();
+    return enquiries.map((enquiry) => {
+      const enquiryObj = enquiry.toObject ? enquiry.toObject() : enquiry;
+      // Handle populated userId
+      let user: any = null;
+      let userId: string | null = null;
+      if (enquiry.userId) {
+        if (typeof enquiry.userId === 'object' && (enquiry.userId as any)._id) {
+          // Populated user
+          user = enquiry.userId;
+          userId = (user as any)._id.toString();
+        } else {
+          userId = enquiry.userId.toString();
+        }
+      }
+      return {
+        ...enquiryObj,
+        id: (enquiry as any)._id?.toString() || (enquiry as any).id,
+        userId: userId,
+        user: user ? {
+          id: (user as any)._id?.toString() || (user as any).id,
+          userName: (user as any).userName,
+          email: (user as any).email,
+        } : null,
+      };
+    });
   }
 
   @Put(':id/respond')
