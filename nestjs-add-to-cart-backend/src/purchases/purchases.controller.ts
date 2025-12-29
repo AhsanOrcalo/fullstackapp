@@ -1,6 +1,7 @@
 import { Controller, Post, Put, Get, Param, Query, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Types } from 'mongoose';
 import { PurchasesService } from './purchases.service';
 import { Roles } from '../users/decorators/roles.decorator';
 import { RolesGuard } from '../users/guards/roles.guard';
@@ -244,28 +245,62 @@ export class PurchasesController {
     },
   })
   async getUserPurchases(@Request() req: any) {
-    const purchases = await this.purchasesService.getUserPurchases(req.user.userId);
-    
-    // Enrich purchases with lead details
-    const purchasesWithLeads = await Promise.all(
-      purchases.map(async (purchase) => {
-        const leadId = (purchase.leadId as any)?.toString() || purchase.leadId;
-        const lead = await this.leadsService.getLeadById(leadId);
+    try {
+      const purchases = await this.purchasesService.getUserPurchases(req.user.userId);
+      
+      // Enrich purchases with lead details
+      const purchasesWithLeads = purchases.map((purchase) => {
         const purchaseObj = purchase.toObject ? purchase.toObject() : purchase;
+        
+        // Handle leadId - it might be populated (Lead document) or ObjectId
+        let leadId: string | null = null;
+        let lead: any = null;
+        
+        if (purchase.leadId) {
+          // Check if leadId is populated (it's a Lead document with _id property)
+          if (typeof purchase.leadId === 'object' && (purchase.leadId as any)._id) {
+            // Already populated - it's a Lead document
+            lead = purchase.leadId;
+            leadId = (lead as any)._id.toString();
+          } else if (purchase.leadId instanceof Types.ObjectId) {
+            // It's an ObjectId (not populated)
+            leadId = purchase.leadId.toString();
+          } else if (typeof purchase.leadId === 'string') {
+            // It's already a string
+            leadId = purchase.leadId;
+          } else {
+            // Fallback: try to convert to string
+            leadId = String(purchase.leadId);
+          }
+        }
+        
+        // Handle userId
+        let userId: string;
+        if (purchase.userId instanceof Types.ObjectId) {
+          userId = purchase.userId.toString();
+        } else if (typeof purchase.userId === 'string') {
+          userId = purchase.userId;
+        } else {
+          userId = String(purchase.userId);
+        }
+        
         return {
           ...purchaseObj,
           id: (purchase as any)._id?.toString() || (purchase as any).id,
           leadId: leadId,
-          userId: (purchase.userId as any)?.toString() || purchase.userId,
+          userId: userId,
           lead: lead ? {
             ...(lead.toObject ? lead.toObject() : lead),
             id: (lead as any)._id?.toString() || (lead as any).id,
           } : null,
         };
-      }),
-    );
+      });
 
-    return purchasesWithLeads;
+      return purchasesWithLeads;
+    } catch (error) {
+      console.error('Error in getUserPurchases:', error);
+      throw error;
+    }
   }
 
   @Get('all')
@@ -330,16 +365,50 @@ export class PurchasesController {
     },
   })
   async getAllPurchases() {
-    const purchases = await this.purchasesService.getAllPurchases();
-    
-    // Enrich purchases with lead and user details
-    const purchasesWithDetails = await Promise.all(
-      purchases.map(async (purchase) => {
-        const leadId = (purchase.leadId as any)?.toString() || purchase.leadId;
-        const userId = (purchase.userId as any)?.toString() || purchase.userId;
-        const lead = await this.leadsService.getLeadById(leadId);
-        const user = await this.usersService.findOneById(userId);
+    try {
+      const purchases = await this.purchasesService.getAllPurchases();
+      
+      // Enrich purchases with lead and user details
+      // Note: The service already populates userId and leadId
+      const purchasesWithDetails = purchases.map((purchase) => {
         const purchaseObj = purchase.toObject ? purchase.toObject() : purchase;
+        
+        // Handle leadId - it might be populated (Lead document) or ObjectId
+        let leadId: string | null = null;
+        let lead: any = null;
+        
+        if (purchase.leadId) {
+          if (typeof purchase.leadId === 'object' && (purchase.leadId as any)._id) {
+            // Already populated - it's a Lead document
+            lead = purchase.leadId;
+            leadId = (lead as any)._id.toString();
+          } else if (purchase.leadId instanceof Types.ObjectId) {
+            leadId = purchase.leadId.toString();
+          } else if (typeof purchase.leadId === 'string') {
+            leadId = purchase.leadId;
+          } else {
+            leadId = String(purchase.leadId);
+          }
+        }
+        
+        // Handle userId - it might be populated (User document) or ObjectId
+        let userId: string | null = null;
+        let user: any = null;
+        
+        if (purchase.userId) {
+          if (typeof purchase.userId === 'object' && (purchase.userId as any)._id) {
+            // Already populated - it's a User document
+            user = purchase.userId;
+            userId = (user as any)._id.toString();
+          } else if (purchase.userId instanceof Types.ObjectId) {
+            userId = purchase.userId.toString();
+          } else if (typeof purchase.userId === 'string') {
+            userId = purchase.userId;
+          } else {
+            userId = String(purchase.userId);
+          }
+        }
+        
         return {
           ...purchaseObj,
           id: (purchase as any)._id?.toString() || (purchase as any).id,
@@ -358,10 +427,13 @@ export class PurchasesController {
               }
             : null,
         };
-      }),
-    );
+      });
 
-    return purchasesWithDetails;
+      return purchasesWithDetails;
+    } catch (error) {
+      console.error('Error in getAllPurchases:', error);
+      throw error;
+    }
   }
 
   @Get('analytics')
