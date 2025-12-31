@@ -138,21 +138,21 @@ const DataManagement = () => {
   // Export to CSV
   const handleExport = () => {
     try {
-      // Prepare CSV headers
+      // Prepare CSV headers - matching table column order
       const headers = [
-        'First Name',
-        'Last Name',
-        'Email',
-        'Phone',
-        'Address',
-        'City',
-        'State',
+        'FIRST NAME',
+        'LAST NAME',
+        'ADDRESS',
+        'CITY',
+        'STATE',
         'ZIP',
         'DOB',
         'SSN',
-        'Price',
-        'Score',
-        'Created At'
+        'MAIL',
+        'PHONE',
+        'PRICE',
+        'SCORE',
+        'CREATED AT'
       ];
 
       // Convert leads to CSV rows
@@ -162,14 +162,14 @@ const DataManagement = () => {
           const row = [
             `"${(lead.firstName || '').replace(/"/g, '""')}"`,
             `"${(lead.lastName || '').replace(/"/g, '""')}"`,
-            `"${(lead.email || '').replace(/"/g, '""')}"`,
-            `"${(lead.phone || '').replace(/"/g, '""')}"`,
             `"${(lead.address || '').replace(/"/g, '""')}"`,
             `"${(lead.city || '').replace(/"/g, '""')}"`,
             `"${(lead.state || '').replace(/"/g, '""')}"`,
             `"${(lead.zip || '').replace(/"/g, '""')}"`,
             `"${lead.dob ? new Date(lead.dob).toISOString().split('T')[0] : ''}"`,
             `"${(lead.ssn || '').replace(/"/g, '""')}"`,
+            `"${(lead.email || '').replace(/"/g, '""')}"`,
+            `"${(lead.phone || '').replace(/"/g, '""')}"`,
             lead.price || 0,
             lead.score || '',
             `"${lead.createdAt ? new Date(lead.createdAt).toISOString() : ''}"`
