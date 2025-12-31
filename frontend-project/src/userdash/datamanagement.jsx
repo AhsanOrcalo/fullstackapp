@@ -171,12 +171,10 @@ const DataManagement = () => {
     if (!dob) return 'N/A';
     try {
       const birthDate = new Date(dob);
+      const day = String(birthDate.getDate()).padStart(2, '0');
+      const month = String(birthDate.getMonth() + 1).padStart(2, '0');
       const year = birthDate.getFullYear();
-      const age = calculateAge(dob);
-      if (age !== null) {
-        return `${year} (age ${age})`;
-      }
-      return year.toString();
+      return `${day}/${month}/${year}`;
     } catch {
       return 'N/A';
     }
@@ -197,8 +195,8 @@ const DataManagement = () => {
         'SSN',
         'MAIL',
         'PHONE',
-        'PRICE',
         'SCORE',
+        'PRICE',
         'CREATED AT'
       ];
 
@@ -217,8 +215,8 @@ const DataManagement = () => {
             `"${(lead.ssn || '').replace(/"/g, '""')}"`,
             `"${(lead.email || '').replace(/"/g, '""')}"`,
             `"${(lead.phone || '').replace(/"/g, '""')}"`,
-            lead.price || 0,
             lead.score || '',
+            lead.price || 0,
             `"${lead.createdAt ? new Date(lead.createdAt).toISOString() : ''}"`
           ];
           return row.join(',');
@@ -336,21 +334,60 @@ const DataManagement = () => {
         headerMap[header] = index;
       });
 
-      // Helper function to extract year from DOB format "2010 (age 15)" or parse date
+      // Helper function to parse DOB from various formats and convert to YYYY-MM-DD
       const parseDOB = (dobValue) => {
         if (!dobValue) return '';
         const cleaned = String(dobValue).replace(/"/g, '').trim();
+        
         // Check if it's in format "2010 (age 15)"
         const yearMatch = cleaned.match(/^(\d{4})\s*\(/);
         if (yearMatch) {
           // Extract year and create a date (using Jan 1st of that year)
           return `${yearMatch[1]}-01-01`;
         }
+        
         // If it's a date object from XLSX, convert to string
         if (dobValue instanceof Date) {
           return dobValue.toISOString().split('T')[0];
         }
-        // If it's already a date string, return as is
+        
+        // Check if it's in DD/MM/YYYY or MM/DD/YYYY format (e.g., "01/01/2003")
+        const dateSlashMatch = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (dateSlashMatch) {
+          const firstPart = parseInt(dateSlashMatch[1]);
+          const secondPart = parseInt(dateSlashMatch[2]);
+          const year = dateSlashMatch[3];
+          
+          // If first part > 12, it must be DD/MM/YYYY
+          if (firstPart > 12) {
+            const day = dateSlashMatch[1].padStart(2, '0');
+            const month = dateSlashMatch[2].padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          }
+          // If second part > 12, it must be MM/DD/YYYY
+          else if (secondPart > 12) {
+            const month = dateSlashMatch[1].padStart(2, '0');
+            const day = dateSlashMatch[2].padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          }
+          // Ambiguous case (both <= 12) - assume DD/MM/YYYY as per user requirement
+          else {
+            const day = dateSlashMatch[1].padStart(2, '0');
+            const month = dateSlashMatch[2].padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          }
+        }
+        
+        // Check if it's already in YYYY-MM-DD format
+        const yyyyMMddMatch = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (yyyyMMddMatch) {
+          const year = yyyyMMddMatch[1];
+          const month = yyyyMMddMatch[2].padStart(2, '0');
+          const day = yyyyMMddMatch[3].padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+        
+        // If it's already a date string, return as is (might be in correct format)
         return cleaned;
       };
 
@@ -395,11 +432,11 @@ const DataManagement = () => {
             state: getValue('STATE'),
             zip: getValue('ZIP'),
             dob: parseDOB(getValue('DOB')),
-            ssn: getValue('SSN'),
+            ssn: getValue('SSN').replace(/\D/g, ''), // Remove all non-digits from SSN
             email: getValue('MAIL'),
             phone: getValue('PHONE'),
-            price: getNumberValue('PRICE') || 0,
             score: getValue('SCORE') || undefined, // Score accepts any text or number
+            price: getNumberValue('PRICE') || 0,
           };
 
           // Validate required fields
@@ -450,18 +487,10 @@ const DataManagement = () => {
     const { name, value } = e.target;
     let processedValue = value;
     
-    // Auto-format SSN
+    // For SSN, only allow digits
     if (name === 'ssn') {
       // Remove all non-digits
-      const digits = value.replace(/\D/g, '');
-      // Format as XXX-XX-XXXX
-      if (digits.length <= 3) {
-        processedValue = digits;
-      } else if (digits.length <= 5) {
-        processedValue = `${digits.slice(0, 3)}-${digits.slice(3)}`;
-      } else {
-        processedValue = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5, 9)}`;
-      }
+      processedValue = value.replace(/\D/g, '');
     }
     
     setFormData(prev => ({
@@ -504,8 +533,8 @@ const DataManagement = () => {
     if (!formData.dob) {
       errors.dob = 'Date of birth is required';
     }
-    if (!formData.ssn.trim() || !/^\d{3}-\d{2}-\d{4}$/.test(formData.ssn)) {
-      errors.ssn = 'SSN must be in format XXX-XX-XXXX';
+    if (!formData.ssn.trim() || !/^\d{9}$/.test(formData.ssn)) {
+      errors.ssn = 'SSN must be 9 digits';
     }
     if (!formData.price || isNaN(formData.price) || parseFloat(formData.price) < 0) {
       errors.price = 'Price must be a positive number';
@@ -554,8 +583,8 @@ const DataManagement = () => {
         zip: '',
         dob: '',
         ssn: '',
-        price: '',
         score: '',
+        price: '',
       });
       setFormErrors({});
       setShowForm(false);
@@ -583,8 +612,8 @@ const DataManagement = () => {
       zip: '',
       dob: '',
       ssn: '',
-      price: '',
       score: '',
+      price: '',
     });
     setFormErrors({});
   };
@@ -913,8 +942,8 @@ const DataManagement = () => {
                   <th>SSN</th>
                   <th>MAIL</th>
                   <th>PHONE</th>
-                  <th>PRICE</th>
                   <th>SCORE</th>
+                  <th>PRICE</th>
                   <th>STATUS</th>
                 </tr>
               </thead>
@@ -942,9 +971,7 @@ const DataManagement = () => {
                     <td>{lead.ssn || 'N/A'}</td>
                     <td>{lead.email || 'N/A'}</td>
                     <td>{lead.phone || 'N/A'}</td>
-                    <td style={{ color: 'var(--primary-blue)', fontWeight: '600' }}>
-                      {formatPrice(lead.price || 0)}
-                    </td>
+                   
                     <td>
                       {lead.score ? (
                         <span style={{ 
@@ -962,6 +989,9 @@ const DataManagement = () => {
                       ) : (
                         'N/A'
                       )}
+                    </td>
+                    <td style={{ color: 'var(--primary-blue)', fontWeight: '600' }}>
+                      {formatPrice(lead.price || 0)}
                     </td>
                     <td>
                       <span style={{
@@ -1320,8 +1350,8 @@ const DataManagement = () => {
                     value={formData.ssn}
                     onChange={handleInputChange}
                     className="filterinput"
-                    placeholder="123-45-6789"
-                    maxLength="11"
+                    placeholder="123456789"
+                    maxLength="9"
                   />
                   {formErrors.ssn && (
                     <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', display: 'block' }}>

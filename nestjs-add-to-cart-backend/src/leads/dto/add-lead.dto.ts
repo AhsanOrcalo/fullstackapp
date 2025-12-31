@@ -77,11 +77,11 @@ export class AddLeadDto {
 
   @ApiProperty({
     description: 'Social Security Number of the lead',
-    example: '123-45-6789',
+    example: '123456789',
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{3}-\d{2}-\d{4}$/, { message: 'SSN must be in format XXX-XX-XXXX' })
+  @Matches(/^\d{9}$/, { message: 'SSN must be 9 digits' })
   ssn: string;
 
   @ApiProperty({
