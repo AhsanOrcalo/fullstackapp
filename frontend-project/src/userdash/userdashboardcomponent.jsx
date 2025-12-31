@@ -41,9 +41,18 @@ const UserDashboardComponent = () => {
     try {
       setLeadsLoading(true);
       setLeadsError('');
-      const data = await getAllLeads();
+      const response = await getAllLeads({ page: 1, limit: 10 });
+      // Handle paginated response
+      let data = [];
+      if (response.leads) {
+        // New paginated response
+        data = response.leads;
+      } else if (Array.isArray(response)) {
+        // Legacy response (array)
+        data = response;
+      }
       // Backend already filters out leads purchased by any user for regular users
-      setLeads(Array.isArray(data) ? data : []);
+      setLeads(data);
     } catch (err) {
       setLeadsError(err.message || 'Failed to fetch available leads');
       console.error('Error fetching leads:', err);

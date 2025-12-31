@@ -8,6 +8,12 @@ const Browsedata = () => {
   const [error, setError] = useState('');
   const [selectedLeads, setSelectedLeads] = useState(new Set());
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const pageSize = 10;
+  
   // Filter state
   const [filters, setFilters] = useState({
     name: '',
@@ -22,7 +28,8 @@ const Browsedata = () => {
 
   useEffect(() => {
     fetchLeads();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   const fetchLeads = async (filterParams = {}) => {
     try {
@@ -33,10 +40,32 @@ const Browsedata = () => {
       const cleanFilters = Object.fromEntries(
         Object.entries(activeFilters).filter(([_, v]) => v !== '')
       );
-      const data = await getAllLeads(cleanFilters);
+      
+      // Add pagination
+      cleanFilters.page = currentPage;
+      cleanFilters.limit = pageSize;
+      
+      const response = await getAllLeads(cleanFilters);
+      
+      // Handle paginated response
+      let data = [];
+      if (response.leads) {
+        // New paginated response
+        data = response.leads;
+        setTotalPages(response.totalPages || 1);
+        setTotalRecords(response.total || 0);
+      } else if (Array.isArray(response)) {
+        // Legacy response (array)
+        data = response;
+        setTotalPages(1);
+        setTotalRecords(data.length);
+      }
+      
       // Backend already filters out leads purchased by any user for regular users
       // So we just use the data as-is
-      setLeads(Array.isArray(data) ? data : []);
+      setLeads(data);
+      // Clear selection when leads are refreshed
+      setSelectedLeads(new Set());
     } catch (err) {
       setError(err.message || 'Failed to fetch leads');
       console.error('Error fetching leads:', err);
@@ -61,6 +90,7 @@ const Browsedata = () => {
   };
 
   const applyFilters = () => {
+    setCurrentPage(1); // Reset to first page when applying filters
     fetchLeads();
   };
 
@@ -126,7 +156,7 @@ const Browsedata = () => {
             Browse Data
           </h2>
           <p className="subtitle" style={{ marginTop: '5px' }}>
-            {leads.length} {leads.length === 1 ? 'available lead' : 'available leads'}
+            Showing {leads.length} of {totalRecords} {totalRecords === 1 ? 'available lead' : 'available leads'}
           </p>
         </div>
         <div className="topbuttons" style={{ display: 'flex', gap: '10px' }}>
@@ -358,6 +388,58 @@ const Browsedata = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', gap: '10px', alignItems: 'center' }}>
+            <button
+              className="applybtn"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              style={{ padding: '8px 16px', fontSize: '14px' }}
+            >
+              Previous
+            </button>
+            <span style={{ color: 'var(--text-sub)', fontSize: '14px' }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  className="applybtn"
+                  onClick={() => setCurrentPage(pageNum)}
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    backgroundColor: currentPage === pageNum ? 'var(--primary-blue)' : 'var(--bg-card)',
+                    color: currentPage === pageNum ? 'white' : 'var(--text-main)',
+                  }}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              className="applybtn"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              style={{ padding: '8px 16px', fontSize: '14px' }}
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
