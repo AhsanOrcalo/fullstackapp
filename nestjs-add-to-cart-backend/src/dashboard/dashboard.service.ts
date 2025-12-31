@@ -67,11 +67,11 @@ export class DashboardService {
         return isNaN(parsed) ? null : parsed;
       };
 
-      // Count sold data with score >= 700
+      // Count sold data with score between 700-799 (700 <= score < 800)
       const soldData700Plus = allPurchases.filter((purchase) => {
         const lead = purchase.leadId as any;
         const score = parseScore(lead?.score);
-        return score !== null && score >= 700;
+        return score !== null && score >= 700 && score < 800;
       }).length;
 
       // Count sold data with score >= 800

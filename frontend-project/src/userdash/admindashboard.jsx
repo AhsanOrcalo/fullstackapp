@@ -101,7 +101,7 @@ const AdminDashboard = ({ setview }) => {
     {
       title: 'Sold (700+)',
       value: stats.soldData700Plus,
-      subtitle: 'Completed orders with score ≥ 700',
+      subtitle: 'Completed orders with score 700-799',
       icon: FaCheckCircle,
       color: '#3b82f6',
       bgColor: 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%)',
