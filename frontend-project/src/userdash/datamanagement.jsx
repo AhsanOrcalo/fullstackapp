@@ -135,6 +135,37 @@ const DataManagement = () => {
     }).format(price);
   };
 
+  const calculateAge = (dob) => {
+    if (!dob) return null;
+    try {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    } catch {
+      return null;
+    }
+  };
+
+  const formatDOBWithAge = (dob) => {
+    if (!dob) return 'N/A';
+    try {
+      const birthDate = new Date(dob);
+      const year = birthDate.getFullYear();
+      const age = calculateAge(dob);
+      if (age !== null) {
+        return `${year} (age ${age})`;
+      }
+      return year.toString();
+    } catch {
+      return 'N/A';
+    }
+  };
+
   // Export to CSV
   const handleExport = () => {
     try {
@@ -166,7 +197,7 @@ const DataManagement = () => {
             `"${(lead.city || '').replace(/"/g, '""')}"`,
             `"${(lead.state || '').replace(/"/g, '""')}"`,
             `"${(lead.zip || '').replace(/"/g, '""')}"`,
-            `"${lead.dob ? new Date(lead.dob).toISOString().split('T')[0] : ''}"`,
+            `"${formatDOBWithAge(lead.dob)}"`,
             `"${(lead.ssn || '').replace(/"/g, '""')}"`,
             `"${(lead.email || '').replace(/"/g, '""')}"`,
             `"${(lead.phone || '').replace(/"/g, '""')}"`,
@@ -733,7 +764,7 @@ const DataManagement = () => {
                     <td>{lead.city || 'N/A'}</td>
                     <td>{lead.state || 'N/A'}</td>
                     <td>{lead.zip || 'N/A'}</td>
-                    <td>{lead.dob ? new Date(lead.dob).getFullYear() : 'N/A'}</td>
+                    <td>{formatDOBWithAge(lead.dob)}</td>
                     <td>{lead.ssn || 'N/A'}</td>
                     <td>{lead.email || 'N/A'}</td>
                     <td>{lead.phone || 'N/A'}</td>
