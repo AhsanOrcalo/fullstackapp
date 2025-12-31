@@ -77,14 +77,39 @@ export class FilterLeadsDto {
   priceSort?: 'high-to-low' | 'low-to-high';
 
   @ApiProperty({
-    description: 'Filter by score: "700+" or "800+"',
+    description: 'Filter by score: "700+", "800+", or "random"',
     example: '700+',
     required: false,
-    enum: ['700+', '800+'],
+    enum: ['700+', '800+', 'random'],
   })
   @IsString()
-  @IsIn(['700+', '800+'])
+  @IsIn(['700+', '800+', 'random'])
   @IsOptional()
-  scoreFilter?: '700+' | '800+';
+  scoreFilter?: '700+' | '800+' | 'random';
+
+  @ApiProperty({
+    description: 'Page number for pagination (starts from 1)',
+    example: 1,
+    required: false,
+    type: Number,
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  page?: number;
+
+  @ApiProperty({
+    description: 'Number of records per page',
+    example: 10,
+    required: false,
+    type: Number,
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @IsOptional()
+  limit?: number;
 }
 

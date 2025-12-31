@@ -36,7 +36,7 @@ export class LeadsService {
     };
   }
 
-  async getAllLeads(filters?: FilterLeadsDto): Promise<Lead[]> {
+  async getAllLeads(filters?: FilterLeadsDto): Promise<{ leads: Lead[]; total: number; page: number; limit: number; totalPages: number }> {
     const query: any = {};
 
     if (filters) {
@@ -77,78 +77,91 @@ export class LeadsService {
         query.state = { $regex: filters.state, $options: 'i' };
       }
 
-      // Filter by score (handles both numeric strings and numbers)
-      // Note: Score filter only works for numeric scores, text scores will be filtered out
-      if (filters.scoreFilter) {
-        if (filters.scoreFilter === '700+') {
-          // 700+ means score between 700 to 800 (700 <= score < 800)
-          // Use $expr with $toDouble to convert string scores to numbers
-          query.$expr = {
-            $and: [
-              { $ne: ['$score', null] },
-              { $ne: ['$score', ''] },
-              {
-                $gte: [
-                  {
-                    $cond: {
-                      if: { $eq: [{ $type: '$score' }, 'string'] },
-                      then: { $toDouble: { $ifNull: ['$score', '0'] } },
-                      else: { $ifNull: ['$score', 0] }
-                    }
-                  },
-                  700
-                ]
-              },
-              {
-                $lt: [
-                  {
-                    $cond: {
-                      if: { $eq: [{ $type: '$score' }, 'string'] },
-                      then: { $toDouble: { $ifNull: ['$score', '0'] } },
-                      else: { $ifNull: ['$score', 0] }
-                    }
-                  },
-                  800
-                ]
-              }
-            ]
-          };
-        } else if (filters.scoreFilter === '800+') {
-          // 800+ means score >= 800
-          query.$expr = {
-            $and: [
-              { $ne: ['$score', null] },
-              { $ne: ['$score', ''] },
-              {
-                $gte: [
-                  {
-                    $cond: {
-                      if: { $eq: [{ $type: '$score' }, 'string'] },
-                      then: { $toDouble: { $ifNull: ['$score', '0'] } },
-                      else: { $ifNull: ['$score', 0] }
-                    }
-                  },
-                  800
-                ]
-              }
-            ]
-          };
+      // Filter by score - we'll handle this in JavaScript after fetching to avoid MongoDB conversion errors
+      // Just mark which filter to apply
+    }
+
+    // Handle score filters in JavaScript (safer than MongoDB $expr with $toDouble)
+    const scoreFilterType = filters?.scoreFilter;
+    const needsScoreFiltering = scoreFilterType === '700+' || scoreFilterType === '800+' || scoreFilterType === 'random';
+    
+    // Get all leads first if score filter is needed (to filter in JavaScript)
+    let allLeads: LeadDocument[] = [];
+    if (needsScoreFiltering) {
+      allLeads = await this.leadModel.find(query).exec();
+      
+      // Apply score filter in JavaScript
+      if (scoreFilterType === '700+') {
+        // 700+ means score between 700 to 800 (700 <= score < 800)
+        allLeads = allLeads.filter((lead: LeadDocument) => {
+          if (!lead.score || lead.score === '') return false;
+          const scoreNum = parseFloat(String(lead.score));
+          return !isNaN(scoreNum) && scoreNum >= 700 && scoreNum < 800;
+        });
+      } else if (scoreFilterType === '800+') {
+        // 800+ means score >= 800
+        allLeads = allLeads.filter((lead: LeadDocument) => {
+          if (!lead.score || lead.score === '') return false;
+          const scoreNum = parseFloat(String(lead.score));
+          return !isNaN(scoreNum) && scoreNum >= 800;
+        });
+      } else if (scoreFilterType === 'random') {
+        // Random filter: show records where score is text/non-numeric or empty
+        allLeads = allLeads.filter((lead: LeadDocument) => {
+          if (!lead.score || lead.score === '') return true;
+          const scoreNum = parseFloat(String(lead.score));
+          return isNaN(scoreNum);
+        });
+      }
+    }
+
+    // Get total count for pagination
+    const total = needsScoreFiltering 
+      ? allLeads.length 
+      : await this.leadModel.countDocuments(query);
+
+    // Pagination
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    let leads: LeadDocument[];
+    if (needsScoreFiltering) {
+      // Sort and paginate filtered results
+      if (filters?.priceSort) {
+        if (filters.priceSort === 'high-to-low') {
+          allLeads.sort((a, b) => (b.price || 0) - (a.price || 0));
+        } else {
+          allLeads.sort((a, b) => (a.price || 0) - (b.price || 0));
         }
       }
-    }
-
-    let queryBuilder = this.leadModel.find(query);
-
-    // Sort by price
-    if (filters?.priceSort) {
-      if (filters.priceSort === 'high-to-low') {
-        queryBuilder = queryBuilder.sort({ price: -1 });
-      } else {
-        queryBuilder = queryBuilder.sort({ price: 1 });
+      leads = allLeads.slice(skip, skip + limit);
+    } else {
+      let queryBuilder = this.leadModel.find(query);
+      
+      // Sort by price
+      if (filters?.priceSort) {
+        if (filters.priceSort === 'high-to-low') {
+          queryBuilder = queryBuilder.sort({ price: -1 });
+        } else {
+          queryBuilder = queryBuilder.sort({ price: 1 });
+        }
       }
+      
+      // Apply pagination
+      queryBuilder = queryBuilder.skip(skip).limit(limit);
+      leads = await queryBuilder.exec();
     }
+    
+    const totalPages = Math.ceil(total / limit);
 
-    return queryBuilder.exec();
+    return {
+      leads,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async getLeadById(leadId: string): Promise<LeadDocument | null> {

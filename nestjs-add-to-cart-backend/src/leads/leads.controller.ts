@@ -97,7 +97,9 @@ export class LeadsController {
   @ApiQuery({ name: 'zip', required: false, type: String, description: 'Filter by zip code' })
   @ApiQuery({ name: 'state', required: false, type: String, description: 'Filter by state' })
   @ApiQuery({ name: 'priceSort', required: false, type: String, enum: ['high-to-low', 'low-to-high'], description: 'Sort by price: "high-to-low" or "low-to-high"' })
-  @ApiQuery({ name: 'scoreFilter', required: false, type: String, enum: ['700+', '800+'], description: 'Filter by score: "700+" or "800+"' })
+  @ApiQuery({ name: 'scoreFilter', required: false, type: String, enum: ['700+', '800+', 'random'], description: 'Filter by score: "700+", "800+", or "random" (for text/non-numeric scores)' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (starts from 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of records per page (default: 10)' })
   @ApiResponse({
     status: 200,
     description: 'List of filtered leads',
@@ -162,17 +164,17 @@ export class LeadsController {
     },
   })
   async getAllLeads(@Request() req: any, @Query() filterDto: FilterLeadsDto) {
-    const leads = await this.leadsService.getAllLeads(filterDto);
+    const result = await this.leadsService.getAllLeads(filterDto);
     const userId = req.user.userId;
     const userRole = req.user.role;
 
     // For regular users: filter out leads that have been purchased by ANY user
     // For admins: show all leads (they can see everything)
-    let availableLeads = leads;
+    let availableLeads = result.leads;
     if (userRole === Role.USER) {
       // Filter out leads that have been purchased by anyone
       const leadsWithPurchaseStatus = await Promise.all(
-        leads.map(async (lead) => {
+        result.leads.map(async (lead) => {
           const leadId = (lead as any)._id?.toString() || (lead as any).id;
           const isPurchasedByAnyone = await this.purchasesService.isLeadPurchased(leadId);
           return {
@@ -211,7 +213,13 @@ export class LeadsController {
       }),
     );
 
-    return leadsWithPurchaseStatus;
+    return {
+      leads: leadsWithPurchaseStatus,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    };
   }
 
   @Delete('bulk/delete')

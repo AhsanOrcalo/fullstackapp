@@ -29,10 +29,15 @@ const DataManagement = () => {
   const [importStatus, setImportStatus] = useState({ success: 0, failed: 0, total: 0 });
   const [showImportModal, setShowImportModal] = useState(false);
   
-  // Filter state - search, score filter, and location filter
+  // Filter state - search and score filter
   const [searchQuery, setSearchQuery] = useState('');
   const [scoreFilter, setScoreFilter] = useState('');
-  const [locationFilter, setLocationFilter] = useState('all'); // 'all' or 'canada'
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const pageSize = 10;
   
   // Selection state for delete functionality
   const [selectedLeads, setSelectedLeads] = useState(new Set());
@@ -48,7 +53,10 @@ const DataManagement = () => {
       setError('');
       
       // Build filters - search and score filters work for both "All" and "Canada"
-      const filters = {};
+      const filters = {
+        page: currentPage,
+        limit: pageSize,
+      };
       if (searchQuery) {
         filters.name = searchQuery;
       }
@@ -56,18 +64,23 @@ const DataManagement = () => {
         filters.scoreFilter = scoreFilter;
       }
       
-      const data = await getAllLeads(filters);
-      let filteredData = Array.isArray(data) ? data : [];
+      const response = await getAllLeads(filters);
       
-      // Apply Canada filter if selected
-      if (locationFilter === 'canada') {
-        filteredData = filteredData.filter(lead => {
-          const state = (lead.state || '').toLowerCase();
-          return state.includes('canada') || state.includes('canda') || state === 'ca';
-        });
+      // Handle paginated response
+      let data = [];
+      if (response.leads) {
+        // New paginated response
+        data = response.leads;
+        setTotalPages(response.totalPages || 1);
+        setTotalRecords(response.total || 0);
+      } else if (Array.isArray(response)) {
+        // Legacy response (array)
+        data = response;
+        setTotalPages(1);
+        setTotalRecords(data.length);
       }
       
-      setLeads(filteredData);
+      setLeads(data);
       // Clear selection when leads are refreshed
       setSelectedLeads(new Set());
     } catch (err) {
@@ -76,7 +89,7 @@ const DataManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, scoreFilter, locationFilter]);
+  }, [searchQuery, scoreFilter, currentPage]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -87,22 +100,14 @@ const DataManagement = () => {
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when search changes
   };
 
   const handleScoreFilterChange = (value) => {
     setScoreFilter(scoreFilter === value ? '' : value);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
-  const handleLocationFilterChange = (value) => {
-    if (value === 'all') {
-      // Clear all filters when "All" is selected
-      setLocationFilter('all');
-      setSearchQuery('');
-      setScoreFilter('');
-    } else {
-      setLocationFilter(locationFilter === value ? 'all' : value);
-    }
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -794,30 +799,6 @@ const DataManagement = () => {
           </div>
         </div>
 
-        {/* Location Filters */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '15px', 
-          alignItems: 'center'
-        }}>
-          <label className="customradio" style={{ cursor: 'pointer' }}>
-            <input
-              type="radio"
-              checked={locationFilter === 'all'}
-              onChange={() => handleLocationFilterChange('all')}
-            />
-            <span style={{ color: 'var(--text-main)', fontSize: '14px' }}>All</span>
-          </label>
-          <label className="customradio" style={{ cursor: 'pointer' }}>
-            <input
-              type="radio"
-              checked={locationFilter === 'canada'}
-              onChange={() => handleLocationFilterChange('canada')}
-            />
-            <span style={{ color: 'var(--text-main)', fontSize: '14px' }}>Canada</span>
-          </label>
-        </div>
-
         {/* Score Filters */}
         <div style={{ 
           display: 'flex', 
@@ -831,7 +812,7 @@ const DataManagement = () => {
               onChange={() => handleScoreFilterChange('700+')}
             />
             <span style={{ 
-              color: locationFilter === 'all' ? 'var(--text-sub)' : 'var(--text-main)', 
+              color: 'var(--text-main)', 
               fontSize: '14px' 
             }}>700+</span>
           </label>
@@ -842,9 +823,20 @@ const DataManagement = () => {
               onChange={() => handleScoreFilterChange('800+')}
             />
             <span style={{ 
-              color: locationFilter === 'all' ? 'var(--text-sub)' : 'var(--text-main)', 
+              color: 'var(--text-main)', 
               fontSize: '14px' 
             }}>800+</span>
+          </label>
+          <label className="customradio" style={{ cursor: 'pointer' }}>
+            <input
+              type="radio"
+              checked={scoreFilter === 'random'}
+              onChange={() => handleScoreFilterChange('random')}
+            />
+            <span style={{ 
+              color: 'var(--text-main)', 
+              fontSize: '14px' 
+            }}>All Random</span>
           </label>
         </div>
 
@@ -855,7 +847,7 @@ const DataManagement = () => {
           fontWeight: '500',
           marginLeft: 'auto'
         }}>
-          {leads.length} records
+          Showing {leads.length} of {totalRecords} records
         </div>
       </motion.div>
 
@@ -973,6 +965,99 @@ const DataManagement = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && !error && leads.length > 0 && totalPages > 1 && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '10px',
+            marginTop: '20px',
+            padding: '15px'
+          }}>
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-clr)',
+                background: currentPage === 1 ? 'var(--bg-input)' : 'var(--bg-card)',
+                color: currentPage === 1 ? 'var(--text-sub)' : 'var(--text-main)',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontWeight: '600',
+                fontSize: '14px'
+              }}
+            >
+              Previous
+            </button>
+            
+            <div style={{
+              display: 'flex',
+              gap: '5px',
+              alignItems: 'center'
+            }}>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-clr)',
+                      background: currentPage === pageNum ? 'var(--primary-blue)' : 'var(--bg-card)',
+                      color: currentPage === pageNum ? '#ffffff' : 'var(--text-main)',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-clr)',
+                background: currentPage === totalPages ? 'var(--bg-input)' : 'var(--bg-card)',
+                color: currentPage === totalPages ? 'var(--text-sub)' : 'var(--text-main)',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                fontWeight: '600',
+                fontSize: '14px'
+              }}
+            >
+              Next
+            </button>
+            
+            <span style={{
+              color: 'var(--text-sub)',
+              fontSize: '14px',
+              marginLeft: '10px'
+            }}>
+              Page {currentPage} of {totalPages}
+            </span>
           </div>
         )}
       </div>
