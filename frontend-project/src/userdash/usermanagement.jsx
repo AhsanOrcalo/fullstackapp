@@ -133,8 +133,8 @@ const UserManagement = () => {
                     transition={{ delay: index * 0.05, duration: 0.3 }}
                     whileHover={{ backgroundColor: 'rgba(67, 24, 255, 0.1)', scale: 1.01 }}
                   >
-                    <td style={{ color: 'var(--text-sub)', fontSize: '12px', fontFamily: 'monospace' }}>
-                      {user.id.substring(0, 8)}...
+                    <td style={{ color: 'var(--text-main)', fontSize: '14px', fontWeight: '600' }}>
+                      {index + 1}
                     </td>
                     <td style={{ fontWeight: '600', color: 'var(--text-main)' }}>
                       {user.userName || 'N/A'}
