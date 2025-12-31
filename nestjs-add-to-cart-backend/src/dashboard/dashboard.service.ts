@@ -47,9 +47,16 @@ export class DashboardService {
       // Get all leads
       const allLeads = await this.leadModel.find().exec();
 
-      // Get purchased lead IDs
+      // Get purchased lead IDs - handle both ObjectId and populated lead object
       const purchasedLeadIds = new Set(
-        allPurchases.map((purchase) => purchase.leadId?.toString()),
+        allPurchases.map((purchase) => {
+          // If leadId is populated, use _id, otherwise use leadId directly
+          const leadId = purchase.leadId as any;
+          if (leadId?._id) {
+            return leadId._id.toString();
+          }
+          return leadId?.toString() || purchase.leadId?.toString();
+        }).filter(Boolean), // Remove any undefined/null values
       );
 
       // Helper function to parse score (handles both string and number)
@@ -76,14 +83,16 @@ export class DashboardService {
 
       // Count available (not purchased) data with score between 700-799
       const availableData700Plus = allLeads.filter((lead) => {
-        if (purchasedLeadIds.has(lead._id.toString())) return false; // Exclude purchased
+        const leadIdStr = lead._id?.toString() || (lead as any).id?.toString();
+        if (!leadIdStr || purchasedLeadIds.has(leadIdStr)) return false; // Exclude purchased
         const score = parseScore(lead.score);
         return score !== null && score >= 700 && score < 800;
       }).length;
 
       // Count available (not purchased) data with score >= 800
       const availableData800Plus = allLeads.filter((lead) => {
-        if (purchasedLeadIds.has(lead._id.toString())) return false; // Exclude purchased
+        const leadIdStr = lead._id?.toString() || (lead as any).id?.toString();
+        if (!leadIdStr || purchasedLeadIds.has(leadIdStr)) return false; // Exclude purchased
         const score = parseScore(lead.score);
         return score !== null && score >= 800;
       }).length;
