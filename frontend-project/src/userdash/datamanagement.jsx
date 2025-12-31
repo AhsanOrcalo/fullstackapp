@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { getAllLeads, addLead } from '../services/api';
-import { FaSearch, FaFileAlt, FaDatabase, FaUpload, FaDownload, FaPlus } from 'react-icons/fa';
+import { getAllLeads, addLead, deleteLead, deleteLeads, getUserData } from '../services/api';
+import { FaSearch, FaFileAlt, FaDatabase, FaUpload, FaDownload, FaPlus, FaTrash } from 'react-icons/fa';
 
 const DataManagement = () => {
   const [leads, setLeads] = useState([]);
@@ -32,6 +32,14 @@ const DataManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [scoreFilter, setScoreFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('all'); // 'all' or 'canada'
+  
+  // Selection state for delete functionality
+  const [selectedLeads, setSelectedLeads] = useState(new Set());
+  const [deleting, setDeleting] = useState(false);
+  
+  // Check if user is admin
+  const userData = getUserData();
+  const isAdmin = userData?.role === 'admin';
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -59,6 +67,8 @@ const DataManagement = () => {
       }
       
       setLeads(filteredData);
+      // Clear selection when leads are refreshed
+      setSelectedLeads(new Set());
     } catch (err) {
       setError(err.message || 'Failed to fetch leads');
       console.error('Error fetching leads:', err);
@@ -498,6 +508,64 @@ const DataManagement = () => {
     setFormErrors({});
   };
 
+  // Handle checkbox selection
+  const handleSelectLead = (leadId) => {
+    setSelectedLeads(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(leadId)) {
+        newSet.delete(leadId);
+      } else {
+        newSet.add(leadId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all checkbox
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allLeadIds = new Set(leads.map(lead => lead.id));
+      setSelectedLeads(allLeadIds);
+    } else {
+      setSelectedLeads(new Set());
+    }
+  };
+
+  // Handle delete selected leads
+  const handleDeleteSelected = async () => {
+    if (selectedLeads.size === 0) return;
+    
+    const confirmMessage = selectedLeads.size === 1 
+      ? 'Are you sure you want to delete this record?'
+      : `Are you sure you want to delete ${selectedLeads.size} records?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      const leadIdsArray = Array.from(selectedLeads);
+      
+      if (leadIdsArray.length === 1) {
+        // Delete single lead
+        await deleteLead(leadIdsArray[0]);
+      } else {
+        // Delete multiple leads
+        await deleteLeads(leadIdsArray);
+      }
+      
+      // Clear selection and refresh leads
+      setSelectedLeads(new Set());
+      await fetchLeads();
+    } catch (err) {
+      alert('Failed to delete record(s): ' + err.message);
+      console.error('Delete error:', err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -603,6 +671,25 @@ const DataManagement = () => {
             <FaPlus />
             <span>Add Record</span>
           </motion.button>
+          {isAdmin && (
+            <motion.button 
+              className="dm-btn"
+              onClick={handleDeleteSelected}
+              disabled={selectedLeads.size === 0 || deleting}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px',
+                opacity: selectedLeads.size === 0 ? 0.5 : 1,
+                cursor: selectedLeads.size === 0 ? 'not-allowed' : 'pointer'
+              }}
+              whileHover={selectedLeads.size > 0 ? { scale: 1.05, y: -2 } : {}}
+              whileTap={selectedLeads.size > 0 ? { scale: 0.95 } : {}}
+            >
+              <FaTrash />
+              <span>Delete {selectedLeads.size > 0 ? `(${selectedLeads.size})` : ''}</span>
+            </motion.button>
+          )}
         </motion.div>
       </motion.div>
 
@@ -737,11 +824,17 @@ const DataManagement = () => {
             <table>
               <thead>
                 <tr>
-                  <th>
-                    <label className="customcheck" style={{ margin: 0 }}>
-                      <input type="checkbox" />
-                    </label>
-                  </th>
+                  {isAdmin && (
+                    <th>
+                      <label className="customcheck" style={{ margin: 0 }}>
+                        <input 
+                          type="checkbox" 
+                          checked={leads.length > 0 && selectedLeads.size === leads.length}
+                          onChange={handleSelectAll}
+                        />
+                      </label>
+                    </th>
+                  )}
                   <th>FIRST NAME</th>
                   <th>LAST NAME</th>
                   <th>ADDRESS</th>
@@ -760,11 +853,17 @@ const DataManagement = () => {
               <tbody>
                 {leads.map((lead) => (
                   <tr key={lead.id}>
-                    <td>
-                      <label className="customcheck" style={{ margin: 0 }}>
-                        <input type="checkbox" />
-                      </label>
-                    </td>
+                    {isAdmin && (
+                      <td>
+                        <label className="customcheck" style={{ margin: 0 }}>
+                          <input 
+                            type="checkbox" 
+                            checked={selectedLeads.has(lead.id)}
+                            onChange={() => handleSelectLead(lead.id)}
+                          />
+                        </label>
+                      </td>
+                    )}
                     <td>{lead.firstName || 'N/A'}</td>
                     <td>{lead.lastName || 'N/A'}</td>
                     <td>{lead.address || 'N/A'}</td>

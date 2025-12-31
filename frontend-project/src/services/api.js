@@ -201,6 +201,31 @@ export const addLead = async (leadData) => {
   }
 };
 
+// Delete lead API (Admin only)
+export const deleteLead = async (leadId) => {
+  try {
+    const response = await apiRequest(`/leads/${leadId}`, {
+      method: 'DELETE',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Delete multiple leads API (Admin only)
+export const deleteLeads = async (leadIds) => {
+  try {
+    const response = await apiRequest('/leads/bulk/delete', {
+      method: 'DELETE',
+      body: JSON.stringify({ leadIds }),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get all users API (Admin only)
 export const getAllUsers = async () => {
   try {

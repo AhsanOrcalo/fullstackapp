@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, HttpCode, HttpStatus, UseGuards, Request, Query, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { LeadsService } from './leads.service';
@@ -212,6 +212,77 @@ export class LeadsController {
     );
 
     return leadsWithPurchaseStatus;
+  }
+
+  @Delete('bulk/delete')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete multiple leads by IDs (Admin only)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        leadIds: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['leadId1', 'leadId2'],
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Leads successfully deleted',
+    schema: {
+      example: {
+        message: '2 lead(s) deleted successfully',
+        deletedCount: 2,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async deleteLeads(@Body() body: { leadIds: string[] }) {
+    return this.leadsService.deleteLeads(body.leadIds);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete a lead by ID (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lead successfully deleted',
+    schema: {
+      example: {
+        message: 'Lead deleted successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Lead not found',
+  })
+  async deleteLead(@Param('id') id: string) {
+    return this.leadsService.deleteLead(id);
   }
 }
 

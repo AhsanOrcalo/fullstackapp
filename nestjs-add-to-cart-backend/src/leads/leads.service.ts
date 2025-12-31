@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AddLeadDto } from './dto/add-lead.dto';
@@ -105,5 +105,21 @@ export class LeadsService {
 
   async getLeadById(leadId: string): Promise<LeadDocument | null> {
     return this.leadModel.findById(leadId);
+  }
+
+  async deleteLead(leadId: string): Promise<{ message: string }> {
+    const result = await this.leadModel.findByIdAndDelete(leadId);
+    if (!result) {
+      throw new NotFoundException('Lead not found');
+    }
+    return { message: 'Lead deleted successfully' };
+  }
+
+  async deleteLeads(leadIds: string[]): Promise<{ message: string; deletedCount: number }> {
+    const result = await this.leadModel.deleteMany({ _id: { $in: leadIds } });
+    return {
+      message: `${result.deletedCount} lead(s) deleted successfully`,
+      deletedCount: result.deletedCount,
+    };
   }
 }
