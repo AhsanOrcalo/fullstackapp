@@ -251,6 +251,7 @@ const SoldData = () => {
                       <th>ORDER ID</th>
                       <th>BUYER NAME</th>
                       <th>SERVICE</th>
+                      <th> STATE</th>
                       <th>PRICE</th>
                       <th>DATE</th>
                     </tr>
@@ -274,6 +275,9 @@ const SoldData = () => {
                             {lead?.firstName && lead?.lastName 
                               ? `${lead.firstName} ${lead.lastName}`
                               : 'OnePay'}
+                          </td>
+                          <td style={{ color: 'var(--text-main)' }}>
+                            {lead?.state || 'N/A'}
                           </td>
                           <td style={{ color: '#28c76f', fontWeight: '600' }}>
                             {lead ? formatPrice(lead.price) : '$0.00'}

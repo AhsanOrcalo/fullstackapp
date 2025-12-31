@@ -26,10 +26,10 @@ const Orders = () => {
         if (!dob) return 'N/A';
         try {
           const date = new Date(dob);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const month = String(date.getMonth() + 1);
+          const day = String(date.getDate());
           const year = date.getFullYear();
-          return `${day}/${month}/${year}`;
+          return `${month}/${day}/${year}`;
         } catch {
           return 'N/A';
         }
@@ -49,7 +49,7 @@ const Orders = () => {
         phone: purchase.lead?.phone || 'N/A', // Show phone number
         score: purchase.lead?.score || 'N/A', // Show score
         price: purchase.lead?.price || 0,
-        date: purchase.purchasedAt ? new Date(purchase.purchasedAt).toLocaleDateString() : 'N/A',
+        date: purchase.purchasedAt ? purchase.purchasedAt : null,
         lead: purchase.lead,
       })) : [];
       setPurchasedata(transformedData);
@@ -114,12 +114,25 @@ const Orders = () => {
     if (!dob || dob === 'N/A') return 'N/A';
     try {
       const date = new Date(dob);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const month = String(date.getMonth() + 1);
+      const day = String(date.getDate());
       const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
+      return `${month}/${day}/${year}`;
     } catch {
       return dob;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === 'N/A') return 'N/A';
+    try {
+      const date = new Date(dateString);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
+    } catch {
+      return dateString;
     }
   };
 
@@ -168,7 +181,7 @@ const Orders = () => {
         'Phone': item.phone,
         'Score': item.score !== 'N/A' ? item.score : '',
         'Price': item.price,
-        'Purchased Date': item.date,
+        'Purchased Date': item.date ? formatDate(item.date) : 'N/A',
       }));
 
       // Create workbook and worksheet
@@ -330,7 +343,7 @@ const Orders = () => {
                       <td style={{ color: 'var(--primary-blue)', fontWeight: '600' }}>
                         {formatPrice(item.price)}
                       </td>
-                      <td>{item.date}</td>
+                      <td>{item.date ? formatDate(item.date) : 'N/A'}</td>
                     </tr>
                   ))
                 )}
