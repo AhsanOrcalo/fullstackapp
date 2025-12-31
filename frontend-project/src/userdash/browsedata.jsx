@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getAllLeads, addMultipleToCart } from '../services/api';
+import { getAllLeads, addMultipleToCart, purchaseLead } from '../services/api';
 
 const Browsedata = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedLeads, setSelectedLeads] = useState(new Set());
+  const [fastBuying, setFastBuying] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -127,6 +128,76 @@ const Browsedata = () => {
     setSelectedLeads(newSelected);
   };
 
+  const handleFastBuy = async () => {
+    if (selectedLeads.size === 0) {
+      alert('Please select at least one lead to purchase');
+      return;
+    }
+
+    const selectedLeadsData = leads.filter(lead => selectedLeads.has(lead.id));
+    const totalPrice = selectedLeadsData.reduce((sum, lead) => sum + (lead.price || 0), 0);
+
+    const confirmMessage = selectedLeads.size === 1
+      ? `Purchase this lead for ${formatPrice(totalPrice)}?`
+      : `Purchase ${selectedLeads.size} leads for ${formatPrice(totalPrice)}?`;
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setFastBuying(true);
+    try {
+      let successCount = 0;
+      let failedCount = 0;
+      let lastRemainingBalance = null;
+      const errors = [];
+
+      // Purchase leads sequentially
+      for (const lead of selectedLeadsData) {
+        try {
+          const result = await purchaseLead(lead.id);
+          if (result.remainingBalance !== undefined) {
+            lastRemainingBalance = result.remainingBalance;
+          }
+          successCount++;
+        } catch (error) {
+          failedCount++;
+          errors.push(`${lead.firstName} ${lead.lastName}: ${error.message || 'Purchase failed'}`);
+        }
+      }
+
+      // Clear selection
+      setSelectedLeads(new Set());
+      
+      // Refresh leads list to remove purchased items
+      await fetchLeads();
+
+      // Trigger balance update event
+      window.dispatchEvent(new CustomEvent('balanceUpdated'));
+
+      // Show result message
+      let message = `Purchase completed!\n\nSuccess: ${successCount}`;
+      if (failedCount > 0) {
+        message += `\nFailed: ${failedCount}`;
+        if (errors.length > 0) {
+          message += `\n\nErrors:\n${errors.slice(0, 3).join('\n')}`;
+          if (errors.length > 3) {
+            message += `\n... and ${errors.length - 3} more`;
+          }
+        }
+      }
+      if (lastRemainingBalance !== null) {
+        message += `\n\nRemaining balance: ${formatPrice(lastRemainingBalance)}`;
+      }
+      alert(message);
+    } catch (error) {
+      alert('Failed to complete purchase: ' + (error.message || 'Unknown error'));
+      console.error('Fast buy error:', error);
+    } finally {
+      setFastBuying(false);
+    }
+  };
+
   const calculateAge = (dob) => {
     if (!dob) return null;
     try {
@@ -186,15 +257,30 @@ const Browsedata = () => {
           </button> */}
           <button 
             className="applybtn" 
-            disabled={selectedLeads.size === 0}
+            disabled={selectedLeads.size === 0 || fastBuying}
             onClick={() => {
               const selectedLeadsData = leads.filter(lead => selectedLeads.has(lead.id));
               addMultipleToCart(selectedLeadsData);
               setSelectedLeads(new Set());
               alert(`${selectedLeadsData.length} lead(s) added to cart!`);
             }}
+            style={{ 
+              backgroundColor: 'var(--primary-blue)',
+              opacity: selectedLeads.size === 0 || fastBuying ? 0.6 : 1
+            }}
           >
             🛒 Add to Cart ({selectedLeads.size})
+          </button>
+          <button 
+            className="applybtn" 
+            disabled={selectedLeads.size === 0 || fastBuying}
+            onClick={handleFastBuy}
+            style={{ 
+              backgroundColor: '#10b981',
+              opacity: selectedLeads.size === 0 || fastBuying ? 0.6 : 1
+            }}
+          >
+            {fastBuying ? '⏳ Purchasing...' : '⚡ Fast Buy'}
           </button>
         </div>
       </div>
