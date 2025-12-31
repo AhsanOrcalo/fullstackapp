@@ -134,6 +134,21 @@ export class PurchasesService {
       .sort({ purchasedAt: -1 })
       .exec();
 
+    // Filter out purchases with missing or invalid lead/user data (unavailable data)
+    purchases = purchases.filter((purchase) => {
+      // Only include purchases that have valid lead and user data
+      // Check if leadId and userId are populated (objects with _id) or are valid ObjectIds
+      const hasLead = purchase.leadId && (
+        (typeof purchase.leadId === 'object' && (purchase.leadId as any)._id) ||
+        purchase.leadId instanceof Types.ObjectId
+      );
+      const hasUser = purchase.userId && (
+        (typeof purchase.userId === 'object' && (purchase.userId as any)._id) ||
+        purchase.userId instanceof Types.ObjectId
+      );
+      return hasLead && hasUser;
+    });
+
     // Calculate total data sold (lifetime)
     const totalDataSold = await this.purchaseModel.countDocuments();
 

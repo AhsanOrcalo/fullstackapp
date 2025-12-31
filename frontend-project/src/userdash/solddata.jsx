@@ -55,11 +55,12 @@ const SoldData = () => {
 
   const formatPrice = (price) => {
     if (!price) return '$0.00';
+    // Price is already in dollars, not cents
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-    }).format(price / 100); // Assuming price is stored in cents
+    }).format(price);
   };
 
   const formatOrderId = (id) => {
@@ -67,7 +68,16 @@ const SoldData = () => {
     return `#${id.substring(0, 4)}`;
   };
 
-  const purchases = analytics.filteredPurchases || [];
+  // Filter out purchases with invalid or missing lead data (unavailable data)
+  const purchases = (analytics.filteredPurchases || []).filter(purchase => {
+    // Only show purchases that have valid lead and user data
+    // Check both leadId/userId (from API) and lead/user (if transformed)
+    const hasLead = (purchase.leadId && (purchase.leadId._id || purchase.leadId.id)) || 
+                    (purchase.lead && (purchase.lead._id || purchase.lead.id));
+    const hasUser = (purchase.userId && (purchase.userId._id || purchase.userId.id)) || 
+                    (purchase.user && (purchase.user._id || purchase.user.id));
+    return hasLead && hasUser;
+  });
 
   return (
     <div style={{ width: '100%', padding: '0' }}>
@@ -246,27 +256,34 @@ const SoldData = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {purchases.map((purchase) => (
-                      <tr key={purchase.id}>
-                        <td style={{ color: '#4318ff', fontWeight: '600', fontFamily: 'monospace' }}>
-                          {formatOrderId(purchase.id)}
-                        </td>
-                        <td style={{ color: 'var(--text-main)', fontWeight: '500' }}>
-                          {purchase.user?.userName || 'N/A'}
-                        </td>
-                        <td style={{ color: 'var(--text-main)' }}>
-                          {purchase.lead?.firstName && purchase.lead?.lastName 
-                            ? `${purchase.lead.firstName} ${purchase.lead.lastName}`
-                            : 'OnePay'}
-                        </td>
-                        <td style={{ color: '#28c76f', fontWeight: '600' }}>
-                          {purchase.lead ? formatPrice(purchase.lead.price) : '$0.00'}
-                        </td>
-                        <td style={{ color: 'var(--text-main)' }}>
-                          {formatDate(purchase.purchasedAt)}
-                        </td>
-                      </tr>
-                    ))}
+                    {purchases.map((purchase) => {
+                      // Handle both leadId/userId (from API) and lead/user (if transformed)
+                      const lead = purchase.lead || purchase.leadId;
+                      const user = purchase.user || purchase.userId;
+                      const purchaseId = purchase.id || purchase._id;
+                      
+                      return (
+                        <tr key={purchaseId}>
+                          <td style={{ color: '#4318ff', fontWeight: '600', fontFamily: 'monospace' }}>
+                            {formatOrderId(purchaseId)}
+                          </td>
+                          <td style={{ color: 'var(--text-main)', fontWeight: '500' }}>
+                            {user?.userName || 'N/A'}
+                          </td>
+                          <td style={{ color: 'var(--text-main)' }}>
+                            {lead?.firstName && lead?.lastName 
+                              ? `${lead.firstName} ${lead.lastName}`
+                              : 'OnePay'}
+                          </td>
+                          <td style={{ color: '#28c76f', fontWeight: '600' }}>
+                            {lead ? formatPrice(lead.price) : '$0.00'}
+                          </td>
+                          <td style={{ color: 'var(--text-main)' }}>
+                            {formatDate(purchase.purchasedAt)}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
