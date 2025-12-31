@@ -333,11 +333,20 @@ const DataManagement = () => {
       headers.forEach((header, index) => {
         headerMap[header] = index;
       });
+      
+      // Debug: Log detected headers
+      console.log('Detected headers:', headers);
+      console.log('Header map:', headerMap);
 
       // Helper function to parse DOB from various formats and convert to YYYY-MM-DD
       const parseDOB = (dobValue) => {
         if (!dobValue) return '';
         const cleaned = String(dobValue).replace(/"/g, '').trim();
+        
+        // Skip masked values (like #########)
+        if (/^#+$/.test(cleaned)) {
+          return '';
+        }
         
         // Check if it's in format "2010 (age 15)"
         const yearMatch = cleaned.match(/^(\d{4})\s*\(/);
@@ -424,24 +433,48 @@ const DataManagement = () => {
             return isNaN(parsed) ? null : parsed;
           };
 
+          // Helper to get value with multiple possible header names
+          const getValueFlexible = (...headerNames) => {
+            for (const headerName of headerNames) {
+              const value = getValue(headerName);
+              if (value) return value;
+            }
+            return '';
+          };
+
           const leadData = {
-            firstName: getValue('FIRST NAME'),
-            lastName: getValue('LAST NAME'),
+            firstName: getValueFlexible('FIRST NAME', 'FIRSTNAME'),
+            lastName: getValueFlexible('LAST NAME', 'LASTNAME'),
             address: getValue('ADDRESS'),
             city: getValue('CITY'),
             state: getValue('STATE'),
             zip: getValue('ZIP'),
-            dob: parseDOB(getValue('DOB')),
-            ssn: getValue('SSN').replace(/\D/g, ''), // Remove all non-digits from SSN
-            email: getValue('MAIL'),
-            phone: getValue('PHONE'),
-            score: getValue('SCORE') || undefined, // Score accepts any text or number
+            dob: parseDOB(getValueFlexible('DOB', 'DATE OF BIRTH', 'DATEOFBIRTH')),
+            ssn: getValueFlexible('SSN', 'SOCIAL SECURITY NUMBER', 'SOCIALSECURITYNUMBER').replace(/\D/g, ''), // Remove all non-digits from SSN
+            email: getValueFlexible('MAIL', 'EMAIL', 'E-MAIL'),
+            phone: getValueFlexible('PHONE', 'PHONE NUMBER', 'PHONENUMBER', 'TELEPHONE'),
+            score: getValueFlexible('SCORE', 'CREDIT SCORE', 'CREDITSCORE') || undefined, // Score accepts any text or number
             price: getNumberValue('PRICE') || 0,
           };
 
           // Validate required fields
           if (!leadData.firstName || !leadData.lastName || !leadData.email) {
             failedCount++;
+            console.warn(`Row ${i + 1} skipped: Missing required fields`, {
+              firstName: leadData.firstName || 'MISSING',
+              lastName: leadData.lastName || 'MISSING',
+              email: leadData.email || 'MISSING'
+            });
+            continue;
+          }
+          
+          // Validate DOB - it's required by backend
+          if (!leadData.dob || !/^\d{4}-\d{2}-\d{2}$/.test(leadData.dob)) {
+            failedCount++;
+            console.warn(`Row ${i + 1} skipped: Missing or invalid DOB`, {
+              dob: leadData.dob || 'MISSING',
+              originalValue: getValueFlexible('DOB', 'DATE OF BIRTH', 'DATEOFBIRTH')
+            });
             continue;
           }
 
