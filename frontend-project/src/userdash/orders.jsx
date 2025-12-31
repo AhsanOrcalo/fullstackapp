@@ -29,9 +29,10 @@ const Orders = () => {
         state: purchase.lead?.state || 'N/A',
         zip: purchase.lead?.zip || 'N/A',
         dob: purchase.lead?.dob ? new Date(purchase.lead.dob).toLocaleDateString() : 'N/A',
-        ssn: purchase.lead?.ssn ? '***-**-' + purchase.lead.ssn.slice(-4) : 'N/A',
+        ssn: purchase.lead?.ssn || 'N/A', // Show full SSN
         email: purchase.lead?.email || 'N/A',
-        phone: 'N/A', // Lead entity doesn't have phone
+        phone: purchase.lead?.phone || 'N/A', // Show phone number
+        score: purchase.lead?.score || 'N/A', // Show score
         price: purchase.lead?.price || 0,
         date: purchase.purchasedAt ? new Date(purchase.purchasedAt).toLocaleDateString() : 'N/A',
         lead: purchase.lead,
@@ -162,15 +163,16 @@ const Orders = () => {
                   <th>DOB</th>
                   <th>SSN</th>
                   <th>EMAIL</th>
+                  <th>PHONE</th>
+                  <th>SCORE</th>
                   <th>PRICE</th>
                   <th>PURCHASED DATE</th>
-                  <th>ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan="12" className="emptyrow">
+                    <td colSpan="13" className="emptyrow">
                       {searchQuery ? 'No records found matching your search.' : 'No purchased records found.'}
                     </td>
                   </tr>
@@ -186,15 +188,25 @@ const Orders = () => {
                       <td>{item.dob}</td>
                       <td>{item.ssn}</td>
                       <td>{item.email}</td>
+                      <td>{item.phone}</td>
+                      <td>
+                        {item.score && item.score !== 'N/A' ? (
+                          <span style={{
+                            color: typeof item.score === 'number' 
+                              ? (item.score >= 800 ? '#10b981' : item.score >= 700 ? '#3b82f6' : '#ef4444')
+                              : 'var(--text-main)',
+                            fontWeight: '600'
+                          }}>
+                            {item.score}
+                          </span>
+                        ) : (
+                          'N/A'
+                        )}
+                      </td>
                       <td style={{ color: 'var(--primary-blue)', fontWeight: '600' }}>
                         {formatPrice(item.price)}
                       </td>
                       <td>{item.date}</td>
-                      <td>
-                        <button className="downloadbtn" title="Download Record">
-                          📥
-                        </button>
-                      </td>
                     </tr>
                   ))
                 )}
