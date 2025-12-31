@@ -478,3 +478,42 @@ export const getSoldDataAnalytics = async (dateFrom, dateTo) => {
   }
 };
 
+// ==================== PAYMENT GATEWAY APIs ====================
+
+// Create payment (Cryptomus)
+export const createPayment = async (paymentData) => {
+  try {
+    const response = await apiRequest('/payments', {
+      method: 'POST',
+      body: JSON.stringify(paymentData),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get payment status
+export const getPaymentStatus = async (paymentId) => {
+  try {
+    const response = await apiRequest(`/payments/${paymentId}`, {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get user payments
+export const getUserPayments = async () => {
+  try {
+    const response = await apiRequest('/payments', {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+

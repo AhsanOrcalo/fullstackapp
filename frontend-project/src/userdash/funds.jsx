@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getUserFunds } from '../services/api';
-import { FaDollarSign, FaFileAlt, FaMoneyBillWave } from 'react-icons/fa';
+import { getUserFunds, createPayment, getPaymentStatus, getUserPayments } from '../services/api';
+import { FaDollarSign, FaFileAlt, FaMoneyBillWave, FaCopy, FaQrcode } from 'react-icons/fa';
 
 const Funds = () => {
   const [fundsData, setFundsData] = useState({
@@ -12,10 +12,26 @@ const Funds = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [amount, setAmount] = useState('');
+  const [creatingPayment, setCreatingPayment] = useState(false);
+  const [activePayment, setActivePayment] = useState(null);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   useEffect(() => {
     fetchFundsData();
+    checkPendingPayments();
   }, []);
+
+  // Check for pending payments periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activePayment) {
+        checkPaymentStatus(activePayment.paymentId);
+      }
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [activePayment]);
 
   const fetchFundsData = async () => {
     try {
@@ -39,9 +55,110 @@ const Funds = () => {
     }).format(price || 0);
   };
 
-  const pendingPayment = fundsData.pendingPayments && fundsData.pendingPayments.length > 0 
-    ? fundsData.pendingPayments[0] 
-    : null; 
+  const checkPendingPayments = async () => {
+    try {
+      const payments = await getUserPayments();
+      const pending = payments.find(p => 
+        p.status === 'pending' || p.status === 'processing'
+      );
+      if (pending) {
+        setActivePayment({
+          paymentId: pending._id || pending.id,
+          address: pending.cryptomusAddress,
+          currency: pending.cryptomusCurrency,
+          network: pending.cryptomusNetwork,
+          amount: pending.amount,
+          paymentUrl: pending.cryptomusPaymentUrl,
+          expiredAt: pending.cryptomusExpiredAt,
+        });
+      }
+    } catch (err) {
+      console.error('Error checking pending payments:', err);
+    }
+  };
+
+  const checkPaymentStatus = async (paymentId) => {
+    if (!paymentId || checkingStatus) return;
+    
+    try {
+      setCheckingStatus(true);
+      const payment = await getPaymentStatus(paymentId);
+      
+      if (payment.status === 'paid') {
+        setActivePayment(null);
+        fetchFundsData();
+        window.dispatchEvent(new CustomEvent('balanceUpdated'));
+        alert('Payment successful! Your balance has been updated.');
+      } else if (payment.status === 'failed' || payment.status === 'expired') {
+        setActivePayment(null);
+        alert(`Payment ${payment.status}. Please try again.`);
+      } else {
+        // Still pending, update active payment
+        setActivePayment({
+          paymentId: payment._id || payment.id,
+          address: payment.cryptomusAddress,
+          currency: payment.cryptomusCurrency,
+          network: payment.cryptomusNetwork,
+          amount: payment.amount,
+          paymentUrl: payment.cryptomusPaymentUrl,
+          expiredAt: payment.cryptomusExpiredAt,
+        });
+      }
+    } catch (err) {
+      console.error('Error checking payment status:', err);
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
+  const handleCreatePayment = async () => {
+    const paymentAmount = parseFloat(amount);
+    if (!paymentAmount || paymentAmount < fundsData.minimumDeposit) {
+      alert(`Minimum deposit is ${formatPrice(fundsData.minimumDeposit)}`);
+      return;
+    }
+
+    try {
+      setCreatingPayment(true);
+      setError('');
+      
+      const paymentData = {
+        amount: paymentAmount,
+        currency: 'USD',
+        paymentMethod: 'cryptomus',
+      };
+
+      const result = await createPayment(paymentData);
+      
+      setActivePayment({
+        paymentId: result.paymentId,
+        address: result.address,
+        currency: result.currency,
+        network: result.network,
+        amount: result.amount,
+        paymentUrl: result.paymentUrl,
+        expiredAt: result.expiredAt ? new Date(result.expiredAt * 1000) : null,
+      });
+      
+      setAmount('');
+      alert('Payment invoice created! Please complete the payment using the details below.');
+    } catch (err) {
+      setError(err.message || 'Failed to create payment');
+      alert('Failed to create payment: ' + (err.message || 'Unknown error'));
+    } finally {
+      setCreatingPayment(false);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Copied to clipboard!');
+    }).catch(() => {
+      alert('Failed to copy');
+    });
+  };
+
+  const pendingPayment = activePayment; 
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -200,72 +317,197 @@ const Funds = () => {
         </div>
       )}
 
-      {/* Main Payment Section */}
-      <motion.div 
-        className="datasection payment-detail-card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.4 }}
-      >
-        <div className="payment-top-row">
-          <div className="pending-info">
-            <h3 className="filtertitle">Pending Payment</h3>
-            {!pendingPayment ? (
-              <p className="infotext" style={{marginTop: '10px'}}>No pending payments at the moment.</p>
-            ) : (
-              <>
-                <p className="infotext">Amount: <strong>{formatPrice(pendingPayment.amount)}</strong></p>
-                <p className="infotext">Status: <span className="statusbadge pending">{pendingPayment.status}</span></p>
-              </>
-            )}
-          </div>
+      {/* Add Funds Form */}
+      {!pendingPayment && (
+        <motion.div 
+          className="datasection payment-detail-card"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+        >
+          <h3 className="filtertitle" style={{ marginBottom: '20px' }}>Add Funds via Cryptocurrency</h3>
           
-          {/* FIXED: Using Blue Theme 'applybtn' instead of green 'fastbutton' */}
-          <motion.button 
-            className="applybtn" 
-            style={{height: 'fit-content', padding: '10px 20px'}}
-            onClick={fetchFundsData}
-            disabled={loading}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '8px',
+              color: 'var(--text-main)',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              Amount (USD)
+            </label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={`Minimum: ${formatPrice(fundsData.minimumDeposit)}`}
+              min={fundsData.minimumDeposit}
+              step="0.01"
+              style={{
+                width: '100%',
+                padding: '12px 15px',
+                borderRadius: '10px',
+                border: '1px solid var(--border-clr)',
+                background: 'var(--bg-input)',
+                color: 'var(--text-main)',
+                fontSize: '15px',
+                outline: 'none'
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleCreatePayment();
+                }
+              }}
+            />
+            <p style={{ 
+              marginTop: '5px', 
+              fontSize: '12px', 
+              color: 'var(--text-sub)' 
+            }}>
+              Minimum deposit: {formatPrice(fundsData.minimumDeposit)}
+            </p>
+          </div>
+
+          <motion.button
+            className="applybtn"
+            onClick={handleCreatePayment}
+            disabled={creatingPayment || !amount || parseFloat(amount) < fundsData.minimumDeposit}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            style={{
+              width: '100%',
+              padding: '12px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              opacity: (!amount || parseFloat(amount) < fundsData.minimumDeposit) ? 0.6 : 1
+            }}
           >
-            {loading ? 'Checking...' : 'Check Status'}
+            <FaDollarSign />
+            {creatingPayment ? 'Creating Payment...' : 'Create Payment Invoice'}
           </motion.button>
-        </div>
+        </motion.div>
+      )}
 
-        {pendingPayment && (
-          <div className="payment-methods-grid">
+      {/* Active Payment Section */}
+      {pendingPayment && (
+        <motion.div 
+          className="datasection payment-detail-card"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+        >
+          <div className="payment-top-row">
+            <div className="pending-info">
+              <h3 className="filtertitle">Pending Payment</h3>
+              <p className="infotext" style={{marginTop: '10px'}}>
+                Amount: <strong>{formatPrice(pendingPayment.amount)}</strong>
+              </p>
+              <p className="infotext">
+                Status: <span className="statusbadge pending">Processing</span>
+              </p>
+              {pendingPayment.expiredAt && (
+                <p className="infotext" style={{fontSize: '12px', color: 'var(--text-sub)'}}>
+                  Expires: {new Date(pendingPayment.expiredAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+            
+            <motion.button 
+              className="applybtn" 
+              style={{height: 'fit-content', padding: '10px 20px'}}
+              onClick={() => checkPaymentStatus(pendingPayment.paymentId)}
+              disabled={checkingStatus}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {checkingStatus ? 'Checking...' : 'Check Status'}
+            </motion.button>
+          </div>
+
+          <div className="payment-methods-grid" style={{ marginTop: '20px' }}>
             <div className="qr-section">
-              <p className="filtertitle" style={{fontSize: '14px'}}>QR Code</p>
-              <div className="qr-placeholder">
-                <img src={pendingPayment.qrUrl} alt="QR Code" />
+              <p className="filtertitle" style={{fontSize: '14px', marginBottom: '10px'}}>
+                <FaQrcode style={{ marginRight: '5px' }} />
+                Payment QR Code
+              </p>
+              <div className="qr-placeholder" style={{
+                padding: '20px',
+                background: 'white',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '200px'
+              }}>
+                {pendingPayment.paymentUrl ? (
+                  <a 
+                    href={pendingPayment.paymentUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                      color: 'var(--primary-blue)',
+                      textDecoration: 'underline',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Click to open payment page
+                  </a>
+                ) : (
+                  <p style={{ color: 'var(--text-sub)', fontSize: '14px' }}>
+                    QR Code not available
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="instructions-section">
-              <p className="filtertitle" style={{fontSize: '14px'}}>Payment Instructions</p>
+              <p className="filtertitle" style={{fontSize: '14px', marginBottom: '10px'}}>Payment Instructions</p>
               <p className="infotext" style={{fontSize: '13px', marginBottom: '15px'}}>
-                Scan the QR code with your crypto wallet or send the payment to the address below.
+                Click the payment link above or send the exact amount to the address below using {pendingPayment.network} network.
               </p>
               
-              <p className="filtertitle" style={{fontSize: '14px'}}>Payment Address</p>
-              <div className="searchbar address-bar">
+              <p className="filtertitle" style={{fontSize: '14px', marginBottom: '10px'}}>Payment Address</p>
+              <div className="searchbar address-bar" style={{ display: 'flex', gap: '10px' }}>
                 <input 
                   type="text" 
                   readOnly 
-                  value={pendingPayment.address} 
+                  value={pendingPayment.address || ''} 
                   className="ordersearch"
-                  style={{fontSize: '12px'}}
+                  style={{fontSize: '12px', flex: 1}}
                 />
-                <button className="secondarybutton">Copy</button>
+                <button 
+                  className="secondarybutton"
+                  onClick={() => copyToClipboard(pendingPayment.address)}
+                  style={{
+                    padding: '8px 15px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <FaCopy style={{ fontSize: '12px' }} />
+                  Copy
+                </button>
               </div>
-              <p className="infotext" style={{marginTop: '10px', fontSize: '13px'}}>
-                Currency: <strong>{pendingPayment.currency}</strong>
-              </p>
+              
+              <div style={{ marginTop: '15px', padding: '10px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px' }}>
+                <p className="infotext" style={{fontSize: '13px', marginBottom: '5px'}}>
+                  <strong>Network:</strong> {pendingPayment.network}
+                </p>
+                <p className="infotext" style={{fontSize: '13px', marginBottom: '5px'}}>
+                  <strong>Currency:</strong> {pendingPayment.currency}
+                </p>
+                <p className="infotext" style={{fontSize: '13px'}}>
+                  <strong>Amount:</strong> {pendingPayment.amount} {pendingPayment.currency}
+                </p>
+              </div>
             </div>
           </div>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };

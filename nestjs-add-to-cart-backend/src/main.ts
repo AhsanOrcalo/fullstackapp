@@ -30,6 +30,7 @@ async function bootstrap() {
     .addTag('purchases', 'Purchase management endpoints')
     .addTag('enquiries', 'Enquiry management endpoints')
     .addTag('dashboard', 'Dashboard statistics endpoints')
+    .addTag('payments', 'Payment gateway endpoints')
     .addBearerAuth(
       {
         type: 'http',
