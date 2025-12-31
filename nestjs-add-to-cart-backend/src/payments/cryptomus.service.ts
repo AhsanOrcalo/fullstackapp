@@ -74,9 +74,7 @@ export class CryptomusService {
   private readonly baseUrl = 'https://api.cryptomus.com/v1';
 
   constructor() {
-    // this.merchantId = process.env.CRYPTOMUS_MERCHANT_ID || '';
-    this.merchantId = "186b5289-c445-4b02-97cf-b6d516a32195";
-
+    this.merchantId = process.env.CRYPTOMUS_MERCHANT_ID || '';
     this.paymentApiKey = process.env.CRYPTOMUS_PAYMENT_API_KEY || '';
 
     if (!this.merchantId || !this.paymentApiKey) {
