@@ -349,7 +349,7 @@ const DataManagement = () => {
             return value !== undefined && value !== null ? String(value).trim() : '';
           };
 
-          // Helper to parse number values (handles both string and number from XLSX)
+          // Helper to parse number values for price (handles both string and number from XLSX)
           const getNumberValue = (headerName) => {
             const index = headerMap[headerName];
             if (index === undefined) return null;
@@ -374,7 +374,7 @@ const DataManagement = () => {
             email: getValue('MAIL'),
             phone: getValue('PHONE'),
             price: getNumberValue('PRICE') || 0,
-            score: getNumberValue('SCORE'),
+            score: getValue('SCORE') || undefined, // Score accepts any text or number
           };
 
           // Validate required fields
@@ -485,9 +485,7 @@ const DataManagement = () => {
     if (!formData.price || isNaN(formData.price) || parseFloat(formData.price) < 0) {
       errors.price = 'Price must be a positive number';
     }
-    if (formData.score && (isNaN(formData.score) || parseFloat(formData.score) < 300 || parseFloat(formData.score) > 850)) {
-      errors.score = 'Score must be between 300 and 850';
-    }
+    // Score validation removed - accepts any text or number
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -514,7 +512,7 @@ const DataManagement = () => {
         dob: formData.dob,
         ssn: formData.ssn.trim(),
         price: parseFloat(formData.price),
-        score: formData.score ? parseFloat(formData.score) : undefined,
+        score: formData.score ? formData.score.trim() : undefined,
       };
 
       await addLead(leadPayload);
@@ -938,7 +936,13 @@ const DataManagement = () => {
                     <td>
                       {lead.score ? (
                         <span style={{ 
-                          color: lead.score >= 800 ? '#10b981' : lead.score >= 700 ? '#3b82f6' : '#ef4444',
+                          color: (() => {
+                            const scoreNum = parseFloat(lead.score);
+                            if (!isNaN(scoreNum)) {
+                              return scoreNum >= 800 ? '#10b981' : scoreNum >= 700 ? '#3b82f6' : '#ef4444';
+                            }
+                            return 'var(--text-main)'; // Default color for text scores
+                          })(),
                           fontWeight: '600'
                         }}>
                           {lead.score}
@@ -1248,15 +1252,12 @@ const DataManagement = () => {
                   Score
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="score"
                   value={formData.score}
                   onChange={handleInputChange}
                   className="filterinput"
-                  placeholder="750"
-                  min="300"
-                  max="850"
-                  step="1"
+                  placeholder="750 or any text"
                 />
                 {formErrors.score && (
                   <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', display: 'block' }}>

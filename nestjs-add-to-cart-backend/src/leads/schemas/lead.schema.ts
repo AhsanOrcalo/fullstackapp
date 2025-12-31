@@ -38,8 +38,8 @@ export class Lead {
   @Prop({ required: false })
   phone?: string;
 
-  @Prop({ type: Number, required: false })
-  score?: number;
+  @Prop({ required: false })
+  score?: string;
 
   createdAt?: Date;
   updatedAt?: Date;

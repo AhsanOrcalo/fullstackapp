@@ -77,14 +77,62 @@ export class LeadsService {
         query.state = { $regex: filters.state, $options: 'i' };
       }
 
-      // Filter by score
+      // Filter by score (handles both numeric strings and numbers)
+      // Note: Score filter only works for numeric scores, text scores will be filtered out
       if (filters.scoreFilter) {
         if (filters.scoreFilter === '700+') {
           // 700+ means score between 700 to 800 (700 <= score < 800)
-          query.score = { $gte: 700, $lt: 800 };
+          // Use $expr with $toDouble to convert string scores to numbers
+          query.$expr = {
+            $and: [
+              { $ne: ['$score', null] },
+              { $ne: ['$score', ''] },
+              {
+                $gte: [
+                  {
+                    $cond: {
+                      if: { $eq: [{ $type: '$score' }, 'string'] },
+                      then: { $toDouble: { $ifNull: ['$score', '0'] } },
+                      else: { $ifNull: ['$score', 0] }
+                    }
+                  },
+                  700
+                ]
+              },
+              {
+                $lt: [
+                  {
+                    $cond: {
+                      if: { $eq: [{ $type: '$score' }, 'string'] },
+                      then: { $toDouble: { $ifNull: ['$score', '0'] } },
+                      else: { $ifNull: ['$score', 0] }
+                    }
+                  },
+                  800
+                ]
+              }
+            ]
+          };
         } else if (filters.scoreFilter === '800+') {
           // 800+ means score >= 800
-          query.score = { $gte: 800 };
+          query.$expr = {
+            $and: [
+              { $ne: ['$score', null] },
+              { $ne: ['$score', ''] },
+              {
+                $gte: [
+                  {
+                    $cond: {
+                      if: { $eq: [{ $type: '$score' }, 'string'] },
+                      then: { $toDouble: { $ifNull: ['$score', '0'] } },
+                      else: { $ifNull: ['$score', 0] }
+                    }
+                  },
+                  800
+                ]
+              }
+            ]
+          };
         }
       }
     }

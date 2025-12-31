@@ -103,16 +103,12 @@ export class AddLeadDto {
   phone?: string;
 
   @ApiProperty({
-    description: 'Score of the lead',
-    example: 750,
-    minimum: 300,
-    maximum: 850,
+    description: 'Score of the lead (can be text or number)',
+    example: '750',
     required: false,
   })
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  @Min(300, { message: 'Score must be at least 300' })
-  @Max(850, { message: 'Score must be at most 850' })
-  score?: number;
+  score?: string;
 }
 
