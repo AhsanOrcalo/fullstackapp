@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './sign.css';
 import { register } from '../services/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Signup = ({ switchpage }) => {
   const [userdata, setuserdata] = useState({
@@ -14,6 +15,8 @@ const Signup = ({ switchpage }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleinput = (e) => {
     setuserdata({ ...userdata, [e.target.name]: e.target.value });
@@ -206,9 +209,9 @@ const Signup = ({ switchpage }) => {
                 disabled={loading}
               />
             </div>
-            <div className="input-wrapper">
+            <div className="input-wrapper password-input-wrapper">
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 name="password" 
                 placeholder="Password" 
                 className="inputfield" 
@@ -216,10 +219,18 @@ const Signup = ({ switchpage }) => {
                 value={userdata.password}
                 disabled={loading}
               />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
-            <div className="input-wrapper">
+            <div className="input-wrapper password-input-wrapper">
               <input 
-                type="password" 
+                type={showConfirmPassword ? "text" : "password"} 
                 name="confirmPassword" 
                 placeholder="Confirm Password" 
                 className="inputfield" 
@@ -227,6 +238,14 @@ const Signup = ({ switchpage }) => {
                 value={userdata.confirmPassword}
                 disabled={loading}
               />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={loading}
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
             {error && (
               <div className="error-message">

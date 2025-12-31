@@ -183,6 +183,11 @@
 .input-wrapper {
   margin-bottom: 20px;
   animation: fadeInUp 0.6s ease-out both;
+  position: relative;
+}
+
+.password-input-wrapper {
+  position: relative;
 }
 
 .input-wrapper:nth-child(1) { animation-delay: 0.1s; }
@@ -209,6 +214,36 @@
   border-color: #4318ff; /* Purple border on focus */
   box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1);
   transform: translateY(-2px);
+}
+
+.password-input-wrapper .inputfield {
+  padding-right: 45px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+  font-size: 18px;
+}
+
+.password-toggle:hover {
+  color: #60a5fa;
+}
+
+.password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Selection class remove kar di hai kyunki ab dropdown nahi hai */

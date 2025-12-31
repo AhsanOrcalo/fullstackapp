@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './sign.css';
 import { login } from '../services/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Signin = ({ switchpage, onLoginSuccess }) => {
   const [logindata, setlogindata] = useState({
@@ -9,6 +10,7 @@ const Signin = ({ switchpage, onLoginSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handlechange = (e) => {
     setlogindata({ ...logindata, [e.target.name]: e.target.value });
@@ -96,9 +98,9 @@ const Signin = ({ switchpage, onLoginSuccess }) => {
                 disabled={loading}
               />
             </div>
-            <div className="input-wrapper">
+            <div className="input-wrapper password-input-wrapper">
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 name="password" 
                 placeholder="Password" 
                 className="inputfield" 
@@ -106,6 +108,14 @@ const Signin = ({ switchpage, onLoginSuccess }) => {
                 value={logindata.password}
                 disabled={loading}
               />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
             {error && (
               <div className="error-message">
