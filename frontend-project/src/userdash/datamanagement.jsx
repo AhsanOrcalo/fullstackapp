@@ -38,14 +38,7 @@ const DataManagement = () => {
       setLoading(true);
       setError('');
       
-      // If "All" is selected, show all records (ignore all other filters)
-      if (locationFilter === 'all') {
-        const data = await getAllLeads({});
-        setLeads(Array.isArray(data) ? data : []);
-        return;
-      }
-      
-      // For Canada filter, apply search and score filters
+      // Build filters - search and score filters work for both "All" and "Canada"
       const filters = {};
       if (searchQuery) {
         filters.name = searchQuery;
@@ -57,25 +50,12 @@ const DataManagement = () => {
       const data = await getAllLeads(filters);
       let filteredData = Array.isArray(data) ? data : [];
       
-      // Apply Canada filter
+      // Apply Canada filter if selected
       if (locationFilter === 'canada') {
         filteredData = filteredData.filter(lead => {
           const state = (lead.state || '').toLowerCase();
           return state.includes('canada') || state.includes('canda') || state === 'ca';
         });
-        
-        // Apply score filter if selected
-        if (scoreFilter) {
-          filteredData = filteredData.filter(lead => {
-            const score = lead.score || 0;
-            if (scoreFilter === '700+') {
-              return score >= 700;
-            } else if (scoreFilter === '800+') {
-              return score >= 800;
-            }
-            return true;
-          });
-        }
       }
       
       setLeads(filteredData);
@@ -657,17 +637,15 @@ const DataManagement = () => {
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Search records..."
-              disabled={locationFilter === 'all'}
               style={{
                 flex: 1,
                 border: 'none',
                 background: 'transparent',
                 outline: 'none',
-                color: locationFilter === 'all' ? 'var(--text-sub)' : 'var(--text-main)',
+                color: 'var(--text-main)',
                 fontSize: '14px',
                 width: '100%',
-                cursor: locationFilter === 'all' ? 'not-allowed' : 'text',
-                opacity: locationFilter === 'all' ? 0.6 : 1
+                cursor: 'text'
               }}
             />
           </div>
@@ -708,7 +686,6 @@ const DataManagement = () => {
               type="radio"
               checked={scoreFilter === '700+'}
               onChange={() => handleScoreFilterChange('700+')}
-              disabled={locationFilter === 'all'}
             />
             <span style={{ 
               color: locationFilter === 'all' ? 'var(--text-sub)' : 'var(--text-main)', 
@@ -720,7 +697,6 @@ const DataManagement = () => {
               type="radio"
               checked={scoreFilter === '800+'}
               onChange={() => handleScoreFilterChange('800+')}
-              disabled={locationFilter === 'all'}
             />
             <span style={{ 
               color: locationFilter === 'all' ? 'var(--text-sub)' : 'var(--text-main)', 

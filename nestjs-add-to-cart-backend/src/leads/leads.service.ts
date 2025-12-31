@@ -79,8 +79,13 @@ export class LeadsService {
 
       // Filter by score
       if (filters.scoreFilter) {
-        const minScore = filters.scoreFilter === '700+' ? 700 : 800;
-        query.score = { $gte: minScore };
+        if (filters.scoreFilter === '700+') {
+          // 700+ means score between 700 to 800 (700 <= score < 800)
+          query.score = { $gte: 700, $lt: 800 };
+        } else if (filters.scoreFilter === '800+') {
+          // 800+ means score >= 800
+          query.score = { $gte: 800 };
+        }
       }
     }
 
