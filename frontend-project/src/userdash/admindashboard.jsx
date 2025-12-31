@@ -81,7 +81,7 @@ const AdminDashboard = ({ setview }) => {
     {
       title: 'Recent Activity',
       value: stats.recentActivity,
-      subtitle: 'Last 5 records',
+      subtitle: 'All activities',
       icon: FaClock,
       color: '#ff9f43',
       bgColor: 'linear-gradient(135deg, rgba(255, 159, 67, 0.25) 0%, rgba(255, 159, 67, 0.15) 100%)',

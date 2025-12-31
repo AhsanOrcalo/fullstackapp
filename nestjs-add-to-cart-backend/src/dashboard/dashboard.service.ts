@@ -25,9 +25,8 @@ export class DashboardService {
       // Get total records (leads)
       const totalRecords = await this.leadModel.countDocuments();
 
-      // Get recent activity (last 5 records)
-      const recentLeads = await this.leadModel.find().sort({ createdAt: -1 }).limit(5).exec();
-      const recentActivity = recentLeads.length;
+      // Get total activity count (all records)
+      const recentActivity = totalRecords;
 
       // Check system status - try to query all entities
       let systemStatus = 'Active';
