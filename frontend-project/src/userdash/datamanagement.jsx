@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { getAllLeads, addLead, deleteLead, deleteLeads, getUserData } from '../services/api';
 import { FaSearch, FaFileAlt, FaDatabase, FaUpload, FaDownload, FaPlus, FaTrash } from 'react-icons/fa';
+import * as XLSX from 'xlsx';
 
 const DataManagement = () => {
   const [leads, setLeads] = useState([]);
@@ -218,14 +219,17 @@ const DataManagement = () => {
     }
   };
 
-  // Import from CSV
+  // Import from CSV or XLSX
   const handleImport = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     // Check file type
-    if (!file.name.endsWith('.csv')) {
-      alert('Please select a CSV file');
+    const isCSV = file.name.endsWith('.csv');
+    const isXLSX = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    
+    if (!isCSV && !isXLSX) {
+      alert('Please select a CSV or XLSX file');
       return;
     }
 
@@ -233,39 +237,73 @@ const DataManagement = () => {
       setImporting(true);
       setImportStatus({ success: 0, failed: 0, total: 0 });
 
-      const text = await file.text();
-      const lines = text.split('\n').filter(line => line.trim());
-      
-      if (lines.length < 2) {
-        alert('CSV file is empty or invalid');
-        setImporting(false);
-        return;
-      }
+      let headers = [];
+      let dataRows = [];
 
-      // Parse CSV header row
-      const parseCSVLine = (line) => {
-        const values = [];
-        let current = '';
-        let inQuotes = false;
+      if (isCSV) {
+        // Parse CSV file
+        const text = await file.text();
+        const lines = text.split('\n').filter(line => line.trim());
         
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            values.push(current.trim().replace(/^"|"$/g, ''));
-            current = '';
-          } else {
-            current += char;
-          }
+        if (lines.length < 2) {
+          alert('CSV file is empty or invalid');
+          setImporting(false);
+          return;
         }
-        values.push(current.trim().replace(/^"|"$/g, ''));
-        return values;
-      };
 
-      const headerLine = lines[0];
-      const headers = parseCSVLine(headerLine).map(h => h.trim().toUpperCase());
-      const dataRows = lines.slice(1);
+        // Parse CSV header row
+        const parseCSVLine = (line) => {
+          const values = [];
+          let current = '';
+          let inQuotes = false;
+          
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              values.push(current.trim().replace(/^"|"$/g, ''));
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          values.push(current.trim().replace(/^"|"$/g, ''));
+          return values;
+        };
+
+        const headerLine = lines[0];
+        headers = parseCSVLine(headerLine).map(h => h.trim().toUpperCase());
+        const csvDataRows = lines.slice(1);
+        
+        // Parse each CSV row
+        dataRows = csvDataRows.map(row => {
+          if (!row.trim()) return null;
+          return parseCSVLine(row);
+        }).filter(row => row !== null);
+      } else {
+        // Parse XLSX file
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // Get first sheet
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Convert to JSON with header row
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        
+        if (jsonData.length < 2) {
+          alert('XLSX file is empty or invalid');
+          setImporting(false);
+          return;
+        }
+
+        // First row is headers
+        headers = jsonData[0].map(h => String(h).trim().toUpperCase());
+        // Rest are data rows
+        dataRows = jsonData.slice(1).filter(row => row.some(cell => cell !== ''));
+      }
 
       // Create header index map
       const headerMap = {};
@@ -276,12 +314,16 @@ const DataManagement = () => {
       // Helper function to extract year from DOB format "2010 (age 15)" or parse date
       const parseDOB = (dobValue) => {
         if (!dobValue) return '';
-        const cleaned = dobValue.replace(/"/g, '').trim();
+        const cleaned = String(dobValue).replace(/"/g, '').trim();
         // Check if it's in format "2010 (age 15)"
         const yearMatch = cleaned.match(/^(\d{4})\s*\(/);
         if (yearMatch) {
           // Extract year and create a date (using Jan 1st of that year)
           return `${yearMatch[1]}-01-01`;
+        }
+        // If it's a date object from XLSX, convert to string
+        if (dobValue instanceof Date) {
+          return dobValue.toISOString().split('T')[0];
         }
         // If it's already a date string, return as is
         return cleaned;
@@ -292,16 +334,32 @@ const DataManagement = () => {
 
       for (let i = 0; i < dataRows.length; i++) {
         const row = dataRows[i];
-        if (!row.trim()) continue;
+        if (!row || row.length === 0) continue;
 
         try {
-          // Parse CSV row (handle quoted values)
-          const values = parseCSVLine(row);
+          // For CSV, row is already parsed array. For XLSX, row is already an array.
+          const values = Array.isArray(row) ? row : [];
 
           // Map values to lead object based on header names
           const getValue = (headerName) => {
             const index = headerMap[headerName];
-            return index !== undefined ? (values[index] || '') : '';
+            if (index === undefined) return '';
+            const value = values[index];
+            // Convert to string and clean up
+            return value !== undefined && value !== null ? String(value).trim() : '';
+          };
+
+          // Helper to parse number values (handles both string and number from XLSX)
+          const getNumberValue = (headerName) => {
+            const index = headerMap[headerName];
+            if (index === undefined) return null;
+            const value = values[index];
+            if (value === undefined || value === null || value === '') return null;
+            // If it's already a number, return it
+            if (typeof value === 'number') return value;
+            // Otherwise parse the string
+            const parsed = parseFloat(String(value));
+            return isNaN(parsed) ? null : parsed;
           };
 
           const leadData = {
@@ -315,8 +373,8 @@ const DataManagement = () => {
             ssn: getValue('SSN'),
             email: getValue('MAIL'),
             phone: getValue('PHONE'),
-            price: parseFloat(getValue('PRICE')) || 0,
-            score: getValue('SCORE') ? parseInt(getValue('SCORE')) : null,
+            price: getNumberValue('PRICE') || 0,
+            score: getNumberValue('SCORE'),
           };
 
           // Validate required fields
@@ -1278,7 +1336,7 @@ const DataManagement = () => {
               fontSize: '20px',
               fontWeight: '700'
             }}>
-              Import Leads from CSV
+              Import Leads from CSV/XLSX
             </h3>
             
             <div style={{ marginBottom: '20px' }}>
@@ -1289,11 +1347,11 @@ const DataManagement = () => {
                 fontSize: '14px',
                 fontWeight: '500'
               }}>
-                Select CSV File
+                Select CSV or XLSX File
               </label>
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleImport}
                 disabled={importing}
                 style={{
@@ -1313,7 +1371,8 @@ const DataManagement = () => {
                 color: 'var(--text-sub)',
                 fontSize: '12px'
               }}>
-                CSV format: First Name, Last Name, Email, Phone, Address, City, State, ZIP, DOB, SSN, Price, Score
+                Supported formats: CSV, XLSX, XLS<br/>
+                Required columns: FIRST NAME, LAST NAME, ADDRESS, CITY, STATE, ZIP, DOB, SSN, MAIL, PHONE, PRICE, SCORE
               </p>
             </div>
 
