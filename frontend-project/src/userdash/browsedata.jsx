@@ -127,13 +127,34 @@ const Browsedata = () => {
     setSelectedLeads(newSelected);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+  const calculateAge = (dob) => {
+    if (!dob) return null;
     try {
-      const date = new Date(dateString);
-      return date.getFullYear().toString();
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
     } catch {
-      return dateString;
+      return null;
+    }
+  };
+
+  const formatDOBWithAge = (dob) => {
+    if (!dob) return 'N/A';
+    try {
+      const birthDate = new Date(dob);
+      const year = birthDate.getFullYear();
+      const age = calculateAge(dob);
+      if (age !== null) {
+        return `${year} (age ${age})`;
+      }
+      return year.toString();
+    } catch {
+      return 'N/A';
     }
   };
 
@@ -367,7 +388,7 @@ const Browsedata = () => {
                     {/* <td>{lead.email || 'N/A'}</td> */}
                     <td>{lead.city || 'N/A'}</td>
                     <td>{lead.state || 'N/A'}</td>
-                    <td>{formatDate(lead.dob)}</td>
+                    <td>{formatDOBWithAge(lead.dob)}</td>
                     <td>{lead.zip || 'N/A'}</td>
                     <td>
                       {lead.score ? (
