@@ -252,9 +252,50 @@ const DataManagement = () => {
         return;
       }
 
-      // Parse CSV (skip header row)
-      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      // Parse CSV header row
+      const parseCSVLine = (line) => {
+        const values = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let j = 0; j < line.length; j++) {
+          const char = line[j];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            values.push(current.trim().replace(/^"|"$/g, ''));
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        values.push(current.trim().replace(/^"|"$/g, ''));
+        return values;
+      };
+
+      const headerLine = lines[0];
+      const headers = parseCSVLine(headerLine).map(h => h.trim().toUpperCase());
       const dataRows = lines.slice(1);
+
+      // Create header index map
+      const headerMap = {};
+      headers.forEach((header, index) => {
+        headerMap[header] = index;
+      });
+
+      // Helper function to extract year from DOB format "2010 (age 15)" or parse date
+      const parseDOB = (dobValue) => {
+        if (!dobValue) return '';
+        const cleaned = dobValue.replace(/"/g, '').trim();
+        // Check if it's in format "2010 (age 15)"
+        const yearMatch = cleaned.match(/^(\d{4})\s*\(/);
+        if (yearMatch) {
+          // Extract year and create a date (using Jan 1st of that year)
+          return `${yearMatch[1]}-01-01`;
+        }
+        // If it's already a date string, return as is
+        return cleaned;
+      };
 
       let successCount = 0;
       let failedCount = 0;
@@ -265,37 +306,27 @@ const DataManagement = () => {
 
         try {
           // Parse CSV row (handle quoted values)
-          const values = [];
-          let current = '';
-          let inQuotes = false;
-          
-          for (let j = 0; j < row.length; j++) {
-            const char = row[j];
-            if (char === '"') {
-              inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-              values.push(current.trim());
-              current = '';
-            } else {
-              current += char;
-            }
-          }
-          values.push(current.trim());
+          const values = parseCSVLine(row);
 
-          // Map values to lead object
+          // Map values to lead object based on header names
+          const getValue = (headerName) => {
+            const index = headerMap[headerName];
+            return index !== undefined ? (values[index] || '') : '';
+          };
+
           const leadData = {
-            firstName: values[0]?.replace(/"/g, '') || '',
-            lastName: values[1]?.replace(/"/g, '') || '',
-            email: values[2]?.replace(/"/g, '') || '',
-            phone: values[3]?.replace(/"/g, '') || '',
-            address: values[4]?.replace(/"/g, '') || '',
-            city: values[5]?.replace(/"/g, '') || '',
-            state: values[6]?.replace(/"/g, '') || '',
-            zip: values[7]?.replace(/"/g, '') || '',
-            dob: values[8]?.replace(/"/g, '') || '',
-            ssn: values[9]?.replace(/"/g, '') || '',
-            price: parseFloat(values[10]) || 0,
-            score: values[11] ? parseInt(values[11]) : null,
+            firstName: getValue('FIRST NAME'),
+            lastName: getValue('LAST NAME'),
+            address: getValue('ADDRESS'),
+            city: getValue('CITY'),
+            state: getValue('STATE'),
+            zip: getValue('ZIP'),
+            dob: parseDOB(getValue('DOB')),
+            ssn: getValue('SSN'),
+            email: getValue('MAIL'),
+            phone: getValue('PHONE'),
+            price: parseFloat(getValue('PRICE')) || 0,
+            score: getValue('SCORE') ? parseInt(getValue('SCORE')) : null,
           };
 
           // Validate required fields
