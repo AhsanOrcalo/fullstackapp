@@ -119,7 +119,7 @@ const AdminDashboard = ({ setview }) => {
     {
       title: 'Available (700+)',
       value: stats.availableData700Plus,
-      subtitle: 'Not purchased, admin-created',
+      subtitle: 'Score 700-799, not purchased',
       icon: FaDatabase,
       color: '#10b981',
       bgColor: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.15) 100%)',
@@ -128,7 +128,7 @@ const AdminDashboard = ({ setview }) => {
     {
       title: 'Available (800+)',
       value: stats.availableData800Plus,
-      subtitle: 'Not purchased, admin-created',
+      subtitle: 'Score ≥ 800, not purchased',
       icon: FaDatabase,
       color: '#10b981',
       bgColor: 'linear-gradient(135deg, rgba(5, 150, 105, 0.25) 0%, rgba(5, 150, 105, 0.15) 100%)',

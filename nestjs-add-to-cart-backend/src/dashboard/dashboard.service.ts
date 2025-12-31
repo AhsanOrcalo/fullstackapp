@@ -53,33 +53,41 @@ export class DashboardService {
         allPurchases.map((purchase) => purchase.leadId?.toString()),
       );
 
+      // Helper function to parse score (handles both string and number)
+      const parseScore = (score: any): number | null => {
+        if (!score) return null;
+        if (typeof score === 'number') return score;
+        const parsed = parseFloat(String(score));
+        return isNaN(parsed) ? null : parsed;
+      };
+
       // Count sold data with score >= 700
       const soldData700Plus = allPurchases.filter((purchase) => {
         const lead = purchase.leadId as any;
-        return lead?.score && lead.score >= 700;
+        const score = parseScore(lead?.score);
+        return score !== null && score >= 700;
       }).length;
 
       // Count sold data with score >= 800
       const soldData800Plus = allPurchases.filter((purchase) => {
         const lead = purchase.leadId as any;
-        return lead?.score && lead.score >= 800;
+        const score = parseScore(lead?.score);
+        return score !== null && score >= 800;
       }).length;
 
-      // Count available (not purchased) data with score >= 700
-      const availableData700Plus = allLeads.filter(
-        (lead) =>
-          !purchasedLeadIds.has(lead._id.toString()) &&
-          typeof lead.score === 'number' &&
-          lead.score >= 700,
-      ).length;
+      // Count available (not purchased) data with score between 700-799
+      const availableData700Plus = allLeads.filter((lead) => {
+        if (purchasedLeadIds.has(lead._id.toString())) return false; // Exclude purchased
+        const score = parseScore(lead.score);
+        return score !== null && score >= 700 && score < 800;
+      }).length;
 
       // Count available (not purchased) data with score >= 800
-      const availableData800Plus = allLeads.filter(
-        (lead) =>
-          !purchasedLeadIds.has(lead._id.toString()) &&
-          typeof lead.score === 'number' &&
-          lead.score >= 800,
-      ).length;
+      const availableData800Plus = allLeads.filter((lead) => {
+        if (purchasedLeadIds.has(lead._id.toString())) return false; // Exclude purchased
+        const score = parseScore(lead.score);
+        return score !== null && score >= 800;
+      }).length;
 
       return {
         totalUsers,
