@@ -37,7 +37,7 @@ const DataManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
   
   // Selection state for delete functionality
   const [selectedLeads, setSelectedLeads] = useState(new Set());
@@ -109,7 +109,7 @@ const DataManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, scoreFilter, currentPage]);
+  }, [searchQuery, scoreFilter, currentPage, pageSize]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -126,6 +126,12 @@ const DataManagement = () => {
   const handleScoreFilterChange = (value) => {
     setScoreFilter(scoreFilter === value ? '' : value);
     setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handlePageSizeChange = (e) => {
+    const newPageSize = parseInt(e.target.value, 10);
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when page size changes
   };
 
 
@@ -174,7 +180,7 @@ const DataManagement = () => {
       const day = String(birthDate.getDate()).padStart(2, '0');
       const month = String(birthDate.getMonth() + 1).padStart(2, '0');
       const year = birthDate.getFullYear();
-      return `${day}/${month}/${year}`;
+      return `${month}/${day}/${year}`;
     } catch {
       return 'N/A';
     }
@@ -922,14 +928,55 @@ const DataManagement = () => {
           </label>
         </div>
 
-        {/* Record Count */}
+        {/* Record Count and Page Size Selector */}
         <div style={{ 
-          color: 'var(--text-sub)', 
-          fontSize: '14px',
-          fontWeight: '500',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px',
           marginLeft: 'auto'
         }}>
-          Showing {leads.length} of {totalRecords} records
+          <div style={{ 
+            color: 'var(--text-sub)', 
+            fontSize: '14px',
+            fontWeight: '500'
+          }}>
+            Showing {leads.length} of {totalRecords} records
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <label style={{
+              color: 'var(--text-main)',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              Records per page:
+            </label>
+            <select
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-clr)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-main)',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                outline: 'none',
+                minWidth: '80px'
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={30}>30</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
       </motion.div>
 
