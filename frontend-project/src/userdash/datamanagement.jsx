@@ -32,6 +32,7 @@ const DataManagement = () => {
   // Filter state - search and score filter
   const [searchQuery, setSearchQuery] = useState('');
   const [scoreFilter, setScoreFilter] = useState('');
+  const [canadaFilter, setCanadaFilter] = useState('');
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,6 +63,9 @@ const DataManagement = () => {
       }
       if (scoreFilter) {
         filters.scoreFilter = scoreFilter;
+      }
+      if (canadaFilter) {
+        filters.canadaFilter = canadaFilter;
       }
       
       const response = await getAllLeads(filters);
@@ -109,7 +113,7 @@ const DataManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, scoreFilter, currentPage, pageSize]);
+  }, [searchQuery, scoreFilter, canadaFilter, currentPage, pageSize]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -124,8 +128,28 @@ const DataManagement = () => {
   };
 
   const handleScoreFilterChange = (value) => {
-    setScoreFilter(scoreFilter === value ? '' : value);
+    const newValue = scoreFilter === value ? '' : value;
+    setScoreFilter(newValue);
+    // Clear country filter when score filter is selected
+    if (newValue) {
+      setCanadaFilter('');
+    }
     setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handleCanadaFilterChange = (value) => {
+    if (value === 'all') {
+      // Reset all filters when "All" is selected
+      setCanadaFilter('');
+      setSearchQuery('');
+      setScoreFilter('');
+      setCurrentPage(1);
+    } else {
+      // Set Canada filter and clear score filter
+      setCanadaFilter(value);
+      setScoreFilter(''); // Clear score filter when country filter is selected
+      setCurrentPage(1); // Reset to first page when filter changes
+    }
   };
 
   const handlePageSizeChange = (e) => {
@@ -887,6 +911,40 @@ const DataManagement = () => {
           </div>
         </div>
 
+        {/* Country Filters - All and Canada */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '15px', 
+          alignItems: 'center'
+        }}>
+          <label className="customradio" style={{ cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="dataFilter"
+              checked={canadaFilter === '' && scoreFilter === ''}
+              onChange={() => handleCanadaFilterChange('all')}
+            />
+            <span style={{ 
+              color: 'var(--text-main)', 
+              fontSize: '14px',
+              fontWeight: '700'
+            }}>All</span>
+          </label>
+          <label className="customradio" style={{ cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="dataFilter"
+              checked={canadaFilter === 'canada'}
+              onChange={() => handleCanadaFilterChange('canada')}
+            />
+            <span style={{ 
+              color: 'var(--text-main)', 
+              fontSize: '14px',
+              fontWeight: '700'
+            }}>Canada</span>
+          </label>
+        </div>
+
         {/* Score Filters */}
         <div style={{ 
           display: 'flex', 
@@ -896,35 +954,41 @@ const DataManagement = () => {
           <label className="customradio" style={{ cursor: 'pointer' }}>
             <input
               type="radio"
+              name="dataFilter"
               checked={scoreFilter === '700+'}
               onChange={() => handleScoreFilterChange('700+')}
             />
             <span style={{ 
               color: 'var(--text-main)', 
-              fontSize: '14px' 
+              fontSize: '14px',
+              fontWeight: '700'
             }}>700+</span>
           </label>
           <label className="customradio" style={{ cursor: 'pointer' }}>
             <input
               type="radio"
+              name="dataFilter"
               checked={scoreFilter === '800+'}
               onChange={() => handleScoreFilterChange('800+')}
             />
             <span style={{ 
               color: 'var(--text-main)', 
-              fontSize: '14px' 
+              fontSize: '14px',
+              fontWeight: '700'
             }}>800+</span>
           </label>
           <label className="customradio" style={{ cursor: 'pointer' }}>
             <input
               type="radio"
+              name="dataFilter"
               checked={scoreFilter === 'random'}
               onChange={() => handleScoreFilterChange('random')}
             />
             <span style={{ 
               color: 'var(--text-main)', 
-              fontSize: '14px' 
-            }}>All Random</span>
+              fontSize: '14px',
+              fontWeight: '700'
+            }}>Random</span>
           </label>
         </div>
 
