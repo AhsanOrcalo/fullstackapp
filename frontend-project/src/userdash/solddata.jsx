@@ -63,10 +63,6 @@ const SoldData = () => {
     }).format(price);
   };
 
-  const formatOrderId = (id) => {
-    if (!id) return 'N/A';
-    return `#${id.substring(0, 4)}`;
-  };
 
   // Filter out purchases with invalid or missing lead data (unavailable data)
   const purchases = (analytics.filteredPurchases || []).filter(purchase => {
@@ -248,7 +244,6 @@ const SoldData = () => {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>ORDER ID</th>
                       <th>BUYER NAME</th>
                       <th>SERVICE</th>
                       <th> STATE</th>
@@ -265,9 +260,6 @@ const SoldData = () => {
                       
                       return (
                         <tr key={purchaseId}>
-                          <td style={{ color: '#4318ff', fontWeight: '600', fontFamily: 'monospace' }}>
-                            {formatOrderId(purchaseId)}
-                          </td>
                           <td style={{ color: 'var(--text-main)', fontWeight: '500' }}>
                             {user?.userName || 'N/A'}
                           </td>
