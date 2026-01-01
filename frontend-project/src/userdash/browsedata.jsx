@@ -370,6 +370,15 @@ const Browsedata = () => {
                 />
                 <span>800+ Score</span>
               </label>
+              <label className="customradio">
+                <input
+                  type="radio"
+                  name="scoreFilter"
+                  checked={filters.scoreFilter === 'random'}
+                  onChange={() => handleRadioChange('scoreFilter', 'random')}
+                />
+                <span>Random</span>
+              </label>
             </div>
           </div>
           <div className="filtergroup">
@@ -479,7 +488,13 @@ const Browsedata = () => {
                     <td>
                       {lead.score ? (
                         <span style={{ 
-                          color: lead.score >= 800 ? '#10b981' : lead.score >= 700 ? '#3b82f6' : '#ef4444',
+                          color: (() => {
+                            const scoreNum = parseFloat(lead.score);
+                            if (!isNaN(scoreNum)) {
+                              return scoreNum >= 800 ? '#10b981' : scoreNum >= 700 ? '#3b82f6' : '#ef4444';
+                            }
+                            return 'var(--text-main)'; // Default color for text scores
+                          })(),
                           fontWeight: '600'
                         }}>
                           {lead.score}

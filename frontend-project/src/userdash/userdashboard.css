@@ -77,7 +77,7 @@ body {
 }
 
 .sidebar {
-  width: 260px;
+  width: 210px;
   height: 94%;
   background-color: var(--bg-side);
   display: flex;
