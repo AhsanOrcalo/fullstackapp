@@ -289,13 +289,13 @@ const Browsedata = () => {
 
       <div className="filtercard">
         <div className="filterheader">
-          <span className="filtertitle">Filters</span>
+          <span className="filtertitle" style={{ fontWeight: '700', color: 'var(--text-main)' }}>Filters</span>
           <button className="clearbtn" onClick={clearFilters}>Clear All</button>
         </div>
         
         <div className="filtergrid">
           <div className="filtergroup">
-            <label>Name</label>
+            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>Name</label>
             <input
               type="text"
               name="name"
@@ -306,7 +306,7 @@ const Browsedata = () => {
             />
           </div>
           <div className="filtergroup">
-            <label>City</label>
+            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>City</label>
             <input
               type="text"
               name="city"
@@ -317,7 +317,7 @@ const Browsedata = () => {
             />
           </div>
           <div className="filtergroup">
-            <label>Date of Birth (Year)</label>
+            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>Date of Birth (Year)</label>
             <div className="daterow">
               <input
                 type="text"
@@ -338,7 +338,7 @@ const Browsedata = () => {
             </div>
           </div>
           <div className="filtergroup">
-            <label>ZIP Code</label>
+            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>ZIP Code</label>
             <input
               type="text"
               name="zip"
@@ -352,7 +352,7 @@ const Browsedata = () => {
 
         <div className="filtergrid">
           <div className="filtergroup">
-            <label>Score</label>
+            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>Score</label>
             <div className="checkrow">
               <label className="customradio">
                 <input
@@ -361,7 +361,7 @@ const Browsedata = () => {
                   checked={filters.scoreFilter === '700+'}
                   onChange={() => handleRadioChange('scoreFilter', '700+')}
                 />
-                <span>700+ Score</span>
+                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>700+ Score</span>
               </label>
               <label className="customradio">
                 <input
@@ -370,7 +370,7 @@ const Browsedata = () => {
                   checked={filters.scoreFilter === '800+'}
                   onChange={() => handleRadioChange('scoreFilter', '800+')}
                 />
-                <span>800+ Score</span>
+                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>800+ Score</span>
               </label>
               <label className="customradio">
                 <input
@@ -379,12 +379,12 @@ const Browsedata = () => {
                   checked={filters.scoreFilter === 'random'}
                   onChange={() => handleRadioChange('scoreFilter', 'random')}
                 />
-                <span>Random</span>
+                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Random</span>
               </label>
             </div>
           </div>
           <div className="filtergroup">
-            <label>State</label>
+            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>State</label>
             <select
               name="state"
               value={filters.state}
@@ -400,7 +400,7 @@ const Browsedata = () => {
             </select>
           </div>
           <div className="filtergroup">
-            <label>Price Sort</label>
+            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>Price Sort</label>
             <div className="checkrow">
               <label className="customradio">
                 <input
@@ -409,7 +409,7 @@ const Browsedata = () => {
                   checked={filters.priceSort === 'high-to-low'}
                   onChange={() => handleRadioChange('priceSort', 'high-to-low')}
                 />
-                <span>High to Low</span>
+                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>High to Low</span>
               </label>
               <label className="customradio">
                 <input
@@ -418,12 +418,12 @@ const Browsedata = () => {
                   checked={filters.priceSort === 'low-to-high'}
                   onChange={() => handleRadioChange('priceSort', 'low-to-high')}
                 />
-                <span>Low to High</span>
+                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Low to High</span>
               </label>
             </div>
           </div>
           <div className="filtergroup">
-            <label>Country</label>
+            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>Country</label>
             <div className="checkrow">
               <label className="customradio">
                 <input
@@ -432,7 +432,7 @@ const Browsedata = () => {
                   checked={filters.canadaFilter === 'canada'}
                   onChange={() => handleRadioChange('canadaFilter', 'canada')}
                 />
-                <span>Canada</span>
+                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Canada</span>
               </label>
             </div>
           </div>

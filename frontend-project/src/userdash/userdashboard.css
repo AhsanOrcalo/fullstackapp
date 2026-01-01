@@ -922,11 +922,17 @@ th {
   border-radius: 50%;
 }
 
+.customradio input:checked {
+  background-color: white;
+  border-color: var(--primary-blue);
+  border-width: 2px;
+}
+
 .customradio input:checked::after {
   content: '';
   width: 8px;
   height: 8px;
-  background-color: white;
+  background-color: var(--primary-blue);
   border-radius: 50%;
 }
 
