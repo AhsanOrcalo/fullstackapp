@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { getDashboardStats } from '../services/api';
 import { getUserData } from '../services/api';
 import { 
-  FaUsers, FaFileAlt, FaClock, FaServer, FaChartLine, FaDatabase, FaCheckCircle
+  FaUsers, FaFileAlt, FaClock, FaServer, FaChartLine, FaDatabase, FaCheckCircle, FaShoppingCart, FaRandom
 } from 'react-icons/fa';
 
 const AdminDashboard = ({ setview }) => {
@@ -16,6 +16,8 @@ const AdminDashboard = ({ setview }) => {
     soldData800Plus: 0,
     availableData700Plus: 0,
     availableData800Plus: 0,
+    totalSold: 0,
+    randomSold: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,6 +47,8 @@ const AdminDashboard = ({ setview }) => {
         soldData800Plus: data?.soldData800Plus ?? 0,
         availableData700Plus: data?.availableData700Plus ?? 0,
         availableData800Plus: data?.availableData800Plus ?? 0,
+        totalSold: data?.totalSold ?? 0,
+        randomSold: data?.randomSold ?? 0,
       });
     } catch (err) {
       setError(err.message || 'Failed to fetch dashboard stats');
@@ -133,6 +137,24 @@ const AdminDashboard = ({ setview }) => {
       color: '#10b981',
       bgColor: 'linear-gradient(135deg, rgba(5, 150, 105, 0.25) 0%, rgba(5, 150, 105, 0.15) 100%)',
       shadowColor: 'rgba(5, 150, 105, 0.4)',
+    },
+    {
+      title: 'Total Sold',
+      value: stats.totalSold ?? 0,
+      subtitle: 'All purchased records',
+      icon: FaChartLine,
+      color: '#8b5cf6',
+      bgColor: 'linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0.15) 100%)',
+      shadowColor: 'rgba(139, 92, 246, 0.4)',
+    },
+    {
+      title: 'Random Sold',
+      value: stats.randomSold,
+      subtitle: 'Sold records with non-numeric score',
+      icon: FaRandom,
+      color: '#ec4899',
+      bgColor: 'linear-gradient(135deg, rgba(236, 72, 153, 0.25) 0%, rgba(236, 72, 153, 0.15) 100%)',
+      shadowColor: 'rgba(236, 72, 153, 0.4)',
     },
   ];
 

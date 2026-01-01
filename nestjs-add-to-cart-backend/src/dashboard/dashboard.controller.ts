@@ -29,6 +29,8 @@ export class DashboardController {
         soldData800Plus: 12,
         availableData700Plus: 230,
         availableData800Plus: 89,
+        totalSold: 57,
+        randomSold: 3,
       },
     },
   })

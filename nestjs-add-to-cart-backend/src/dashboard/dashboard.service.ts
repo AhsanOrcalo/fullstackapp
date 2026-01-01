@@ -97,6 +97,17 @@ export class DashboardService {
         return score !== null && score >= 800;
       }).length;
 
+      // Calculate total sold (all purchases)
+      const totalSold = allPurchases.length;
+
+      // Count random sold (purchases where score is non-numeric or empty)
+      const randomSold = allPurchases.filter((purchase) => {
+        const lead = purchase.leadId as any;
+        const score = parseScore(lead?.score);
+        // Random means score is null, empty, or non-numeric
+        return score === null;
+      }).length;
+
       return {
         totalUsers,
         totalRecords,
@@ -106,6 +117,8 @@ export class DashboardService {
         soldData800Plus,
         availableData700Plus,
         availableData800Plus,
+        totalSold,
+        randomSold,
       };
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
