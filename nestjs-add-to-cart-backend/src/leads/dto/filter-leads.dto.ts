@@ -88,6 +88,17 @@ export class FilterLeadsDto {
   scoreFilter?: '700+' | '800+' | 'random';
 
   @ApiProperty({
+    description: 'Filter by Canada: "canada" to show only Canadian records',
+    example: 'canada',
+    required: false,
+    enum: ['canada'],
+  })
+  @IsString()
+  @IsIn(['canada'])
+  @IsOptional()
+  canadaFilter?: 'canada';
+
+  @ApiProperty({
     description: 'Page number for pagination (starts from 1)',
     example: 1,
     required: false,

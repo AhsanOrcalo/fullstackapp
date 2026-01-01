@@ -77,6 +77,44 @@ export class LeadsService {
         query.state = { $regex: filters.state, $options: 'i' };
       }
 
+      // Filter by Canada - filter by Canadian provinces/territories
+      if (filters.canadaFilter === 'canada') {
+        const canadianProvinces = [
+          'Ontario',
+          'Quebec',
+          'British Columbia',
+          'Alberta',
+          'Manitoba',
+          'Saskatchewan',
+          'Nova Scotia',
+          'New Brunswick',
+          'Newfoundland and Labrador',
+          'Newfoundland',
+          'Prince Edward Island',
+          'Northwest Territories',
+          'Yukon',
+          'Nunavut',
+        ];
+        // Create $or condition for Canadian provinces
+        const canadaStateOr = canadianProvinces.map(province => ({
+          state: { $regex: `^${province}$`, $options: 'i' }
+        }));
+        
+        // If there's already an $or for name search, we need to combine with $and
+        if (query.$or && query.$or.length > 0) {
+          // There's a name search $or, combine with $and
+          const existingNameOr = query.$or;
+          query.$and = [
+            { $or: existingNameOr },
+            { $or: canadaStateOr }
+          ];
+          delete query.$or;
+        } else {
+          // No existing $or, just use the Canada filter
+          query.$or = canadaStateOr;
+        }
+      }
+
       // Filter by score - we'll handle this in JavaScript after fetching to avoid MongoDB conversion errors
       // Just mark which filter to apply
     }

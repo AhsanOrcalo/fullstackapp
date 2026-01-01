@@ -174,6 +174,7 @@ export const getAllLeads = async (filters = {}) => {
     if (filters.state) queryParams.append('state', filters.state);
     if (filters.priceSort) queryParams.append('priceSort', filters.priceSort);
     if (filters.scoreFilter) queryParams.append('scoreFilter', filters.scoreFilter);
+    if (filters.canadaFilter) queryParams.append('canadaFilter', filters.canadaFilter);
     if (filters.page) queryParams.append('page', filters.page);
     if (filters.limit) queryParams.append('limit', filters.limit);
 

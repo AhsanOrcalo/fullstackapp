@@ -25,6 +25,7 @@ const Browsedata = () => {
     state: '',
     scoreFilter: '',
     priceSort: '',
+    canadaFilter: '',
   });
 
   useEffect(() => {
@@ -105,6 +106,7 @@ const Browsedata = () => {
       state: '',
       scoreFilter: '',
       priceSort: '',
+      canadaFilter: '',
     };
     setFilters(clearedFilters);
     fetchLeads(clearedFilters);
@@ -417,6 +419,20 @@ const Browsedata = () => {
                   onChange={() => handleRadioChange('priceSort', 'low-to-high')}
                 />
                 <span>Low to High</span>
+              </label>
+            </div>
+          </div>
+          <div className="filtergroup">
+            <label>Country</label>
+            <div className="checkrow">
+              <label className="customradio">
+                <input
+                  type="radio"
+                  name="canadaFilter"
+                  checked={filters.canadaFilter === 'canada'}
+                  onChange={() => handleRadioChange('canadaFilter', 'canada')}
+                />
+                <span>Canada</span>
               </label>
             </div>
           </div>
