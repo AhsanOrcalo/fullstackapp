@@ -135,6 +135,11 @@ const Signin = ({ switchpage, onLoginSuccess }) => {
           <p className="bottomtext">
             Don't have an account? <span className="linktext" onClick={() => switchpage('signup')}>Create One</span>
           </p>
+          <p className="bottomtext">
+          <span>
+            Need help? Contact us <a href="mailto:info@freshdata.shop" style={{ color: '#4318ff', textDecoration: 'underline' }}>info@freshdata.shop</a>
+          </span>
+          </p>
         </div>
       </div>
     </div>
