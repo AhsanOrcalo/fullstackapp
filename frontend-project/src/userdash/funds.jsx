@@ -64,12 +64,12 @@ const Funds = () => {
       if (pending) {
         setActivePayment({
           paymentId: pending._id || pending.id,
-          address: pending.cryptomusAddress,
-          currency: pending.cryptomusCurrency,
-          network: pending.cryptomusNetwork,
+          address: pending.plisioAddress || pending.cryptomusAddress,
+          currency: pending.plisioCurrency || pending.cryptomusCurrency,
+          network: pending.plisioCurrency || pending.cryptomusNetwork || 'N/A',
           amount: pending.amount,
-          paymentUrl: pending.cryptomusPaymentUrl,
-          expiredAt: pending.cryptomusExpiredAt,
+          paymentUrl: pending.plisioPaymentUrl || pending.cryptomusPaymentUrl,
+          expiredAt: pending.plisioExpiredAt || pending.cryptomusExpiredAt,
         });
       }
     } catch (err) {
@@ -96,12 +96,12 @@ const Funds = () => {
         // Still pending, update active payment
         setActivePayment({
           paymentId: payment._id || payment.id,
-          address: payment.cryptomusAddress,
-          currency: payment.cryptomusCurrency,
-          network: payment.cryptomusNetwork,
+          address: payment.plisioAddress || payment.cryptomusAddress,
+          currency: payment.plisioCurrency || payment.cryptomusCurrency,
+          network: payment.plisioCurrency || payment.cryptomusNetwork || 'N/A',
           amount: payment.amount,
-          paymentUrl: payment.cryptomusPaymentUrl,
-          expiredAt: payment.cryptomusExpiredAt,
+          paymentUrl: payment.plisioPaymentUrl || payment.cryptomusPaymentUrl,
+          expiredAt: payment.plisioExpiredAt || payment.cryptomusExpiredAt,
         });
       }
     } catch (err) {
@@ -125,7 +125,7 @@ const Funds = () => {
       const paymentData = {
         amount: paymentAmount,
         currency: 'USD',
-        paymentMethod: 'cryptomus',
+        paymentMethod: 'plisio',
       };
 
       const result = await createPayment(paymentData);
@@ -134,7 +134,7 @@ const Funds = () => {
         paymentId: result.paymentId,
         address: result.address,
         currency: result.currency,
-        network: result.network,
+        network: result.network || result.currency || 'N/A',
         amount: result.amount,
         paymentUrl: result.paymentUrl,
         expiredAt: result.expiredAt ? new Date(result.expiredAt * 1000) : null,

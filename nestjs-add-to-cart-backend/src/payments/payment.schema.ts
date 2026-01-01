@@ -13,6 +13,7 @@ export enum PaymentStatus {
 export enum PaymentMethod {
   BALANCE = 'balance',
   CRYPTOMUS = 'cryptomus',
+  PLISIO = 'plisio',
 }
 
 export type PaymentDocument = Payment & Document;
@@ -37,7 +38,7 @@ export class Payment {
   @Prop({ required: true, enum: PaymentStatus, default: PaymentStatus.PENDING })
   status: PaymentStatus;
 
-  // Cryptomus specific fields
+  // Cryptomus specific fields (kept for backward compatibility)
   @Prop({ required: false })
   cryptomusOrderId?: string;
 
@@ -67,6 +68,31 @@ export class Payment {
 
   @Prop({ required: false, type: Object })
   cryptomusResponse?: any;
+
+  // Plisio specific fields
+  @Prop({ required: false })
+  plisioTxnId?: string;
+
+  @Prop({ required: false })
+  plisioInvoiceId?: string;
+
+  @Prop({ required: false })
+  plisioAddress?: string;
+
+  @Prop({ required: false })
+  plisioCurrency?: string;
+
+  @Prop({ required: false })
+  plisioPaymentUrl?: string;
+
+  @Prop({ required: false, type: Date })
+  plisioExpiredAt?: Date;
+
+  @Prop({ required: false })
+  plisioOrderNumber?: string;
+
+  @Prop({ required: false, type: Object })
+  plisioResponse?: any;
 
   @Prop({ required: false, type: Date })
   paidAt?: Date;
