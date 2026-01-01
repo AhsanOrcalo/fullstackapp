@@ -7,11 +7,15 @@ import { UsersService } from './users.service';
 import { JwtStrategy } from './jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { User, UserSchema } from './schemas/user.schema';
+import { Payment, PaymentSchema } from '../payments/payment.schema';
 import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Payment.name, schema: PaymentSchema },
+    ]),
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',

@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, UnauthorizedException, OnModuleInit, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
@@ -11,12 +11,15 @@ import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { User, UserDocument } from './schemas/user.schema';
 import { Role } from './enums/role.enum';
 import { EmailService } from '../email/email.service';
+import { Payment, PaymentDocument, PaymentStatus, PaymentMethod } from '../payments/payment.schema';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
+    @InjectModel(Payment.name)
+    private paymentModel: Model<PaymentDocument>,
     private jwtService: JwtService,
     private emailService: EmailService,
   ) {}
@@ -314,6 +317,18 @@ export class UsersService implements OnModuleInit {
     user.balance = (parseFloat(user.balance.toString()) || 0) + amount;
     await user.save();
 
+    // Create a payment record to track admin-added funds in totalDeposits
+    const adminPayment = new this.paymentModel({
+      userId: new Types.ObjectId(userId),
+      amount: amount,
+      currency: 'USD',
+      paymentMethod: PaymentMethod.BALANCE,
+      status: PaymentStatus.PAID,
+      cryptomusAdditionalData: 'Admin added funds',
+      paidAt: new Date(),
+    });
+    await adminPayment.save();
+
     return {
       message: 'Funds added successfully',
       user: {
@@ -332,17 +347,53 @@ export class UsersService implements OnModuleInit {
     }
 
     const currentBalance = parseFloat(user.balance?.toString() || '0');
-    // For now, total deposits equals current balance (since funds are added directly by admin)
-    // In the future, this can be calculated from a transaction history table
-    const totalDeposits = currentBalance;
+    
+    // Calculate total deposits from all PAID payments that are for adding funds (not for purchasing leads)
+    // This includes:
+    // 1. Cryptomus payments (for adding funds, not lead purchases)
+    // 2. Admin-added funds (marked with "Admin added funds" in additionalData)
+    const depositPayments = await this.paymentModel.find({
+      userId: new Types.ObjectId(userId),
+      status: PaymentStatus.PAID,
+      purchaseId: { $exists: false },
+    }).exec();
+    
+    const totalDeposits = depositPayments.reduce((sum, payment) => {
+      // Count payments that are:
+      // - Admin added funds (has "Admin added funds" in additionalData)
+      // - Cryptomus payments for adding funds (doesn't have "Lead purchase:" in additionalData)
+      const additionalData = payment.cryptomusAdditionalData || '';
+      if (additionalData.includes('Admin added funds') || !additionalData.includes('Lead purchase:')) {
+        return sum + parseFloat(payment.amount?.toString() || '0');
+      }
+      return sum;
+    }, 0);
+    
     const minimumDeposit = 10.0; // Minimum deposit amount
-    const pendingPayments: any[] = []; // Can be implemented later with payment system
+    
+    // Get pending payments
+    const pendingPayments = await this.paymentModel.find({
+      userId: new Types.ObjectId(userId),
+      status: { $in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING] },
+      purchaseId: { $exists: false },
+    }).exec();
 
     return {
       currentBalance,
       totalDeposits,
       minimumDeposit,
-      pendingPayments,
+      pendingPayments: pendingPayments.map((p: any) => ({
+        _id: p._id,
+        id: p._id.toString(),
+        amount: p.amount,
+        status: p.status,
+        cryptomusAddress: p.cryptomusAddress,
+        cryptomusCurrency: p.cryptomusCurrency,
+        cryptomusNetwork: p.cryptomusNetwork,
+        cryptomusPaymentUrl: p.cryptomusPaymentUrl,
+        cryptomusExpiredAt: p.cryptomusExpiredAt,
+        createdAt: p.createdAt,
+      })),
     };
   }
 }
