@@ -66,14 +66,14 @@ const Cart = ({ setview }) => {
   };
 
   const handleCheckout = async () => {
-    if (selectedItems.size === 0) {
-      alert('Please select at least one item to checkout');
+    if (cartitems.length === 0) {
+      alert('Your cart is empty');
       return;
     }
 
-    // Calculate total price of selected items
-    const itemsToPurchase = cartitems.filter(item => selectedItems.has(item.id));
-    const totalPrice = itemsToPurchase.reduce((sum, item) => sum + (item.price || 0), 0);
+    // Checkout ALL items in cart
+    const itemsToPurchase = cartitems;
+    const totalPrice = subtotal;
 
     // Check balance before attempting purchase
     if (userBalance < totalPrice) {
@@ -97,9 +97,9 @@ const Cart = ({ setview }) => {
         }
       }
       
-      // Remove purchased items from cart
-      selectedItems.forEach(itemId => {
-        removeFromCart(itemId);
+      // Remove all purchased items from cart (clear entire cart)
+      cartitems.forEach(item => {
+        removeFromCart(item.id);
       });
       setSelectedItems(new Set());
       loadCart();
@@ -142,12 +142,13 @@ const Cart = ({ setview }) => {
   };
 
   const calculateTotal = () => {
-    const selected = cartitems.filter(item => selectedItems.has(item.id));
-    return selected.reduce((sum, item) => sum + (item.price || 0), 0);
+    // Calculate total for ALL items in cart, not just selected
+    return cartitems.reduce((sum, item) => sum + (item.price || 0), 0);
   };
 
-  const selectedCount = selectedItems.size;
-  const subtotal = calculateTotal();
+  const totalItems = cartitems.length;
+  const selectedCount = selectedItems.size; // For delete selection only
+  const subtotal = calculateTotal(); // Total for all items
 
   return (
     <div className="cartbox">
@@ -168,7 +169,7 @@ const Cart = ({ setview }) => {
                 />
                 <span>Select All</span>
               </label>
-              <span className="countinfo">{selectedCount} selected</span>
+              <span className="countinfo">{selectedCount} selected for deletion</span>
             </div>
             <button 
               className="deletebutton"
@@ -266,7 +267,7 @@ const Cart = ({ setview }) => {
             <h3 className="cardsubtitle">Cart Summary</h3>
             <div className="summaryrow">
               <span>Items:</span>
-              <span>{selectedCount}</span>
+              <span>{totalItems}</span>
             </div>
             <div className="summaryrow">
               <span>Subtotal:</span>
@@ -290,7 +291,7 @@ const Cart = ({ setview }) => {
                 {formatPrice(userBalance)}
               </span>
             </div>
-            {selectedCount > 0 && (
+            {totalItems > 0 && (
               <div className="summaryrow" style={{ 
                 marginTop: '5px',
                 fontSize: '13px'
@@ -304,7 +305,7 @@ const Cart = ({ setview }) => {
                 </span>
               </div>
             )}
-            {selectedCount > 0 && userBalance < subtotal && (
+            {totalItems > 0 && userBalance < subtotal && (
               <div style={{
                 marginTop: '10px',
                 padding: '10px',
@@ -320,10 +321,10 @@ const Cart = ({ setview }) => {
             <button 
               className="checkoutbutton"
               onClick={handleCheckout}
-              disabled={selectedCount === 0 || checkoutLoading || userBalance < subtotal}
+              disabled={totalItems === 0 || checkoutLoading || userBalance < subtotal}
               style={{
-                opacity: (selectedCount === 0 || checkoutLoading || userBalance < subtotal) ? 0.5 : 1,
-                cursor: (selectedCount === 0 || checkoutLoading || userBalance < subtotal) ? 'not-allowed' : 'pointer',
+                opacity: (totalItems === 0 || checkoutLoading || userBalance < subtotal) ? 0.5 : 1,
+                cursor: (totalItems === 0 || checkoutLoading || userBalance < subtotal) ? 'not-allowed' : 'pointer',
                 marginTop: '15px'
               }}
             >
