@@ -816,7 +816,7 @@ const DataManagement = () => {
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
           >
-            <FaUpload />
+          <FaDownload />
             <span>Import</span>
           </motion.button>
           <motion.button 
@@ -826,7 +826,7 @@ const DataManagement = () => {
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
           >
-            <FaDownload />
+            <FaUpload />
             <span>Export</span>
           </motion.button>
           <motion.button 
