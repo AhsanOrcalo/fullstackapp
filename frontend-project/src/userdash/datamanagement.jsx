@@ -337,14 +337,25 @@ const DataManagement = () => {
       } else {
         // Parse XLSX file
         const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        // Enable date parsing for XLSX files
+        const workbook = XLSX.read(arrayBuffer, { 
+          type: 'array',
+          cellDates: true, // Parse dates as Date objects
+          cellNF: false, // Don't parse number formats
+          cellText: false // Don't parse text
+        });
         
         // Get first sheet
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
-        // Convert to JSON with header row
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        // Convert to JSON with header row, preserving date objects
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+          header: 1, 
+          defval: '',
+          raw: false, // Convert dates to strings
+          dateNF: 'yyyy-mm-dd' // Date format
+        });
         
         if (jsonData.length < 2) {
           alert('XLSX file is empty or invalid');
@@ -370,7 +381,22 @@ const DataManagement = () => {
 
       // Helper function to parse DOB from various formats and convert to YYYY-MM-DD
       const parseDOB = (dobValue) => {
-        if (!dobValue) return '';
+        if (!dobValue && dobValue !== 0) return '';
+        
+        // Handle Excel date serial numbers (numbers between 1 and ~3 million)
+        if (typeof dobValue === 'number' && dobValue > 0 && dobValue < 3000000) {
+          // Excel date serial number - convert to date
+          // Excel epoch is January 1, 1900, but Excel incorrectly treats 1900 as a leap year
+          const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899
+          const date = new Date(excelEpoch.getTime() + dobValue * 24 * 60 * 60 * 1000);
+          if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          }
+        }
+        
         const cleaned = String(dobValue).replace(/"/g, '').trim();
         
         // Skip masked values (like #########)
@@ -387,7 +413,10 @@ const DataManagement = () => {
         
         // If it's a date object from XLSX, convert to string
         if (dobValue instanceof Date) {
-          return dobValue.toISOString().split('T')[0];
+          if (!isNaN(dobValue.getTime())) {
+            return dobValue.toISOString().split('T')[0];
+          }
+          return '';
         }
         
         // Check if it's in DD/MM/YYYY or MM/DD/YYYY format (e.g., "01/01/2003")
@@ -490,27 +519,29 @@ const DataManagement = () => {
           // Validate required fields
           if (!leadData.firstName || !leadData.lastName || !leadData.email) {
             failedCount++;
-            console.warn(`Row ${i + 1} skipped: Missing required fields`, {
-              firstName: leadData.firstName || 'MISSING',
-              lastName: leadData.lastName || 'MISSING',
-              email: leadData.email || 'MISSING'
-            });
+            const errorMsg = `Row ${i + 2} skipped: Missing required fields - First Name: ${leadData.firstName ? 'OK' : 'MISSING'}, Last Name: ${leadData.lastName ? 'OK' : 'MISSING'}, Email: ${leadData.email ? 'OK' : 'MISSING'}`;
+            console.warn(errorMsg, leadData);
             continue;
           }
           
           // Validate DOB - it's required by backend
           if (!leadData.dob || !/^\d{4}-\d{2}-\d{2}$/.test(leadData.dob)) {
             failedCount++;
-            console.warn(`Row ${i + 1} skipped: Missing or invalid DOB`, {
-              dob: leadData.dob || 'MISSING',
-              originalValue: getValueFlexible('DOB', 'DATE OF BIRTH', 'DATEOFBIRTH')
-            });
+            const originalDOB = getValueFlexible('DOB', 'DATE OF BIRTH', 'DATEOFBIRTH');
+            const errorMsg = `Row ${i + 2} skipped: Missing or invalid DOB - Original: "${originalDOB}", Parsed: "${leadData.dob || 'MISSING'}"`;
+            console.warn(errorMsg);
             continue;
           }
 
           // Add lead via API
-          await addLead(leadData);
-          successCount++;
+          try {
+            await addLead(leadData);
+            successCount++;
+          } catch (apiError) {
+            failedCount++;
+            console.error(`Row ${i + 2} API error:`, apiError.message || apiError);
+            continue;
+          }
 
           // Update status
           setImportStatus({
