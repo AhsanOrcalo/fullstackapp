@@ -6,7 +6,8 @@ const Browsedata = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedLeads, setSelectedLeads] = useState(new Set());
+  const [selectedLeads, setSelectedLeads] = useState(new Set()); // Set of IDs for quick lookup
+  const [selectedLeadsData, setSelectedLeadsData] = useState(new Map()); // Map of ID -> lead object for storing full data
   const [fastBuying, setFastBuying] = useState(false);
   
   // Pagination state
@@ -66,8 +67,17 @@ const Browsedata = () => {
       // Backend already filters out leads purchased by any user for regular users
       // So we just use the data as-is
       setLeads(data);
-      // Clear selection when leads are refreshed
-      setSelectedLeads(new Set());
+      // Update stored lead data for leads that are already selected (refresh their data)
+      setSelectedLeadsData(prev => {
+        const updated = new Map(prev);
+        data.forEach(lead => {
+          if (selectedLeads.has(lead.id)) {
+            updated.set(lead.id, lead); // Update with latest data
+          }
+        });
+        return updated;
+      });
+      // Don't clear selection when changing pages - preserve selections across pagination
     } catch (err) {
       setError(err.message || 'Failed to fetch leads');
       console.error('Error fetching leads:', err);
@@ -93,6 +103,8 @@ const Browsedata = () => {
 
   const applyFilters = () => {
     setCurrentPage(1); // Reset to first page when applying filters
+    setSelectedLeads(new Set()); // Clear selection when filters change
+    setSelectedLeadsData(new Map()); // Clear stored lead data
     fetchLeads();
   };
 
@@ -109,25 +121,53 @@ const Browsedata = () => {
       canadaFilter: '',
     };
     setFilters(clearedFilters);
+    setSelectedLeads(new Set()); // Clear selection when filters are cleared
+    setSelectedLeadsData(new Map()); // Clear stored lead data
     fetchLeads(clearedFilters);
   };
 
   const handleSelectAll = () => {
-    if (selectedLeads.size === leads.length) {
-      setSelectedLeads(new Set());
+    if (selectedLeads.size === leads.length && leads.length > 0) {
+      // Deselect all current page leads
+      const newSelected = new Set(selectedLeads);
+      const newSelectedData = new Map(selectedLeadsData);
+      leads.forEach(lead => {
+        newSelected.delete(lead.id);
+        newSelectedData.delete(lead.id);
+      });
+      setSelectedLeads(newSelected);
+      setSelectedLeadsData(newSelectedData);
     } else {
-      setSelectedLeads(new Set(leads.map(lead => lead.id)));
+      // Select all current page leads
+      const newSelected = new Set(selectedLeads);
+      const newSelectedData = new Map(selectedLeadsData);
+      leads.forEach(lead => {
+        newSelected.add(lead.id);
+        newSelectedData.set(lead.id, lead);
+      });
+      setSelectedLeads(newSelected);
+      setSelectedLeadsData(newSelectedData);
     }
   };
 
   const handleSelectLead = (leadId) => {
+    const lead = leads.find(l => l.id === leadId);
     const newSelected = new Set(selectedLeads);
+    const newSelectedData = new Map(selectedLeadsData);
+    
     if (newSelected.has(leadId)) {
+      // Deselect
       newSelected.delete(leadId);
+      newSelectedData.delete(leadId);
     } else {
-      newSelected.add(leadId);
+      // Select - store both ID and full lead object
+      if (lead) {
+        newSelected.add(leadId);
+        newSelectedData.set(leadId, lead);
+      }
     }
     setSelectedLeads(newSelected);
+    setSelectedLeadsData(newSelectedData);
   };
 
   const handleFastBuy = async () => {
@@ -136,8 +176,9 @@ const Browsedata = () => {
       return;
     }
 
-    const selectedLeadsData = leads.filter(lead => selectedLeads.has(lead.id));
-    const totalPrice = selectedLeadsData.reduce((sum, lead) => sum + (lead.price || 0), 0);
+    // Get all selected leads from stored data (across all pages)
+    const leadsToPurchase = Array.from(selectedLeadsData.values());
+      const totalPrice = leadsToPurchase.reduce((sum, lead) => sum + (lead.price || 0), 0);
 
     const confirmMessage = selectedLeads.size === 1
       ? `Purchase this lead for ${formatPrice(totalPrice)}?`
@@ -155,7 +196,7 @@ const Browsedata = () => {
       const errors = [];
 
       // Purchase leads sequentially
-      for (const lead of selectedLeadsData) {
+      for (const lead of leadsToPurchase) {
         try {
           const result = await purchaseLead(lead.id);
           if (result.remainingBalance !== undefined) {
@@ -170,6 +211,7 @@ const Browsedata = () => {
 
       // Clear selection
       setSelectedLeads(new Set());
+      setSelectedLeadsData(new Map());
       
       // Refresh leads list to remove purchased items
       await fetchLeads();
@@ -261,10 +303,12 @@ const Browsedata = () => {
             className="applybtn" 
             disabled={selectedLeads.size === 0 || fastBuying}
             onClick={() => {
-              const selectedLeadsData = leads.filter(lead => selectedLeads.has(lead.id));
-              addMultipleToCart(selectedLeadsData);
+              // Get all selected leads from stored data (across all pages)
+              const leadsToAdd = Array.from(selectedLeadsData.values());
+              addMultipleToCart(leadsToAdd);
               setSelectedLeads(new Set());
-              alert(`${selectedLeadsData.length} lead(s) added to cart!`);
+              setSelectedLeadsData(new Map());
+              alert(`${leadsToAdd.length} lead(s) added to cart!`);
             }}
             style={{ 
               backgroundColor: 'var(--primary-blue)',
