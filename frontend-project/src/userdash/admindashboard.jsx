@@ -29,7 +29,17 @@ const AdminDashboard = ({ setview }) => {
     fetchDashboardStats();
     // Refresh stats every 30 seconds
     const interval = setInterval(fetchDashboardStats, 800000);
-    return () => clearInterval(interval);
+    
+    // Listen for balance updates (which happen when purchases occur)
+    const handleBalanceUpdate = () => {
+      fetchDashboardStats();
+    };
+    window.addEventListener('balanceUpdated', handleBalanceUpdate);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('balanceUpdated', handleBalanceUpdate);
+    };
   }, []);
 
   const fetchDashboardStats = async () => {
@@ -76,7 +86,7 @@ const AdminDashboard = ({ setview }) => {
     {
       title: 'Total Records',
       value: stats.totalRecords,
-      subtitle: 'Data entries',
+      subtitle: 'Available data entries',
       icon: FaFileAlt,
       color: '#00cfe8',
       bgColor: 'linear-gradient(135deg, rgba(0, 207, 232, 0.25) 0%, rgba(0, 207, 232, 0.15) 100%)',

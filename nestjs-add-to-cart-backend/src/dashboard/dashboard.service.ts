@@ -22,8 +22,24 @@ export class DashboardService {
       // Get total users (excluding admin)
       const totalUsers = await this.userModel.countDocuments({ role: Role.USER });
 
-      // Get total records (leads)
-      const totalRecords = await this.leadModel.countDocuments();
+      // Get all purchases to determine purchased lead IDs
+      const allPurchases = await this.purchaseModel
+        .find()
+        .select('leadId')
+        .exec();
+
+      // Get purchased lead IDs as ObjectIds for database query
+      const purchasedLeadIds = allPurchases
+        .map((purchase) => {
+          const leadId = purchase.leadId;
+          return leadId instanceof Types.ObjectId ? leadId : new Types.ObjectId(leadId);
+        })
+        .filter(Boolean);
+
+      // Get total records (only available/not purchased leads)
+      const totalRecords = purchasedLeadIds.length > 0
+        ? await this.leadModel.countDocuments({ _id: { $nin: purchasedLeadIds } })
+        : await this.leadModel.countDocuments();
 
       // Get total activity count (all records)
       const recentActivity = totalRecords;
@@ -38,18 +54,18 @@ export class DashboardService {
         systemStatus = 'Error';
       }
 
-      // Get all purchases with lead relations
-      const allPurchases = await this.purchaseModel
+      // Get all purchases with lead relations (for sold data calculations)
+      const allPurchasesWithLeads = await this.purchaseModel
         .find()
         .populate('leadId')
         .exec();
 
-      // Get all leads
+      // Get all leads (for available data calculations)
       const allLeads = await this.leadModel.find().exec();
 
-      // Get purchased lead IDs - handle both ObjectId and populated lead object
-      const purchasedLeadIds = new Set(
-        allPurchases.map((purchase) => {
+      // Get purchased lead IDs as strings - handle both ObjectId and populated lead object
+      const purchasedLeadIdsStr = new Set(
+        allPurchasesWithLeads.map((purchase) => {
           // If leadId is populated, use _id, otherwise use leadId directly
           const leadId = purchase.leadId as any;
           if (leadId?._id) {
@@ -68,14 +84,14 @@ export class DashboardService {
       };
 
       // Count sold data with score between 700-799 (700 <= score < 800)
-      const soldData700Plus = allPurchases.filter((purchase) => {
+      const soldData700Plus = allPurchasesWithLeads.filter((purchase) => {
         const lead = purchase.leadId as any;
         const score = parseScore(lead?.score);
         return score !== null && score >= 700 && score < 800;
       }).length;
 
       // Count sold data with score >= 800
-      const soldData800Plus = allPurchases.filter((purchase) => {
+      const soldData800Plus = allPurchasesWithLeads.filter((purchase) => {
         const lead = purchase.leadId as any;
         const score = parseScore(lead?.score);
         return score !== null && score >= 800;
@@ -84,7 +100,7 @@ export class DashboardService {
       // Count available (not purchased) data with score between 700-799
       const availableData700Plus = allLeads.filter((lead) => {
         const leadIdStr = lead._id?.toString() || (lead as any).id?.toString();
-        if (!leadIdStr || purchasedLeadIds.has(leadIdStr)) return false; // Exclude purchased
+        if (!leadIdStr || purchasedLeadIdsStr.has(leadIdStr)) return false; // Exclude purchased
         const score = parseScore(lead.score);
         return score !== null && score >= 700 && score < 800;
       }).length;
@@ -92,16 +108,16 @@ export class DashboardService {
       // Count available (not purchased) data with score >= 800
       const availableData800Plus = allLeads.filter((lead) => {
         const leadIdStr = lead._id?.toString() || (lead as any).id?.toString();
-        if (!leadIdStr || purchasedLeadIds.has(leadIdStr)) return false; // Exclude purchased
+        if (!leadIdStr || purchasedLeadIdsStr.has(leadIdStr)) return false; // Exclude purchased
         const score = parseScore(lead.score);
         return score !== null && score >= 800;
       }).length;
 
       // Calculate total sold (all purchases)
-      const totalSold = allPurchases.length;
+      const totalSold = allPurchasesWithLeads.length;
 
       // Count random sold (purchases where score is non-numeric or empty)
-      const randomSold = allPurchases.filter((purchase) => {
+      const randomSold = allPurchasesWithLeads.filter((purchase) => {
         const lead = purchase.leadId as any;
         const score = parseScore(lead?.score);
         // Random means score is null, empty, or non-numeric
