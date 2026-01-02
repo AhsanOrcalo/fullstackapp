@@ -16,8 +16,8 @@ const Browsedata = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   
-  // Tab state
-  const [activeTab, setActiveTab] = useState('canada'); // 'canada' or 'usa'
+  // Tab state - default to 'all' to show all records initially
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'canada', or 'usa'
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -47,10 +47,11 @@ const Browsedata = () => {
         Object.entries(activeFilters).filter(([_, v]) => v !== '')
       );
       
-      // Add country filter based on active tab
+      // Add country filter based on active tab (only if explicitly selected, not 'all')
       if (activeTab === 'canada' || activeTab === 'usa') {
         cleanFilters.countryFilter = activeTab;
       }
+      // If activeTab is 'all', don't add countryFilter (show all records)
       
       // Add pagination
       cleanFilters.page = currentPage;
@@ -405,6 +406,23 @@ const Browsedata = () => {
           gap: '10px'
         }}
       >
+        <button
+          onClick={() => handleTabChange('all')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            color: activeTab === 'all' ? 'var(--primary-blue)' : 'var(--text-sub)',
+            fontSize: '16px',
+            fontWeight: activeTab === 'all' ? '700' : '500',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'all' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+            marginBottom: '-2px',
+            transition: 'all 0.3s'
+          }}
+        >
+          All
+        </button>
         <button
           onClick={() => handleTabChange('canada')}
           style={{
