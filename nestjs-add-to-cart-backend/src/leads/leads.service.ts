@@ -93,8 +93,13 @@ export class LeadsService {
     };
   }
 
-  async getAllLeads(filters?: FilterLeadsDto): Promise<{ leads: Lead[]; total: number; page: number; limit: number; totalPages: number }> {
+  async getAllLeads(filters?: FilterLeadsDto, excludePurchasedLeadIds?: any[]): Promise<{ leads: Lead[]; total: number; page: number; limit: number; totalPages: number }> {
     const query: any = {};
+    
+    // Exclude purchased leads if provided
+    if (excludePurchasedLeadIds && excludePurchasedLeadIds.length > 0) {
+      query._id = { $nin: excludePurchasedLeadIds };
+    }
 
     if (filters) {
       // Filter by name (searches in firstName and lastName)

@@ -203,40 +203,33 @@ export class LeadsController {
     },
   })
   async getAllLeads(@Request() req: any, @Query() filterDto: FilterLeadsDto) {
-    const result = await this.leadsService.getAllLeads(filterDto);
     const userId = req.user.userId;
     const userRole = req.user.role;
 
-    // For regular users: filter out leads that have been purchased by ANY user
-    // For admins: show all leads (they can see everything)
-    let availableLeads = result.leads;
-    if (userRole === Role.USER) {
-      // Filter out leads that have been purchased by anyone
-      const leadsWithPurchaseStatus = await Promise.all(
-        result.leads.map(async (lead) => {
-          const leadId = (lead as any)._id?.toString() || (lead as any).id;
-          const isPurchasedByAnyone = await this.purchasesService.isLeadPurchased(leadId);
-          return {
-            lead,
-            isPurchasedByAnyone,
-          };
-        }),
-      );
-      // Only return leads that haven't been purchased by anyone
-      availableLeads = leadsWithPurchaseStatus
-        .filter(({ isPurchasedByAnyone }) => !isPurchasedByAnyone)
-        .map(({ lead }) => lead);
-    }
+    // Get all purchased lead IDs to exclude them at database level
+    // This ensures pagination and total counts are accurate
+    const purchasedLeadIds = await this.purchasesService.getAllPurchasedLeadIds();
+    
+    // For regular users: always exclude purchased leads
+    // For admins: also exclude purchased leads (to show only available data in data management)
+    const excludePurchasedLeadIds = purchasedLeadIds;
+
+    // Get leads with purchased leads excluded at database level
+    const result = await this.leadsService.getAllLeads(filterDto, excludePurchasedLeadIds);
 
     // Add purchase status for each lead (whether current user has purchased it)
     // For admins, also add isPurchasedByAnyone to show if lead is sold to anyone
+    // Note: Since we filtered at DB level, all returned leads should be available
+    // But we still check for consistency and to set the status field
     const leadsWithPurchaseStatus = await Promise.all(
-      availableLeads.map(async (lead) => {
+      result.leads.map(async (lead) => {
         const leadId = (lead as any)._id?.toString() || (lead as any).id;
         const isPurchased = await this.purchasesService.isLeadPurchasedByUser(userId, leadId);
+        // Since we filtered at DB level, isPurchasedByAnyone should always be false
+        // But we check for admins to set the status field correctly
         const isPurchasedByAnyone = userRole === Role.ADMIN 
           ? await this.purchasesService.isLeadPurchased(leadId)
-          : undefined;
+          : false;
         const leadObj = (lead as any).toObject ? (lead as any).toObject() : lead;
         
         // Determine status: 'available' if not purchased by anyone, 'unavailable' if purchased

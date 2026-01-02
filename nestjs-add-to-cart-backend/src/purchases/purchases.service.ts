@@ -111,6 +111,11 @@ export class PurchasesService {
     return !!purchase;
   }
 
+  async getAllPurchasedLeadIds(): Promise<Types.ObjectId[]> {
+    const purchases = await this.purchaseModel.find({}).select('leadId').exec();
+    return purchases.map(p => new Types.ObjectId(p.leadId));
+  }
+
   async getSoldDataAnalytics(dateFrom?: string, dateTo?: string) {
     // Build date filter
     const dateFilter: any = {};

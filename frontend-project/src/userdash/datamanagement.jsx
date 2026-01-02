@@ -84,26 +84,8 @@ const DataManagement = () => {
         setTotalRecords(data.length);
       }
       
-      // Filter out unavailable (purchased) leads for admin in data management
-      if (isAdmin) {
-        const filteredData = data.filter(lead => {
-          // Hide leads that are purchased (unavailable)
-          return !lead.isPurchasedByAnyone && lead.status !== 'unavailable';
-        });
-        // Update total count to reflect filtered results
-        // Note: This is an approximation since we're filtering client-side
-        // For accurate pagination, backend should filter unavailable leads for admins
-        const filteredCount = filteredData.length;
-        if (response.total && data.length > 0) {
-          // Estimate: if we filtered out some leads, adjust total proportionally
-          const filterRatio = filteredCount / data.length;
-          setTotalRecords(Math.round(response.total * filterRatio));
-        } else {
-          setTotalRecords(filteredCount);
-        }
-        data = filteredData;
-      }
-      
+      // Backend now filters out purchased leads at database level
+      // So we can use the data directly without client-side filtering
       setLeads(data);
       // Clear selection when leads are refreshed
       setSelectedLeads(new Set());
