@@ -99,6 +99,17 @@ export class FilterLeadsDto {
   canadaFilter?: 'canada';
 
   @ApiProperty({
+    description: 'Filter by country: "canada" or "usa" to show only records from that country',
+    example: 'canada',
+    required: false,
+    enum: ['canada', 'usa'],
+  })
+  @IsString()
+  @IsIn(['canada', 'usa'])
+  @IsOptional()
+  countryFilter?: 'canada' | 'usa';
+
+  @ApiProperty({
     description: 'Page number for pagination (starts from 1)',
     example: 1,
     required: false,

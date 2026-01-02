@@ -4,6 +4,50 @@ import { getAllLeads, addLead, bulkAddLeads, deleteLead, deleteLeads, getUserDat
 import { FaSearch, FaFileAlt, FaDatabase, FaUpload, FaDownload, FaPlus, FaTrash } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 
+// Canadian provinces and territories
+const CANADIAN_PROVINCES = [
+  'Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba', 
+  'Saskatchewan', 'Nova Scotia', 'New Brunswick', 'Newfoundland and Labrador',
+  'Newfoundland', 'Prince Edward Island', 'Northwest Territories', 'Yukon', 'Nunavut'
+];
+
+// Major Canadian cities
+const CANADIAN_CITIES = [
+  'Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Edmonton', 'Ottawa',
+  'Winnipeg', 'Quebec City', 'Hamilton', 'Kitchener', 'London', 'Victoria',
+  'Halifax', 'Oshawa', 'Windsor', 'Saskatoon', 'Regina', 'Sherbrooke',
+  'St. John\'s', 'Barrie', 'Kelowna', 'Abbotsford', 'Sudbury', 'Kingston',
+  'Saguenay', 'Trois-Rivières', 'Guelph', 'Cambridge', 'Thunder Bay', 'Saint John'
+];
+
+// US states
+const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado',
+  'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho',
+  'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana',
+  'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+  'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
+  'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma',
+  'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota',
+  'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
+  'West Virginia', 'Wisconsin', 'Wyoming', 'District of Columbia'
+];
+
+// Major US cities
+const US_CITIES = [
+  'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia',
+  'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville',
+  'Fort Worth', 'Columbus', 'Charlotte', 'San Francisco', 'Indianapolis',
+  'Seattle', 'Denver', 'Washington', 'Boston', 'El Paso', 'Detroit', 'Nashville',
+  'Portland', 'Oklahoma City', 'Las Vegas', 'Memphis', 'Louisville', 'Baltimore',
+  'Milwaukee', 'Albuquerque', 'Tucson', 'Fresno', 'Sacramento', 'Kansas City',
+  'Mesa', 'Atlanta', 'Omaha', 'Raleigh', 'Miami', 'Long Beach', 'Virginia Beach',
+  'Oakland', 'Minneapolis', 'Tulsa', 'Tampa', 'Arlington', 'New Orleans'
+];
+
+// Note: Country filtering is now done on the backend
+// These constants are kept for reference but filtering happens server-side
+
 const DataManagement = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +78,9 @@ const DataManagement = () => {
   const [scoreFilter, setScoreFilter] = useState('');
   const [canadaFilter, setCanadaFilter] = useState('');
   
+  // Tab state
+  const [activeTab, setActiveTab] = useState('canada'); // 'canada' or 'usa'
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -53,7 +100,7 @@ const DataManagement = () => {
       setLoading(true);
       setError('');
       
-      // Build filters - search and score filters work for both "All" and "Canada"
+      // Build filters - search and score filters work for both tabs
       const filters = {
         page: currentPage,
         limit: pageSize,
@@ -66,6 +113,10 @@ const DataManagement = () => {
       }
       if (canadaFilter) {
         filters.canadaFilter = canadaFilter;
+      }
+      // Add country filter based on active tab
+      if (activeTab === 'canada' || activeTab === 'usa') {
+        filters.countryFilter = activeTab;
       }
       
       const response = await getAllLeads(filters);
@@ -84,9 +135,9 @@ const DataManagement = () => {
         setTotalRecords(data.length);
       }
       
-      // Backend now filters out purchased leads at database level
-      // So we can use the data directly without client-side filtering
+      // Backend now filters out purchased leads and applies country filter at database level
       setLeads(data);
+      
       // Clear selection when leads are refreshed
       setSelectedLeads(new Set());
     } catch (err) {
@@ -95,7 +146,7 @@ const DataManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, scoreFilter, canadaFilter, currentPage, pageSize]);
+  }, [searchQuery, scoreFilter, canadaFilter, currentPage, pageSize, activeTab]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -126,11 +177,14 @@ const DataManagement = () => {
       setSearchQuery('');
       setScoreFilter('');
       setCurrentPage(1);
+      // Note: Tab filtering still applies
     } else {
       // Set Canada filter and clear score filter
       setCanadaFilter(value);
       setScoreFilter(''); // Clear score filter when country filter is selected
       setCurrentPage(1); // Reset to first page when filter changes
+      // Switch to Canada tab when Canada filter is selected
+      setActiveTab('canada');
     }
   };
 
@@ -138,6 +192,12 @@ const DataManagement = () => {
     const newPageSize = parseInt(e.target.value, 10);
     setPageSize(newPageSize);
     setCurrentPage(1); // Reset to first page when page size changes
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to first page when tab changes
+    // fetchLeads will be called automatically via useEffect dependency on activeTab
   };
 
 
@@ -903,6 +963,52 @@ const DataManagement = () => {
             </motion.button>
           )}
         </motion.div>
+      </motion.div>
+
+      {/* Tabs */}
+      <motion.div 
+        style={{
+          display: 'flex',
+          gap: '10px',
+          marginBottom: '20px',
+          borderBottom: '2px solid var(--border-clr)'
+        }}
+        variants={itemVariants}
+      >
+        <button
+          onClick={() => handleTabChange('canada')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            color: activeTab === 'canada' ? 'var(--primary-blue)' : 'var(--text-sub)',
+            fontSize: '16px',
+            fontWeight: activeTab === 'canada' ? '700' : '500',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'canada' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+            marginBottom: '-2px',
+            transition: 'all 0.3s'
+          }}
+        >
+          Canada
+        </button>
+        <button
+          onClick={() => handleTabChange('usa')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            color: activeTab === 'usa' ? 'var(--primary-blue)' : 'var(--text-sub)',
+            fontSize: '16px',
+            fontWeight: activeTab === 'usa' ? '700' : '500',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'usa' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+            marginBottom: '-2px',
+            transition: 'all 0.3s'
+          }}
+        >
+          USA
+        </button>
       </motion.div>
 
       {/* Search and Filter Section */}

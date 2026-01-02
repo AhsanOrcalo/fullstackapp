@@ -175,6 +175,7 @@ export const getAllLeads = async (filters = {}) => {
     if (filters.priceSort) queryParams.append('priceSort', filters.priceSort);
     if (filters.scoreFilter) queryParams.append('scoreFilter', filters.scoreFilter);
     if (filters.canadaFilter) queryParams.append('canadaFilter', filters.canadaFilter);
+    if (filters.countryFilter) queryParams.append('countryFilter', filters.countryFilter);
     if (filters.page) queryParams.append('page', filters.page);
     if (filters.limit) queryParams.append('limit', filters.limit);
 

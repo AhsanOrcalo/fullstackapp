@@ -8,6 +8,58 @@ import { Lead, LeadDocument } from './schemas/lead.schema';
 
 @Injectable()
 export class LeadsService {
+  // Canadian provinces and territories
+  private readonly CANADIAN_PROVINCES = [
+    'Ontario',
+    'Quebec',
+    'British Columbia',
+    'Alberta',
+    'Manitoba',
+    'Saskatchewan',
+    'Nova Scotia',
+    'New Brunswick',
+    'Newfoundland and Labrador',
+    'Newfoundland',
+    'Prince Edward Island',
+    'Northwest Territories',
+    'Yukon',
+    'Nunavut',
+  ];
+
+  // Major Canadian cities
+  private readonly CANADIAN_CITIES = [
+    'Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Edmonton', 'Ottawa',
+    'Winnipeg', 'Quebec City', 'Hamilton', 'Kitchener', 'London', 'Victoria',
+    'Halifax', 'Oshawa', 'Windsor', 'Saskatoon', 'Regina', 'Sherbrooke',
+    'St. John\'s', 'Barrie', 'Kelowna', 'Abbotsford', 'Sudbury', 'Kingston',
+    'Saguenay', 'Trois-Rivières', 'Guelph', 'Cambridge', 'Thunder Bay', 'Saint John'
+  ];
+
+  // US states
+  private readonly US_STATES = [
+    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado',
+    'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho',
+    'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana',
+    'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+    'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
+    'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma',
+    'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota',
+    'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
+    'West Virginia', 'Wisconsin', 'Wyoming', 'District of Columbia'
+  ];
+
+  // Major US cities
+  private readonly US_CITIES = [
+    'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia',
+    'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville',
+    'Fort Worth', 'Columbus', 'Charlotte', 'San Francisco', 'Indianapolis',
+    'Seattle', 'Denver', 'Washington', 'Boston', 'El Paso', 'Detroit', 'Nashville',
+    'Portland', 'Oklahoma City', 'Las Vegas', 'Memphis', 'Louisville', 'Baltimore',
+    'Milwaukee', 'Albuquerque', 'Tucson', 'Fresno', 'Sacramento', 'Kansas City',
+    'Mesa', 'Atlanta', 'Omaha', 'Raleigh', 'Miami', 'Long Beach', 'Virginia Beach',
+    'Oakland', 'Minneapolis', 'Tulsa', 'Tampa', 'Arlington', 'New Orleans'
+  ];
+
   constructor(
     @InjectModel(Lead.name)
     private leadModel: Model<LeadDocument>,
@@ -139,26 +191,10 @@ export class LeadsService {
         query.state = { $regex: filters.state, $options: 'i' };
       }
 
-      // Filter by Canada - filter by Canadian provinces/territories
+      // Filter by Canada - filter by Canadian provinces/territories (legacy filter)
       if (filters.canadaFilter === 'canada') {
-        const canadianProvinces = [
-          'Ontario',
-          'Quebec',
-          'British Columbia',
-          'Alberta',
-          'Manitoba',
-          'Saskatchewan',
-          'Nova Scotia',
-          'New Brunswick',
-          'Newfoundland and Labrador',
-          'Newfoundland',
-          'Prince Edward Island',
-          'Northwest Territories',
-          'Yukon',
-          'Nunavut',
-        ];
         // Create $or condition for Canadian provinces
-        const canadaStateOr = canadianProvinces.map(province => ({
+        const canadaStateOr = this.CANADIAN_PROVINCES.map(province => ({
           state: { $regex: `^${province}$`, $options: 'i' }
         }));
         
@@ -174,6 +210,39 @@ export class LeadsService {
         } else {
           // No existing $or, just use the Canada filter
           query.$or = canadaStateOr;
+        }
+      }
+
+      // Filter by country (Canada or USA) - filters by both state and city
+      if (filters.countryFilter === 'canada' || filters.countryFilter === 'usa') {
+        const isCanada = filters.countryFilter === 'canada';
+        const states = isCanada ? this.CANADIAN_PROVINCES : this.US_STATES;
+        const cities = isCanada ? this.CANADIAN_CITIES : this.US_CITIES;
+
+        // Create $or conditions for states and cities
+        const stateOr = states.map(state => ({
+          state: { $regex: `^${state}$`, $options: 'i' }
+        }));
+
+        const cityOr = cities.map(city => ({
+          city: { $regex: `^${city}$`, $options: 'i' }
+        }));
+
+        // Combine state and city conditions with $or
+        const countryOr = [...stateOr, ...cityOr];
+
+        // If there's already an $or for name search, we need to combine with $and
+        if (query.$or && query.$or.length > 0) {
+          // There's a name search $or, combine with $and
+          const existingNameOr = query.$or;
+          query.$and = [
+            { $or: existingNameOr },
+            { $or: countryOr }
+          ];
+          delete query.$or;
+        } else {
+          // No existing $or, just use the country filter
+          query.$or = countryOr;
         }
       }
 
