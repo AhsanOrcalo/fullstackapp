@@ -292,6 +292,7 @@ const DataManagement = () => {
   const handleExport = () => {
     try {
       // Prepare CSV headers - matching table column order
+      // Exclude MAIL for Canada tab
       const headers = [
         'FIRST NAME',
         'LAST NAME',
@@ -301,7 +302,7 @@ const DataManagement = () => {
         'ZIP',
         'DOB',
         'SSN',
-        'MAIL',
+        ...(activeTab === 'usa' ? ['MAIL'] : []), // Only include MAIL for USA tab
         'PHONE',
         'SCORE',
         'PRICE',
@@ -321,7 +322,7 @@ const DataManagement = () => {
             `"${(lead.zip || '').replace(/"/g, '""')}"`,
             `"${formatDOBWithAge(lead.dob)}"`,
             `"${(lead.ssn || '').replace(/"/g, '""')}"`,
-            `"${(lead.email || '').replace(/"/g, '""')}"`,
+            ...(activeTab === 'usa' ? [`"${(lead.email || '').replace(/"/g, '""')}"`] : []), // Only include email for USA tab
             `"${(lead.phone || '').replace(/"/g, '""')}"`,
             lead.score || '',
             lead.price || 0,
@@ -585,17 +586,20 @@ const DataManagement = () => {
             zip: getValue('ZIP', values),
             dob: parseDOB(getValueFlexible(values, 'DOB', 'DATE OF BIRTH', 'DATEOFBIRTH')),
             ssn: getValueFlexible(values, 'SSN', 'SOCIAL SECURITY NUMBER', 'SOCIALSECURITYNUMBER').replace(/\D/g, ''),
-            email: getValueFlexible(values, 'MAIL', 'EMAIL', 'E-MAIL'),
+            // Only include email for USA tab, skip for Canada
+            ...(activeTab === 'usa' ? { email: getValueFlexible(values, 'MAIL', 'EMAIL', 'E-MAIL') } : {}),
             phone: getValueFlexible(values, 'PHONE', 'PHONE NUMBER', 'PHONENUMBER', 'TELEPHONE'),
             score: getValueFlexible(values, 'SCORE', 'CREDIT SCORE', 'CREDITSCORE') || undefined,
             price: getNumberValue('PRICE', values) || 0,
           };
 
-          // Validate required fields
-          if (!leadData.firstName || !leadData.lastName || !leadData.email) {
+          // Validate required fields - email is only required for USA tab
+          if (!leadData.firstName || !leadData.lastName || (activeTab === 'usa' && !leadData.email)) {
             invalidRows.push({
               index: i + 2,
-              error: 'Missing required fields (First Name, Last Name, or Email)',
+              error: activeTab === 'usa' 
+                ? 'Missing required fields (First Name, Last Name, or Email)'
+                : 'Missing required fields (First Name or Last Name)',
             });
             continue;
           }
@@ -1312,7 +1316,7 @@ const DataManagement = () => {
                   <th>ZIP</th>
                   <th>DOB</th>
                   <th>SSN</th>
-                  <th>MAIL</th>
+                  {activeTab === 'usa' && <th>MAIL</th>}
                   <th>PHONE</th>
                   <th>SCORE</th>
                   <th>PRICE</th>
@@ -1341,7 +1345,7 @@ const DataManagement = () => {
                     <td>{lead.zip || 'N/A'}</td>
                     <td>{formatDOBWithAge(lead.dob)}</td>
                     <td>{lead.ssn || 'N/A'}</td>
-                    <td>{lead.email || 'N/A'}</td>
+                    {activeTab === 'usa' && <td>{lead.email || 'N/A'}</td>}
                     <td>{lead.phone || 'N/A'}</td>
                    
                     <td>
@@ -1892,7 +1896,7 @@ const DataManagement = () => {
                 fontSize: '12px'
               }}>
                 Supported formats: CSV, XLSX, XLS<br/>
-                Required columns: FIRST NAME, LAST NAME, ADDRESS, CITY, STATE, ZIP, DOB, SSN, MAIL, PHONE, PRICE, SCORE
+                Required columns: FIRST NAME, LAST NAME, ADDRESS, CITY, STATE, ZIP, DOB, SSN, {activeTab === 'usa' ? 'MAIL, ' : ''}PHONE, PRICE, SCORE
               </p>
             </div>
 

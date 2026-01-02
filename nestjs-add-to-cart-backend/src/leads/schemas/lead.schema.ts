@@ -32,8 +32,8 @@ export class Lead {
   @Prop({ required: true })
   ssn: string;
 
-  @Prop({ required: true })
-  email: string;
+  @Prop({ required: false })
+  email?: string;
 
   @Prop({ required: false })
   phone?: string;

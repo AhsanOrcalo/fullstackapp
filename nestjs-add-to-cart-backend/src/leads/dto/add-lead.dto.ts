@@ -87,10 +87,11 @@ export class AddLeadDto {
   @ApiProperty({
     description: 'Email address of the lead',
     example: 'john.doe@example.com',
+    required: false,
   })
   @IsEmail({}, { message: 'Email must be a valid email address' })
-  @IsNotEmpty()
-  email: string;
+  @IsOptional()
+  email?: string;
 
   @ApiProperty({
     description: 'Phone number of the lead',
