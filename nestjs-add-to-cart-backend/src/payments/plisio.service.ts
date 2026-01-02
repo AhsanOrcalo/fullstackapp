@@ -111,23 +111,69 @@ export class PlisioService {
     }
 
     try {
-      // Plisio API uses query parameter for secret key
+      // Plisio API uses secret key in URL path format: /operations/{api_key}/create
+      // Ensure amount is properly formatted
+      const requestPayload = {
+        order_name: paymentData.order_name || 'Payment',
+        order_number: paymentData.order_number || '',
+        currency: paymentData.currency || 'USD',
+        amount: typeof paymentData.amount === 'string' ? parseFloat(paymentData.amount) : paymentData.amount,
+        ...(paymentData.description && { description: paymentData.description }),
+        ...(paymentData.email && { email: paymentData.email }),
+        ...(paymentData.callback_url && { callback_url: paymentData.callback_url }),
+        ...(paymentData.success_url && { success_url: paymentData.success_url }),
+        ...(paymentData.fail_url && { fail_url: paymentData.fail_url }),
+      };
+
+      this.logger.log('Creating Plisio payment', { 
+        endpoint: `/operations/${this.secretKey.substring(0, 10)}.../create`, 
+        payload: { ...requestPayload, callback_url: requestPayload.callback_url } 
+      });
+
       const response = await this.apiClient.post<PlisioPaymentResponse>(
         `/operations/${this.secretKey}/create`,
-        paymentData,
+        requestPayload,
       );
+
+      this.logger.log('Plisio API response received', { status: response.data.status });
 
       if (response.data.status === 'success') {
         return response.data;
       } else {
-        throw new BadRequestException(`Plisio API error: ${response.data.status || 'Unknown error'}`);
+        // Log the full error response for debugging
+        this.logger.error('Plisio API error response', response.data);
+        const errorData = response.data as any;
+        const errorMessage = errorData.data?.message || errorData.data?.name || errorData.message || errorData.status || 'Unknown error';
+        throw new BadRequestException(`Plisio API error: ${errorMessage}`);
       }
     } catch (error: any) {
-      this.logger.error('Error creating Plisio payment', error);
+      // Enhanced error logging for debugging
+      const errorDetails = {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        responseData: error.response?.data,
+        requestUrl: error.config?.url,
+        requestData: error.config?.data,
+      };
+      
+      this.logger.error('Error creating Plisio payment - Full Details:', JSON.stringify(errorDetails, null, 2));
+      
       if (error.response?.data) {
-        throw new BadRequestException(
-          `Plisio API error: ${error.response.data?.message || error.response.data?.error || error.message}`,
-        );
+        const errorData = error.response.data;
+        const errorMessage = errorData.data?.message || errorData.data?.name || errorData.message || errorData.error || error.message;
+        
+        // Provide more context in error message
+        let fullErrorMessage = `Plisio API error: ${errorMessage}`;
+        if (error.response.status === 500) {
+          fullErrorMessage += ' (Server error - check Plisio dashboard configuration and callback URLs)';
+        } else if (error.response.status === 400) {
+          fullErrorMessage += ' (Bad request - check required fields and API key)';
+        } else if (error.response.status === 401 || error.response.status === 403) {
+          fullErrorMessage += ' (Authentication failed - check API key and IP restrictions)';
+        }
+        
+        throw new BadRequestException(fullErrorMessage);
       }
       throw new BadRequestException(`Failed to create payment: ${error.message}`);
     }
