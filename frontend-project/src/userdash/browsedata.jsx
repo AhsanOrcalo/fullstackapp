@@ -16,6 +16,9 @@ const Browsedata = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   
+  // Tab state
+  const [activeTab, setActiveTab] = useState('canada'); // 'canada' or 'usa'
+  
   // Filter state
   const [filters, setFilters] = useState({
     name: '',
@@ -32,7 +35,7 @@ const Browsedata = () => {
   useEffect(() => {
     fetchLeads();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, activeTab]);
 
   const fetchLeads = async (filterParams = {}) => {
     try {
@@ -43,6 +46,11 @@ const Browsedata = () => {
       const cleanFilters = Object.fromEntries(
         Object.entries(activeFilters).filter(([_, v]) => v !== '')
       );
+      
+      // Add country filter based on active tab
+      if (activeTab === 'canada' || activeTab === 'usa') {
+        cleanFilters.countryFilter = activeTab;
+      }
       
       // Add pagination
       cleanFilters.page = currentPage;
@@ -131,6 +139,18 @@ const Browsedata = () => {
     const newPageSize = parseInt(e.target.value, 10);
     setPageSize(newPageSize);
     setCurrentPage(1); // Reset to first page when page size changes
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to first page when tab changes
+    // Clear score filter when switching to Canada tab (score filters only work in USA tab)
+    if (tab === 'canada') {
+      setFilters(prev => ({
+        ...prev,
+        scoreFilter: '',
+      }));
+    }
   };
 
   const applyFilters = () => {
@@ -374,6 +394,53 @@ const Browsedata = () => {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div 
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          marginBottom: '20px',
+          borderBottom: '2px solid var(--border-clr)',
+          gap: '10px'
+        }}
+      >
+        <button
+          onClick={() => handleTabChange('canada')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            color: activeTab === 'canada' ? 'var(--primary-blue)' : 'var(--text-sub)',
+            fontSize: '16px',
+            fontWeight: activeTab === 'canada' ? '700' : '500',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'canada' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+            marginBottom: '-2px',
+            transition: 'all 0.3s'
+          }}
+        >
+          Canada
+        </button>
+        <button
+          onClick={() => handleTabChange('usa')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            color: activeTab === 'usa' ? 'var(--primary-blue)' : 'var(--text-sub)',
+            fontSize: '16px',
+            fontWeight: activeTab === 'usa' ? '700' : '500',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'usa' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+            marginBottom: '-2px',
+            transition: 'all 0.3s'
+          }}
+        >
+          USA
+        </button>
+      </div>
+
       <div className="filtercard">
         <div className="filterheader">
           <span className="filtertitle" style={{ fontWeight: '700', color: 'var(--text-main)' }}>Filters</span>
@@ -438,47 +505,50 @@ const Browsedata = () => {
         </div>
 
         <div className="filtergrid">
-          <div className="filtergroup">
-            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>Score</label>
-            <div className="checkrow">
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="scoreFilter"
-                  checked={filters.scoreFilter === ''}
-                  onChange={() => handleRadioChange('scoreFilter', '')}
-                />
-                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>All</span>
-              </label>
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="scoreFilter"
-                  checked={filters.scoreFilter === '700+'}
-                  onChange={() => handleRadioChange('scoreFilter', '700+')}
-                />
-                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>700+ Score</span>
-              </label>
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="scoreFilter"
-                  checked={filters.scoreFilter === '800+'}
-                  onChange={() => handleRadioChange('scoreFilter', '800+')}
-                />
-                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>800+ Score</span>
-              </label>
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="scoreFilter"
-                  checked={filters.scoreFilter === 'random'}
-                  onChange={() => handleRadioChange('scoreFilter', 'random')}
-                />
-                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Random</span>
-              </label>
+          {/* Score Filters - Only show in USA tab */}
+          {activeTab === 'usa' && (
+            <div className="filtergroup">
+              <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>Score</label>
+              <div className="checkrow">
+                <label className="customradio">
+                  <input
+                    type="radio"
+                    name="scoreFilter"
+                    checked={filters.scoreFilter === ''}
+                    onChange={() => handleRadioChange('scoreFilter', '')}
+                  />
+                  <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>All</span>
+                </label>
+                <label className="customradio">
+                  <input
+                    type="radio"
+                    name="scoreFilter"
+                    checked={filters.scoreFilter === '700+'}
+                    onChange={() => handleRadioChange('scoreFilter', '700+')}
+                  />
+                  <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>700+ Score</span>
+                </label>
+                <label className="customradio">
+                  <input
+                    type="radio"
+                    name="scoreFilter"
+                    checked={filters.scoreFilter === '800+'}
+                    onChange={() => handleRadioChange('scoreFilter', '800+')}
+                  />
+                  <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>800+ Score</span>
+                </label>
+                <label className="customradio">
+                  <input
+                    type="radio"
+                    name="scoreFilter"
+                    checked={filters.scoreFilter === 'random'}
+                    onChange={() => handleRadioChange('scoreFilter', 'random')}
+                  />
+                  <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Random</span>
+                </label>
+              </div>
             </div>
-          </div>
+          )}
           <div className="filtergroup">
             <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>State</label>
             <select
@@ -515,20 +585,6 @@ const Browsedata = () => {
                   onChange={() => handleRadioChange('priceSort', 'low-to-high')}
                 />
                 <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Low to High</span>
-              </label>
-            </div>
-          </div>
-          <div className="filtergroup">
-            <label style={{ fontWeight: '700', color: 'var(--text-main)' }}>Country</label>
-            <div className="checkrow">
-              <label className="customradio">
-                <input
-                  type="radio"
-                  name="canadaFilter"
-                  checked={filters.canadaFilter === 'canada'}
-                  onChange={() => handleRadioChange('canadaFilter', 'canada')}
-                />
-                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Canada</span>
               </label>
             </div>
           </div>
