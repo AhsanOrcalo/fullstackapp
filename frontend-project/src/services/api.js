@@ -267,6 +267,31 @@ export const addFundsToUser = async (userId, amount) => {
   }
 };
 
+// Delete user API (Admin only)
+export const deleteUser = async (userId) => {
+  try {
+    const response = await apiRequest(`/auth/users/${userId}`, {
+      method: 'DELETE',
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Delete multiple users API (Admin only)
+export const deleteUsers = async (userIds) => {
+  try {
+    const response = await apiRequest('/auth/users/bulk/delete', {
+      method: 'DELETE',
+      body: JSON.stringify({ userIds }),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get user funds API (User only)
 export const getUserFunds = async () => {
   try {

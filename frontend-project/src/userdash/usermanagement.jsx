@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getAllUsers, addFundsToUser } from '../services/api';
-import { FaDollarSign, FaPlus } from 'react-icons/fa';
+import { getAllUsers, addFundsToUser, deleteUser, deleteUsers } from '../services/api';
+import { FaDollarSign, FaPlus, FaTrash } from 'react-icons/fa';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -10,6 +10,8 @@ const UserManagement = () => {
   const [addingFunds, setAddingFunds] = useState(null);
   const [fundAmount, setFundAmount] = useState('');
   const [showAddFundModal, setShowAddFundModal] = useState(null);
+  const [selectedUsers, setSelectedUsers] = useState(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -77,6 +79,54 @@ const UserManagement = () => {
     }
   };
 
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allUserIds = new Set(users.map(user => user.id));
+      setSelectedUsers(allUserIds);
+    } else {
+      setSelectedUsers(new Set());
+    }
+  };
+
+  const handleSelectUser = (userId) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const handleDeleteUsers = async () => {
+    if (selectedUsers.size === 0) {
+      alert('Please select at least one user to delete');
+      return;
+    }
+
+    const userIds = Array.from(selectedUsers);
+    const confirmMessage = userIds.length === 1
+      ? `Are you sure you want to delete this user? This action cannot be undone.`
+      : `Are you sure you want to delete ${userIds.length} users? This action cannot be undone.`;
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      const result = await deleteUsers(userIds);
+      setSelectedUsers(new Set());
+      await fetchUsers(); // Refresh users list
+      alert(result.message || `${result.deletedCount} user(s) deleted successfully`);
+    } catch (err) {
+      alert(err.message || 'Failed to delete users');
+      console.error('Error deleting users:', err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="browsebox">
       <div className="browsetop" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -86,11 +136,28 @@ const UserManagement = () => {
           </h2>
           <p className="subtitle" style={{ marginTop: '5px' }}>
             {users.length} {users.length === 1 ? 'user' : 'users'} registered
+            {selectedUsers.size > 0 && ` • ${selectedUsers.size} selected`}
           </p>
         </div>
-        <button className="applybtn" onClick={fetchUsers} disabled={loading}>
-          {loading ? 'Loading...' : '🔄 Refresh'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {selectedUsers.size > 0 && (
+            <button 
+              className="applybtn" 
+              onClick={handleDeleteUsers}
+              disabled={deleting || loading}
+              style={{ 
+                backgroundColor: '#ef4444',
+                opacity: deleting || loading ? 0.6 : 1
+              }}
+            >
+              <FaTrash style={{ marginRight: '5px' }} />
+              {deleting ? 'Deleting...' : `Delete (${selectedUsers.size})`}
+            </button>
+          )}
+          <button className="applybtn" onClick={fetchUsers} disabled={loading}>
+            {loading ? 'Loading...' : '🔄 Refresh'}
+          </button>
+        </div>
       </div>
 
       <div className="tablecard">
@@ -114,6 +181,15 @@ const UserManagement = () => {
             <table>
               <thead>
                 <tr>
+                  <th>
+                    <label className="customcheck">
+                      <input
+                        type="checkbox"
+                        checked={users.length > 0 && users.every(user => selectedUsers.has(user.id))}
+                        onChange={handleSelectAll}
+                      />
+                    </label>
+                  </th>
                   <th>ID</th>
                   <th>Username</th>
                   <th>Email</th>
@@ -133,6 +209,15 @@ const UserManagement = () => {
                     transition={{ delay: index * 0.05, duration: 0.3 }}
                     whileHover={{ backgroundColor: 'rgba(67, 24, 255, 0.1)', scale: 1.01 }}
                   >
+                    <td>
+                      <label className="customcheck">
+                        <input
+                          type="checkbox"
+                          checked={selectedUsers.has(user.id)}
+                          onChange={() => handleSelectUser(user.id)}
+                        />
+                      </label>
+                    </td>
                     <td style={{ color: 'var(--text-main)', fontSize: '14px', fontWeight: '600' }}>
                       {index + 1}
                     </td>

@@ -12,6 +12,7 @@ import { User, UserDocument } from './schemas/user.schema';
 import { Role } from './enums/role.enum';
 import { EmailService } from '../email/email.service';
 import { Payment, PaymentDocument, PaymentStatus, PaymentMethod } from '../payments/payment.schema';
+import { Purchase, PurchaseDocument } from '../purchases/schemas/purchase.schema';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -20,6 +21,8 @@ export class UsersService implements OnModuleInit {
     private userModel: Model<UserDocument>,
     @InjectModel(Payment.name)
     private paymentModel: Model<PaymentDocument>,
+    @InjectModel(Purchase.name)
+    private purchaseModel: Model<PurchaseDocument>,
     private jwtService: JwtService,
     private emailService: EmailService,
   ) {}
@@ -394,6 +397,53 @@ export class UsersService implements OnModuleInit {
         cryptomusExpiredAt: p.cryptomusExpiredAt,
         createdAt: p.createdAt,
       })),
+    };
+  }
+
+  async deleteUser(userId: string): Promise<{ message: string }> {
+    const user = await this.userModel.findById(userId);
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Prevent deleting admin users
+    if (user.role === Role.ADMIN) {
+      throw new BadRequestException('Cannot delete admin users');
+    }
+
+    // Delete user's purchases
+    await this.purchaseModel.deleteMany({ userId: new Types.ObjectId(userId) });
+
+    // Delete user's payments
+    await this.paymentModel.deleteMany({ userId: new Types.ObjectId(userId) });
+
+    // Delete the user
+    await this.userModel.findByIdAndDelete(userId);
+
+    return {
+      message: 'User deleted successfully',
+    };
+  }
+
+  async deleteUsers(userIds: string[]): Promise<{ message: string; deletedCount: number; failedCount: number }> {
+    let deletedCount = 0;
+    let failedCount = 0;
+
+    for (const userId of userIds) {
+      try {
+        await this.deleteUser(userId);
+        deletedCount++;
+      } catch (error) {
+        failedCount++;
+        console.error(`Failed to delete user ${userId}:`, error.message);
+      }
+    }
+
+    return {
+      message: `Deleted ${deletedCount} user(s)${failedCount > 0 ? `, ${failedCount} failed` : ''}`,
+      deletedCount,
+      failedCount,
     };
   }
 }

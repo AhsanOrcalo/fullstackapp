@@ -8,6 +8,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { User, UserSchema } from './schemas/user.schema';
 import { Payment, PaymentSchema } from '../payments/payment.schema';
+import { Purchase, PurchaseSchema } from '../purchases/schemas/purchase.schema';
 import { EmailModule } from '../email/email.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { EmailModule } from '../email/email.module';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Payment.name, schema: PaymentSchema },
+      { name: Purchase.name, schema: PurchaseSchema },
     ]),
     PassportModule,
     JwtModule.register({

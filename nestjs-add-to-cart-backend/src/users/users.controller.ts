@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, Param, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Body, Param, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
@@ -446,6 +446,88 @@ export class UsersController {
   })
   async getUserFunds(@Request() req: any) {
     return this.usersService.getUserFunds(req.user.userId);
+  }
+
+  @Delete('users/:userId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete a user by ID (Admin only)' })
+  @ApiParam({
+    name: 'userId',
+    description: 'ID of the user to delete',
+    example: '1234567890',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully deleted',
+    schema: {
+      example: {
+        message: 'User deleted successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot delete admin users',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async deleteUser(@Param('userId') userId: string) {
+    return this.usersService.deleteUser(userId);
+  }
+
+  @Delete('users/bulk/delete')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete multiple users (Admin only)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userIds: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['1234567890', '9876543210'],
+        },
+      },
+      required: ['userIds'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Users deleted successfully',
+    schema: {
+      example: {
+        message: 'Deleted 2 user(s)',
+        deletedCount: 2,
+        failedCount: 0,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async deleteUsers(@Body() body: { userIds: string[] }) {
+    return this.usersService.deleteUsers(body.userIds);
   }
 }
 
