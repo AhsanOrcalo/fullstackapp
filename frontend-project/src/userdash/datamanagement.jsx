@@ -107,8 +107,8 @@ const DataManagement = () => {
   const [scoreFilter, setScoreFilter] = useState('');
   const [canadaFilter, setCanadaFilter] = useState('');
   
-  // Tab state
-  const [activeTab, setActiveTab] = useState('canada'); // 'canada' or 'usa'
+  // Tab state - default to 'all' to show all records initially
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'canada', or 'usa'
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,10 +143,11 @@ const DataManagement = () => {
       if (canadaFilter) {
         filters.canadaFilter = canadaFilter;
       }
-      // Add country filter based on active tab
+      // Add country filter based on active tab (only if explicitly selected, not 'all')
       if (activeTab === 'canada' || activeTab === 'usa') {
         filters.countryFilter = activeTab;
       }
+      // If activeTab is 'all', don't add countryFilter (show all records)
       
       const response = await getAllLeads(filters);
       
@@ -340,7 +341,7 @@ const DataManagement = () => {
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      const countryLabel = activeTab === 'canada' ? 'Canada' : 'USA';
+      const countryLabel = activeTab === 'canada' ? 'Canada' : activeTab === 'usa' ? 'USA' : 'All';
       link.setAttribute('download', `${countryLabel}_leads_export_${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
@@ -613,7 +614,7 @@ const DataManagement = () => {
             continue;
           }
 
-          // Validate country based on active tab
+          // Validate country based on active tab (only if not 'all')
           if (activeTab === 'canada') {
             if (!isCanadianLocation(leadData.state, leadData.city)) {
               invalidRows.push({
@@ -631,6 +632,7 @@ const DataManagement = () => {
               continue;
             }
           }
+          // If activeTab is 'all', skip country validation
 
           validLeads.push(leadData);
         } catch (err) {
@@ -1030,6 +1032,23 @@ const DataManagement = () => {
           gap: '10px'
         }}>
           <button
+            onClick={() => handleTabChange('all')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              background: 'transparent',
+              color: activeTab === 'all' ? 'var(--primary-blue)' : 'var(--text-sub)',
+              fontSize: '16px',
+              fontWeight: activeTab === 'all' ? '700' : '500',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'all' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+              marginBottom: '-2px',
+              transition: 'all 0.3s'
+            }}
+          >
+            All
+          </button>
+          <button
             onClick={() => handleTabChange('canada')}
             style={{
               padding: '12px 24px',
@@ -1086,7 +1105,7 @@ const DataManagement = () => {
             }}
           >
             <FaDownload />
-            <span>Import {activeTab === 'canada' ? 'Canada' : 'USA'}</span>
+            <span>Import {activeTab === 'canada' ? 'Canada' : activeTab === 'usa' ? 'USA' : 'Data'}</span>
           </motion.button>
           <motion.button 
             className="dm-btn"
@@ -1101,7 +1120,7 @@ const DataManagement = () => {
             }}
           >
             <FaUpload />
-            <span>Export {activeTab === 'canada' ? 'Canada' : 'USA'}</span>
+            <span>Export {activeTab === 'canada' ? 'Canada' : activeTab === 'usa' ? 'USA' : 'Data'}</span>
           </motion.button>
         </div>
       </motion.div>
@@ -1316,7 +1335,7 @@ const DataManagement = () => {
                   <th>ZIP</th>
                   <th>DOB</th>
                   <th>SSN</th>
-                  {activeTab === 'usa' && <th>MAIL</th>}
+                  {(activeTab === 'usa' || activeTab === 'all') && <th>MAIL</th>}
                   <th>PHONE</th>
                   <th>SCORE</th>
                   <th>PRICE</th>
@@ -1345,7 +1364,7 @@ const DataManagement = () => {
                     <td>{lead.zip || 'N/A'}</td>
                     <td>{formatDOBWithAge(lead.dob)}</td>
                     <td>{lead.ssn || 'N/A'}</td>
-                    {activeTab === 'usa' && <td>{lead.email || 'N/A'}</td>}
+                    {(activeTab === 'usa' || activeTab === 'all') && <td>{lead.email || 'N/A'}</td>}
                     <td>{lead.phone || 'N/A'}</td>
                    
                     <td>
@@ -1848,7 +1867,7 @@ const DataManagement = () => {
               fontSize: '20px',
               fontWeight: '700'
             }}>
-              Import {activeTab === 'canada' ? 'Canada' : 'USA'} Leads from CSV/XLSX
+              Import {activeTab === 'canada' ? 'Canada' : activeTab === 'usa' ? 'USA' : ''} Leads from CSV/XLSX
             </h3>
             <p style={{
               margin: '0 0 20px 0',
@@ -1860,7 +1879,9 @@ const DataManagement = () => {
             }}>
               {activeTab === 'canada' 
                 ? '⚠️ Only Canadian states/provinces and cities will be accepted. Records with non-Canadian locations will be rejected.'
-                : '⚠️ Only US states and cities will be accepted. Records with non-US locations will be rejected.'}
+                : activeTab === 'usa'
+                ? '⚠️ Only US states and cities will be accepted. Records with non-US locations will be rejected.'
+                : '⚠️ All records will be imported. Country validation will be skipped.'}
             </p>
             
             <div style={{ marginBottom: '20px' }}>
@@ -1896,7 +1917,7 @@ const DataManagement = () => {
                 fontSize: '12px'
               }}>
                 Supported formats: CSV, XLSX, XLS<br/>
-                Required columns: FIRST NAME, LAST NAME, ADDRESS, CITY, STATE, ZIP, DOB, SSN, {activeTab === 'usa' ? 'MAIL, ' : ''}PHONE, PRICE, SCORE
+                Required columns: FIRST NAME, LAST NAME, ADDRESS, CITY, STATE, ZIP, DOB, SSN, {(activeTab === 'usa' || activeTab === 'all') ? 'MAIL, ' : ''}PHONE, PRICE, SCORE
               </p>
             </div>
 
