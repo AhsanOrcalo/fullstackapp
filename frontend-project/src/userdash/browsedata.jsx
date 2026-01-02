@@ -52,16 +52,42 @@ const Browsedata = () => {
       
       // Handle paginated response
       let data = [];
+      let newTotalPages = 1;
+      let newTotalRecords = 0;
+      
       if (response.leads) {
         // New paginated response
         data = response.leads;
-        setTotalPages(response.totalPages || 1);
-        setTotalRecords(response.total || 0);
+        newTotalPages = response.totalPages || 1;
+        newTotalRecords = response.total || 0;
       } else if (Array.isArray(response)) {
         // Legacy response (array)
         data = response;
-        setTotalPages(1);
-        setTotalRecords(data.length);
+        newTotalPages = 1;
+        newTotalRecords = data.length;
+      }
+      
+      // Update total pages and records first
+      setTotalPages(newTotalPages);
+      setTotalRecords(newTotalRecords);
+      
+      // If current page is empty and we're not on page 1, navigate to previous page
+      if (data.length === 0 && currentPage > 1 && newTotalPages > 0) {
+        const previousPage = Math.max(1, Math.min(currentPage - 1, newTotalPages));
+        setCurrentPage(previousPage);
+        setLeads([]); // Set empty leads for now
+        setLoading(false); // Set loading to false before returning
+        // useEffect will trigger fetchLeads with the new page number
+        return; // Exit early, useEffect will trigger fetchLeads with new page
+      }
+      
+      // If current page exceeds total pages, go to last page
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+        setLeads([]); // Set empty leads for now
+        setLoading(false); // Set loading to false before returning
+        // useEffect will trigger fetchLeads with the new page number
+        return; // Exit early, useEffect will trigger fetchLeads with new page
       }
       
       // Backend already filters out leads purchased by any user for regular users
@@ -215,13 +241,24 @@ const Browsedata = () => {
         }
       }
 
-      // Clear selection
-      setSelectedLeads(new Set());
-      setSelectedLeadsData(new Map());
+      // Get list of purchased lead IDs for cleanup
+      const purchasedLeadIds = new Set(leadsToPurchase.map(lead => lead.id));
+      
+      // Clear selection and remove purchased leads from selection
+      setSelectedLeads(prev => {
+        const updated = new Set(prev);
+        purchasedLeadIds.forEach(id => updated.delete(id));
+        return updated;
+      });
+      setSelectedLeadsData(prev => {
+        const updated = new Map(prev);
+        purchasedLeadIds.forEach(id => updated.delete(id));
+        return updated;
+      });
       
       // Refresh leads list to remove purchased items
       await fetchLeads();
-
+      
       // Trigger balance update event
       window.dispatchEvent(new CustomEvent('balanceUpdated'));
 
