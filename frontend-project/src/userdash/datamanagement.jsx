@@ -1056,86 +1056,78 @@ const DataManagement = () => {
           </div>
         </div>
 
-        {/* Country Filters - All and Canada */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '15px', 
-          alignItems: 'center'
-        }}>
-          <label className="customradio" style={{ cursor: 'pointer' }}>
-            <input
-              type="radio"
-              name="dataFilter"
-              checked={canadaFilter === '' && scoreFilter === ''}
-              onChange={() => handleCanadaFilterChange('all')}
-            />
-            <span style={{ 
-              color: 'var(--text-main)', 
-              fontSize: '14px',
-              fontWeight: '700'
-            }}>All</span>
-          </label>
-          <label className="customradio" style={{ cursor: 'pointer' }}>
-            <input
-              type="radio"
-              name="dataFilter"
-              checked={canadaFilter === 'canada'}
-              onChange={() => handleCanadaFilterChange('canada')}
-            />
-            <span style={{ 
-              color: 'var(--text-main)', 
-              fontSize: '14px',
-              fontWeight: '700'
-            }}>Canada</span>
-          </label>
-        </div>
+        {/* Radio Buttons - Only show in USA tab */}
+        {activeTab === 'usa' && (
+          <>
+            {/* All Filter */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '15px', 
+              alignItems: 'center'
+            }}>
+              <label className="customradio" style={{ cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="dataFilter"
+                  checked={canadaFilter === '' && scoreFilter === ''}
+                  onChange={() => handleCanadaFilterChange('all')}
+                />
+                <span style={{ 
+                  color: 'var(--text-main)', 
+                  fontSize: '14px',
+                  fontWeight: '700'
+                }}>All</span>
+              </label>
+            </div>
 
-        {/* Score Filters */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '15px', 
-          alignItems: 'center'
-        }}>
-          <label className="customradio" style={{ cursor: 'pointer' }}>
-            <input
-              type="radio"
-              name="dataFilter"
-              checked={scoreFilter === '700+'}
-              onChange={() => handleScoreFilterChange('700+')}
-            />
-            <span style={{ 
-              color: 'var(--text-main)', 
-              fontSize: '14px',
-              fontWeight: '700'
-            }}>700+</span>
-          </label>
-          <label className="customradio" style={{ cursor: 'pointer' }}>
-            <input
-              type="radio"
-              name="dataFilter"
-              checked={scoreFilter === '800+'}
-              onChange={() => handleScoreFilterChange('800+')}
-            />
-            <span style={{ 
-              color: 'var(--text-main)', 
-              fontSize: '14px',
-              fontWeight: '700'
-            }}>800+</span>
-          </label>
-          <label className="customradio" style={{ cursor: 'pointer' }}>
-            <input
-              type="radio"
-              name="dataFilter"
-              checked={scoreFilter === 'random'}
-              onChange={() => handleScoreFilterChange('random')}
-            />
-            <span style={{ 
-              color: 'var(--text-main)', 
-              fontSize: '14px',
-              fontWeight: '700'
-            }}>Random</span>
-          </label>
-        </div>
+            {/* Score Filters */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '15px', 
+              alignItems: 'center'
+            }}>
+              <label className="customradio" style={{ cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="dataFilter"
+                  checked={scoreFilter === '700+'}
+                  onChange={() => handleScoreFilterChange('700+')}
+                />
+                <span style={{ 
+                  color: 'var(--text-main)', 
+                  fontSize: '14px',
+                  fontWeight: '700'
+                }}>700+</span>
+              </label>
+              <label className="customradio" style={{ cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="dataFilter"
+                  checked={scoreFilter === '800+'}
+                  onChange={() => handleScoreFilterChange('800+')}
+                />
+                <span style={{ 
+                  color: 'var(--text-main)', 
+                  fontSize: '14px',
+                  fontWeight: '700'
+                }}>800+</span>
+              </label>
+              <label className="customradio" style={{ cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="dataFilter"
+                  checked={scoreFilter === 'random'}
+                  onChange={() => handleScoreFilterChange('random')}
+                />
+                <span style={{ 
+                  color: 'var(--text-main)', 
+                  fontSize: '14px',
+                  fontWeight: '700'
+                }}>Random</span>
+              </label>
+            </div>
+          </>
+        )}
 
         {/* Record Count and Page Size Selector */}
         <div style={{ 
