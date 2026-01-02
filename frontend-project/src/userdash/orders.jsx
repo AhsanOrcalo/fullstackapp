@@ -11,6 +11,8 @@ const Orders = () => {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRows, setSelectedRows] = useState(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     fetchPurchases();
@@ -66,6 +68,7 @@ const Orders = () => {
   const handleSearch = () => {
     if (!searchQuery.trim()) {
       setFilteredData(purchasedata);
+      setCurrentPage(1); // Reset to first page when search is cleared
       return;
     }
 
@@ -86,6 +89,7 @@ const Orders = () => {
     });
 
     setFilteredData(filtered);
+    setCurrentPage(1); // Reset to first page when search is applied
   };
 
   const handleSearchChange = (e) => {
@@ -93,6 +97,7 @@ const Orders = () => {
     // If search is cleared, show all data
     if (!e.target.value.trim()) {
       setFilteredData(purchasedata);
+      setCurrentPage(1); // Reset to first page when search is cleared
     }
   };
 
@@ -149,13 +154,37 @@ const Orders = () => {
   };
 
   const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = new Set(filteredData.map(item => item.id));
-      setSelectedRows(allIds);
-    } else {
-      setSelectedRows(new Set());
-    }
+    // Get current page data
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const currentPageData = filteredData.slice(startIndex, endIndex);
+    const currentPageIds = new Set(currentPageData.map(item => item.id));
+    
+    setSelectedRows(prev => {
+      const newSet = new Set(prev);
+      if (e.target.checked) {
+        // Add all current page IDs
+        currentPageIds.forEach(id => newSet.add(id));
+      } else {
+        // Remove only current page IDs
+        currentPageIds.forEach(id => newSet.delete(id));
+      }
+      return newSet;
+    });
   };
+
+  const handlePageSizeChange = (e) => {
+    const newPageSize = parseInt(e.target.value, 10);
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when page size changes
+  };
+
+  // Calculate pagination
+  const totalRecords = filteredData.length;
+  const totalPages = Math.ceil(totalRecords / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentPageData = filteredData.slice(startIndex, endIndex);
 
   const handleDownloadSelected = () => {
     if (selectedRows.size === 0) {
@@ -216,7 +245,12 @@ const Orders = () => {
       <div className="ordersheader">
         <div className="headertitle">
           <h2 className="toptitle">Purchased Data</h2>
-          <p className="subtitle">View all your purchased data records</p>
+          <p className="subtitle">
+            View all your purchased data records
+          </p>
+          <p style={{ color: 'var(--success-color)', fontSize: '18px', fontWeight: '600',marginBottom:"0px" }}>
+            Total Purchased: {totalRecords}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           {selectedRows.size > 0 && (
@@ -256,6 +290,63 @@ const Orders = () => {
         </div>
       </div>
 
+      {/* Total Records and Page Size Selector */}
+      {!loading && !error && filteredData.length > 0 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '20px',
+          padding: '10px',
+          background: 'var(--bg-card)',
+          borderRadius: '12px',
+          border: '1px solid var(--border-clr)'
+        }}>
+          <div style={{ 
+            color: 'var(--text-main)', 
+            fontSize: '16px',
+            fontWeight: '600'
+          }}>
+            Showing {startIndex + 1} to {Math.min(endIndex, totalRecords)} of {totalRecords} records
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <label style={{
+              color: 'var(--text-main)',
+              fontSize: '14px',
+              fontWeight: '600'
+            }}>
+              Records per page:
+            </label>
+            <select
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-clr)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-main)',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                outline: 'none',
+                minWidth: '80px'
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={30}>30</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+        </div>
+      )}
+
       <div className="tablecard">
         {loading ? (
           <div className="nodata">
@@ -277,7 +368,7 @@ const Orders = () => {
                     <label className="customcheck" style={{ margin: 0 }}>
                       <input
                         type="checkbox"
-                        checked={filteredData.length > 0 && selectedRows.size === filteredData.length}
+                        checked={currentPageData.length > 0 && currentPageData.every(item => selectedRows.has(item.id))}
                         onChange={handleSelectAll}
                       />
                     </label>
@@ -298,14 +389,14 @@ const Orders = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.length === 0 ? (
+                {currentPageData.length === 0 ? (
                   <tr>
                     <td colSpan="14" className="emptyrow">
                       {searchQuery ? 'No records found matching your search.' : 'No purchased records found.'}
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((item) => (
+                  currentPageData.map((item) => (
                     <tr key={item.id}>
                       <td>
                         <label className="customcheck" style={{ margin: 0 }}>
@@ -349,6 +440,64 @@ const Orders = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {!loading && !error && totalPages > 1 && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            marginTop: '20px', 
+            gap: '10px', 
+            alignItems: 'center' 
+          }}>
+            <button
+              className="applybtn"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              style={{ padding: '8px 16px', fontSize: '14px' }}
+            >
+              Previous
+            </button>
+            <span style={{ color: 'var(--text-sub)', fontSize: '14px' }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  className="applybtn"
+                  onClick={() => setCurrentPage(pageNum)}
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    backgroundColor: currentPage === pageNum ? 'var(--primary-blue)' : 'var(--bg-card)',
+                    color: currentPage === pageNum ? 'white' : 'var(--text-main)',
+                  }}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              className="applybtn"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              style={{ padding: '8px 16px', fontSize: '14px' }}
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
