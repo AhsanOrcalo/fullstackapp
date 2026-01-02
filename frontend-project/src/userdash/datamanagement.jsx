@@ -45,8 +45,37 @@ const US_CITIES = [
   'Oakland', 'Minneapolis', 'Tulsa', 'Tampa', 'Arlington', 'New Orleans'
 ];
 
-// Note: Country filtering is now done on the backend
-// These constants are kept for reference but filtering happens server-side
+// Helper function to check if state/city is Canadian
+const isCanadianLocation = (state, city) => {
+  const stateLower = (state || '').trim().toLowerCase();
+  const cityLower = (city || '').trim().toLowerCase();
+  
+  const isCanadianState = CANADIAN_PROVINCES.some(province => 
+    stateLower === province.toLowerCase()
+  );
+  
+  const isCanadianCity = CANADIAN_CITIES.some(canadianCity => 
+    cityLower === canadianCity.toLowerCase()
+  );
+  
+  return isCanadianState || isCanadianCity;
+};
+
+// Helper function to check if state/city is US
+const isUSLocation = (state, city) => {
+  const stateLower = (state || '').trim().toLowerCase();
+  const cityLower = (city || '').trim().toLowerCase();
+  
+  const isUSState = US_STATES.some(usState => 
+    stateLower === usState.toLowerCase()
+  );
+  
+  const isUSCity = US_CITIES.some(usCity => 
+    cityLower === usCity.toLowerCase()
+  );
+  
+  return isUSState || isUSCity;
+};
 
 const DataManagement = () => {
   const [leads, setLeads] = useState([]);
@@ -197,6 +226,10 @@ const DataManagement = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setCurrentPage(1); // Reset to first page when tab changes
+    // Clear score filter when switching to Canada tab (score filters only work in USA tab)
+    if (tab === 'canada') {
+      setScoreFilter('');
+    }
     // fetchLeads will be called automatically via useEffect dependency on activeTab
   };
 
@@ -303,7 +336,8 @@ const DataManagement = () => {
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
+      const countryLabel = activeTab === 'canada' ? 'Canada' : 'USA';
+      link.setAttribute('download', `${countryLabel}_leads_export_${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -572,6 +606,25 @@ const DataManagement = () => {
             continue;
           }
 
+          // Validate country based on active tab
+          if (activeTab === 'canada') {
+            if (!isCanadianLocation(leadData.state, leadData.city)) {
+              invalidRows.push({
+                index: i + 2,
+                error: `State/City is not Canadian. State: ${leadData.state}, City: ${leadData.city}`,
+              });
+              continue;
+            }
+          } else if (activeTab === 'usa') {
+            if (!isUSLocation(leadData.state, leadData.city)) {
+              invalidRows.push({
+                index: i + 2,
+                error: `State/City is not US-based. State: ${leadData.state}, City: ${leadData.city}`,
+              });
+              continue;
+            }
+          }
+
           validLeads.push(leadData);
         } catch (err) {
           invalidRows.push({
@@ -632,8 +685,17 @@ const DataManagement = () => {
       // Refresh leads list
       await fetchLeads();
 
-      // Show completion message
-      alert(`Import completed!\nSuccess: ${successCount}\nFailed: ${failedCount}`);
+      // Show completion message with country validation info
+      const countryValidationErrors = invalidRows.filter(row => 
+        row.error.includes('is not Canadian') || row.error.includes('is not US-based')
+      ).length;
+      
+      let message = `Import completed!\nSuccess: ${successCount}\nFailed: ${failedCount}`;
+      if (countryValidationErrors > 0) {
+        message += `\n\n${countryValidationErrors} record(s) rejected due to ${activeTab === 'canada' ? 'non-Canadian' : 'non-US'} state/city.`;
+      }
+      
+      alert(message);
       setShowImportModal(false);
     } catch (err) {
       alert('Failed to import file: ' + err.message);
@@ -907,28 +969,6 @@ const DataManagement = () => {
           variants={itemVariants}
         >
           <motion.button 
-            className="dm-btn"
-            onClick={() => {
-              setShowImportModal(true);
-              setImportStatus({ success: 0, failed: 0, total: 0 });
-            }}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-          >
-          <FaDownload />
-            <span>Import</span>
-          </motion.button>
-          <motion.button 
-            className="dm-btn"
-            onClick={handleExport}
-            disabled={loading || leads.length === 0}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaUpload />
-            <span>Export</span>
-          </motion.button>
-          <motion.button 
             className="applybtn"
             onClick={() => setShowForm(true)}
             style={{ 
@@ -965,50 +1005,98 @@ const DataManagement = () => {
         </motion.div>
       </motion.div>
 
-      {/* Tabs */}
+      {/* Tabs with Import/Export buttons */}
       <motion.div 
         style={{
           display: 'flex',
-          gap: '10px',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: '20px',
-          borderBottom: '2px solid var(--border-clr)'
+          borderBottom: '2px solid var(--border-clr)',
+          flexWrap: 'wrap',
+          gap: '15px'
         }}
         variants={itemVariants}
       >
-        <button
-          onClick={() => handleTabChange('canada')}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            background: 'transparent',
-            color: activeTab === 'canada' ? 'var(--primary-blue)' : 'var(--text-sub)',
-            fontSize: '16px',
-            fontWeight: activeTab === 'canada' ? '700' : '500',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'canada' ? '3px solid var(--primary-blue)' : '3px solid transparent',
-            marginBottom: '-2px',
-            transition: 'all 0.3s'
-          }}
-        >
-          Canada
-        </button>
-        <button
-          onClick={() => handleTabChange('usa')}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            background: 'transparent',
-            color: activeTab === 'usa' ? 'var(--primary-blue)' : 'var(--text-sub)',
-            fontSize: '16px',
-            fontWeight: activeTab === 'usa' ? '700' : '500',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'usa' ? '3px solid var(--primary-blue)' : '3px solid transparent',
-            marginBottom: '-2px',
-            transition: 'all 0.3s'
-          }}
-        >
-          USA
-        </button>
+        <div style={{
+          display: 'flex',
+          gap: '10px'
+        }}>
+          <button
+            onClick={() => handleTabChange('canada')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              background: 'transparent',
+              color: activeTab === 'canada' ? 'var(--primary-blue)' : 'var(--text-sub)',
+              fontSize: '16px',
+              fontWeight: activeTab === 'canada' ? '700' : '500',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'canada' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+              marginBottom: '-2px',
+              transition: 'all 0.3s'
+            }}
+          >
+            Canada
+          </button>
+          <button
+            onClick={() => handleTabChange('usa')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              background: 'transparent',
+              color: activeTab === 'usa' ? 'var(--primary-blue)' : 'var(--text-sub)',
+              fontSize: '16px',
+              fontWeight: activeTab === 'usa' ? '700' : '500',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'usa' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+              marginBottom: '-2px',
+              transition: 'all 0.3s'
+            }}
+          >
+            USA
+          </button>
+        </div>
+
+        {/* Tab-specific Import/Export buttons */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '10px',
+          flexWrap: 'wrap'
+        }}>
+          <motion.button 
+            className="dm-btn"
+            onClick={() => {
+              setShowImportModal(true);
+              setImportStatus({ success: 0, failed: 0, total: 0 });
+            }}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <FaDownload />
+            <span>Import {activeTab === 'canada' ? 'Canada' : 'USA'}</span>
+          </motion.button>
+          <motion.button 
+            className="dm-btn"
+            onClick={handleExport}
+            disabled={loading || leads.length === 0}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <FaUpload />
+            <span>Export {activeTab === 'canada' ? 'Canada' : 'USA'}</span>
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* Search and Filter Section */}
@@ -1753,8 +1841,20 @@ const DataManagement = () => {
               fontSize: '20px',
               fontWeight: '700'
             }}>
-              Import Leads from CSV/XLSX
+              Import {activeTab === 'canada' ? 'Canada' : 'USA'} Leads from CSV/XLSX
             </h3>
+            <p style={{
+              margin: '0 0 20px 0',
+              color: 'var(--text-sub)',
+              fontSize: '14px',
+              padding: '10px',
+              backgroundColor: 'rgba(67, 24, 255, 0.1)',
+              borderRadius: '8px'
+            }}>
+              {activeTab === 'canada' 
+                ? '⚠️ Only Canadian states/provinces and cities will be accepted. Records with non-Canadian locations will be rejected.'
+                : '⚠️ Only US states and cities will be accepted. Records with non-US locations will be rejected.'}
+            </p>
             
             <div style={{ marginBottom: '20px' }}>
               <label style={{
