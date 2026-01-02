@@ -50,7 +50,8 @@ export class PlisioService {
   private readonly baseUrl = 'https://plisio.net/api/v1';
 
   constructor() {
-    this.secretKey = process.env.PLISIO_SECRET_KEY || '';
+    // Hardcoded Plisio secret key from dashboard
+    this.secretKey = '6MAwo7jI76ywGXBm9idA81of7JIepg3CNrcx5TUGBrDOhUOxlwyHKncyIYFbB6p6';
 
     if (!this.secretKey) {
       this.logger.warn('Plisio secret key not configured. Payment features will be disabled.');

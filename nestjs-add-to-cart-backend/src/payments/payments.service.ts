@@ -54,12 +54,11 @@ export class PaymentsService {
     if (paymentMethod === PaymentMethod.PLISIO) {
       try {
         const orderId = payment._id.toString();
-        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
         
-        // Get URLs from environment variables or use defaults
-        const statusUrl = process.env.PLISIO_STATUS_URL || `${process.env.BACKEND_URL || 'http://localhost:8000'}/payments/webhook`;
-        const successUrl = process.env.PLISIO_SUCCESS_URL || `${baseUrl}/payment/success`;
-        const failUrl = process.env.PLISIO_FAIL_URL || `${baseUrl}/payment/fail`;
+        // Hardcoded URLs from Plisio dashboard configuration
+        const statusUrl = 'https://freshdata.shop/api/payments/webhook';
+        const successUrl = 'https://freshdata.shop/payment-success';
+        const failUrl = 'https://freshdata.shop/payment-failed';
         
         const plisioRequest: PlisioPaymentRequest = {
           amount: amount,
