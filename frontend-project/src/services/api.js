@@ -204,6 +204,19 @@ export const addLead = async (leadData) => {
   }
 };
 
+// Bulk add leads API
+export const bulkAddLeads = async (leadsData) => {
+  try {
+    const response = await apiRequest('/leads/bulk/add', {
+      method: 'POST',
+      body: JSON.stringify({ leads: leadsData }),
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Delete lead API (Admin only)
 export const deleteLead = async (leadId) => {
   try {

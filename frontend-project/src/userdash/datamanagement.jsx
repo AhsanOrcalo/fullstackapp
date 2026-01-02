@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { getAllLeads, addLead, deleteLead, deleteLeads, getUserData } from '../services/api';
+import { getAllLeads, addLead, bulkAddLeads, deleteLead, deleteLeads, getUserData } from '../services/api';
 import { FaSearch, FaFileAlt, FaDatabase, FaUpload, FaDownload, FaPlus, FaTrash } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 
@@ -459,99 +459,125 @@ const DataManagement = () => {
         return cleaned;
       };
 
-      let successCount = 0;
-      let failedCount = 0;
+      // Parse all rows first and validate
+      const validLeads = [];
+      const invalidRows = [];
 
+      // Helper functions for parsing
+      const getValue = (headerName, values) => {
+        const index = headerMap[headerName];
+        if (index === undefined) return '';
+        const value = values[index];
+        return value !== undefined && value !== null ? String(value).trim() : '';
+      };
+
+      const getNumberValue = (headerName, values) => {
+        const index = headerMap[headerName];
+        if (index === undefined) return null;
+        const value = values[index];
+        if (value === undefined || value === null || value === '') return null;
+        if (typeof value === 'number') return value;
+        const parsed = parseFloat(String(value));
+        return isNaN(parsed) ? null : parsed;
+      };
+
+      const getValueFlexible = (values, ...headerNames) => {
+        for (const headerName of headerNames) {
+          const value = getValue(headerName, values);
+          if (value) return value;
+        }
+        return '';
+      };
+
+      // Parse all rows
       for (let i = 0; i < dataRows.length; i++) {
         const row = dataRows[i];
         if (!row || row.length === 0) continue;
 
         try {
-          // For CSV, row is already parsed array. For XLSX, row is already an array.
           const values = Array.isArray(row) ? row : [];
 
-          // Map values to lead object based on header names
-          const getValue = (headerName) => {
-            const index = headerMap[headerName];
-            if (index === undefined) return '';
-            const value = values[index];
-            // Convert to string and clean up
-            return value !== undefined && value !== null ? String(value).trim() : '';
-          };
-
-          // Helper to parse number values for price (handles both string and number from XLSX)
-          const getNumberValue = (headerName) => {
-            const index = headerMap[headerName];
-            if (index === undefined) return null;
-            const value = values[index];
-            if (value === undefined || value === null || value === '') return null;
-            // If it's already a number, return it
-            if (typeof value === 'number') return value;
-            // Otherwise parse the string
-            const parsed = parseFloat(String(value));
-            return isNaN(parsed) ? null : parsed;
-          };
-
-          // Helper to get value with multiple possible header names
-          const getValueFlexible = (...headerNames) => {
-            for (const headerName of headerNames) {
-              const value = getValue(headerName);
-              if (value) return value;
-            }
-            return '';
-          };
-
           const leadData = {
-            firstName: getValueFlexible('FIRST NAME', 'FIRSTNAME'),
-            lastName: getValueFlexible('LAST NAME', 'LASTNAME'),
-            address: getValue('ADDRESS'),
-            city: getValue('CITY'),
-            state: getValue('STATE'),
-            zip: getValue('ZIP'),
-            dob: parseDOB(getValueFlexible('DOB', 'DATE OF BIRTH', 'DATEOFBIRTH')),
-            ssn: getValueFlexible('SSN', 'SOCIAL SECURITY NUMBER', 'SOCIALSECURITYNUMBER').replace(/\D/g, ''), // Remove all non-digits from SSN
-            email: getValueFlexible('MAIL', 'EMAIL', 'E-MAIL'),
-            phone: getValueFlexible('PHONE', 'PHONE NUMBER', 'PHONENUMBER', 'TELEPHONE'),
-            score: getValueFlexible('SCORE', 'CREDIT SCORE', 'CREDITSCORE') || undefined, // Score accepts any text or number
-            price: getNumberValue('PRICE') || 0,
+            firstName: getValueFlexible(values, 'FIRST NAME', 'FIRSTNAME'),
+            lastName: getValueFlexible(values, 'LAST NAME', 'LASTNAME'),
+            address: getValue('ADDRESS', values),
+            city: getValue('CITY', values),
+            state: getValue('STATE', values),
+            zip: getValue('ZIP', values),
+            dob: parseDOB(getValueFlexible(values, 'DOB', 'DATE OF BIRTH', 'DATEOFBIRTH')),
+            ssn: getValueFlexible(values, 'SSN', 'SOCIAL SECURITY NUMBER', 'SOCIALSECURITYNUMBER').replace(/\D/g, ''),
+            email: getValueFlexible(values, 'MAIL', 'EMAIL', 'E-MAIL'),
+            phone: getValueFlexible(values, 'PHONE', 'PHONE NUMBER', 'PHONENUMBER', 'TELEPHONE'),
+            score: getValueFlexible(values, 'SCORE', 'CREDIT SCORE', 'CREDITSCORE') || undefined,
+            price: getNumberValue('PRICE', values) || 0,
           };
 
           // Validate required fields
           if (!leadData.firstName || !leadData.lastName || !leadData.email) {
-            failedCount++;
-            const errorMsg = `Row ${i + 2} skipped: Missing required fields - First Name: ${leadData.firstName ? 'OK' : 'MISSING'}, Last Name: ${leadData.lastName ? 'OK' : 'MISSING'}, Email: ${leadData.email ? 'OK' : 'MISSING'}`;
-            console.warn(errorMsg, leadData);
+            invalidRows.push({
+              index: i + 2,
+              error: 'Missing required fields (First Name, Last Name, or Email)',
+            });
             continue;
           }
           
-          // Validate DOB - it's required by backend
+          // Validate DOB
           if (!leadData.dob || !/^\d{4}-\d{2}-\d{2}$/.test(leadData.dob)) {
-            failedCount++;
-            const originalDOB = getValueFlexible('DOB', 'DATE OF BIRTH', 'DATEOFBIRTH');
-            const errorMsg = `Row ${i + 2} skipped: Missing or invalid DOB - Original: "${originalDOB}", Parsed: "${leadData.dob || 'MISSING'}"`;
-            console.warn(errorMsg);
+            invalidRows.push({
+              index: i + 2,
+              error: 'Missing or invalid DOB',
+            });
             continue;
           }
 
-          // Add lead via API
-          try {
-            await addLead(leadData);
-            successCount++;
-          } catch (apiError) {
-            failedCount++;
-            console.error(`Row ${i + 2} API error:`, apiError.message || apiError);
-            continue;
-          }
+          validLeads.push(leadData);
+        } catch (err) {
+          invalidRows.push({
+            index: i + 2,
+            error: err.message || 'Parsing error',
+          });
+        }
+      }
 
-          // Update status
+      // Process in batches for better performance
+      const BATCH_SIZE = 100; // Process 100 leads at a time
+      let successCount = 0;
+      let failedCount = invalidRows.length; // Start with pre-validation failures
+
+      for (let i = 0; i < validLeads.length; i += BATCH_SIZE) {
+        const batch = validLeads.slice(i, i + BATCH_SIZE);
+        
+        try {
+          const result = await bulkAddLeads(batch);
+          successCount += result.successCount || batch.length;
+          failedCount += result.failedCount || 0;
+          
+          // Update status after each batch
           setImportStatus({
             success: successCount,
             failed: failedCount,
             total: dataRows.length
           });
-        } catch (err) {
-          failedCount++;
-          console.error(`Error importing row ${i + 1}:`, err);
+        } catch (apiError) {
+          // If batch fails, try individual inserts as fallback
+          console.warn(`Batch ${Math.floor(i / BATCH_SIZE) + 1} failed, falling back to individual inserts:`, apiError.message);
+          
+          for (const leadData of batch) {
+            try {
+              await addLead(leadData);
+              successCount++;
+            } catch (individualError) {
+              failedCount++;
+              console.error('Individual insert error:', individualError.message);
+            }
+            
+            // Update status
+            setImportStatus({
+              success: successCount,
+              failed: failedCount,
+              total: dataRows.length
+            });
+          }
         }
       }
 

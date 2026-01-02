@@ -2,6 +2,7 @@ import { Injectable, Inject, forwardRef, NotFoundException } from '@nestjs/commo
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AddLeadDto } from './dto/add-lead.dto';
+import { BulkAddLeadsDto } from './dto/bulk-add-leads.dto';
 import { FilterLeadsDto } from './dto/filter-leads.dto';
 import { Lead, LeadDocument } from './schemas/lead.schema';
 
@@ -33,6 +34,62 @@ export class LeadsService {
     return {
       message: 'Lead added successfully',
       lead: savedLead,
+    };
+  }
+
+  async bulkAddLeads(bulkAddLeadsDto: BulkAddLeadsDto): Promise<{ message: string; successCount: number; failedCount: number; errors: Array<{ index: number; error: string }> }> {
+    const leadsToInsert = bulkAddLeadsDto.leads.map(leadDto => ({
+      firstName: leadDto.firstName,
+      lastName: leadDto.lastName,
+      price: leadDto.price,
+      address: leadDto.address,
+      state: leadDto.state,
+      city: leadDto.city,
+      zip: leadDto.zip,
+      dob: new Date(leadDto.dob),
+      ssn: leadDto.ssn,
+      email: leadDto.email,
+      phone: leadDto.phone,
+      score: leadDto.score,
+    }));
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors: Array<{ index: number; error: string }> = [];
+
+    try {
+      // Use insertMany for better performance with large datasets
+      // ordered: false allows insertion to continue even if some documents fail
+      const result = await this.leadModel.insertMany(leadsToInsert, { ordered: false });
+      successCount = result.length;
+    } catch (error: any) {
+      // Handle bulk write errors
+      if (error.writeErrors && error.writeErrors.length > 0) {
+        // Some documents failed, but some may have succeeded
+        successCount = error.result?.insertedCount || 0;
+        failedCount = error.writeErrors.length;
+        
+        error.writeErrors.forEach((writeError: any, idx: number) => {
+          errors.push({
+            index: writeError.index,
+            error: writeError.errmsg || writeError.err?.message || 'Validation error',
+          });
+        });
+      } else {
+        // All documents failed or other error
+        failedCount = leadsToInsert.length;
+        errors.push({
+          index: 0,
+          error: error.message || 'Bulk insert failed',
+        });
+      }
+    }
+
+    return {
+      message: `Bulk import completed: ${successCount} succeeded, ${failedCount} failed`,
+      successCount,
+      failedCount,
+      errors,
     };
   }
 

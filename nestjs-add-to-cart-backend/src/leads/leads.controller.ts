@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiQuery } 
 import { AuthGuard } from '@nestjs/passport';
 import { LeadsService } from './leads.service';
 import { AddLeadDto } from './dto/add-lead.dto';
+import { BulkAddLeadsDto } from './dto/bulk-add-leads.dto';
 import { FilterLeadsDto } from './dto/filter-leads.dto';
 import { Roles } from '../users/decorators/roles.decorator';
 import { RolesGuard } from '../users/guards/roles.guard';
@@ -82,6 +83,44 @@ export class LeadsController {
   })
   async addLead(@Body() addLeadDto: AddLeadDto) {
     return this.leadsService.addLead(addLeadDto);
+  }
+
+  @Post('bulk/add')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Bulk add multiple leads (Admin only)' })
+  @ApiBody({ type: BulkAddLeadsDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Leads bulk import completed',
+    schema: {
+      example: {
+        message: 'Bulk import completed: 100 succeeded, 5 failed',
+        successCount: 100,
+        failedCount: 5,
+        errors: [
+          { index: 10, error: 'Validation error' },
+          { index: 25, error: 'Duplicate email' },
+        ],
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error',
+  })
+  async bulkAddLeads(@Body() bulkAddLeadsDto: BulkAddLeadsDto) {
+    return this.leadsService.bulkAddLeads(bulkAddLeadsDto);
   }
 
   @Get()
