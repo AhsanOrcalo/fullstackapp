@@ -135,7 +135,7 @@ const DataManagement = () => {
         limit: pageSize,
       };
       if (searchQuery) {
-        filters.name = searchQuery;
+        filters.name = searchQuery; // This will search across name, city, and state
       }
       if (scoreFilter) {
         filters.scoreFilter = scoreFilter;
@@ -230,6 +230,9 @@ const DataManagement = () => {
     if (tab === 'canada') {
       setScoreFilter('');
     }
+    // Optionally clear city and state search when switching tabs (uncomment if needed)
+    // setCitySearch('');
+    // setStateSearch('');
     // fetchLeads will be called automatically via useEffect dependency on activeTab
   };
 
@@ -1110,7 +1113,7 @@ const DataManagement = () => {
         }}
         variants={itemVariants}
       >
-        {/* Search Bar - Smaller */}
+        {/* Unified Search Bar - searches name, city, and state */}
         <div style={{ 
           width: '300px',
           position: 'relative'
@@ -1129,7 +1132,7 @@ const DataManagement = () => {
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search records..."
+              placeholder="Search by name, city, or state..."
               style={{
                 flex: 1,
                 border: 'none',

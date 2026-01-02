@@ -154,16 +154,18 @@ export class LeadsService {
     }
 
     if (filters) {
-      // Filter by name (searches in firstName and lastName)
+      // Filter by name (searches in firstName, lastName, city, and state)
       if (filters.name) {
         query.$or = [
           { firstName: { $regex: filters.name, $options: 'i' } },
           { lastName: { $regex: filters.name, $options: 'i' } },
+          { city: { $regex: filters.name, $options: 'i' } },
+          { state: { $regex: filters.name, $options: 'i' } },
         ];
       }
 
-      // Filter by city
-      if (filters.city) {
+      // Filter by city (only if name filter is not provided, to avoid duplicate search)
+      if (filters.city && !filters.name) {
         query.city = { $regex: filters.city, $options: 'i' };
       }
 
@@ -186,8 +188,8 @@ export class LeadsService {
         query.zip = { $regex: filters.zip, $options: 'i' };
       }
 
-      // Filter by state
-      if (filters.state) {
+      // Filter by state (only if name filter is not provided, to avoid duplicate search)
+      if (filters.state && !filters.name) {
         query.state = { $regex: filters.state, $options: 'i' };
       }
 
