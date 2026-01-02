@@ -14,7 +14,7 @@ const Browsedata = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -32,7 +32,7 @@ const Browsedata = () => {
   useEffect(() => {
     fetchLeads();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
+  }, [currentPage, pageSize]);
 
   const fetchLeads = async (filterParams = {}) => {
     try {
@@ -99,6 +99,12 @@ const Browsedata = () => {
       ...prev,
       [name]: prev[name] === value ? '' : value, // Toggle if same value clicked
     }));
+  };
+
+  const handlePageSizeChange = (e) => {
+    const newPageSize = parseInt(e.target.value, 10);
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when page size changes
   };
 
   const applyFilters = () => {
@@ -402,6 +408,15 @@ const Browsedata = () => {
                 <input
                   type="radio"
                   name="scoreFilter"
+                  checked={filters.scoreFilter === ''}
+                  onChange={() => handleRadioChange('scoreFilter', '')}
+                />
+                <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>All</span>
+              </label>
+              <label className="customradio">
+                <input
+                  type="radio"
+                  name="scoreFilter"
                   checked={filters.scoreFilter === '700+'}
                   onChange={() => handleRadioChange('scoreFilter', '700+')}
                 />
@@ -483,6 +498,61 @@ const Browsedata = () => {
         </div>
 
         <button className="applybtn" onClick={applyFilters}>Apply Filters</button>
+      </div>
+
+      {/* Total Records and Page Size Selector */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '20px',
+        padding: '15px',
+        background: 'var(--bg-card)',
+        borderRadius: '12px',
+        border: '1px solid var(--border-clr)'
+      }}>
+        <div style={{ 
+          color: 'var(--text-main)', 
+          fontSize: '16px',
+          fontWeight: '600'
+        }}>
+          Total Records: <span style={{ color: 'var(--primary-blue)', fontWeight: '700' }}>{totalRecords}</span>
+        </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <label style={{
+            color: 'var(--text-main)',
+            fontSize: '14px',
+            fontWeight: '600'
+          }}>
+            Records per page:
+          </label>
+          <select
+            value={pageSize}
+            onChange={handlePageSizeChange}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-clr)',
+              background: 'var(--bg-card)',
+              color: 'var(--text-main)',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              outline: 'none',
+              minWidth: '80px'
+            }}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={30}>30</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
       </div>
 
       <div className="tablecard">
