@@ -293,7 +293,7 @@ const DataManagement = () => {
   const handleExport = () => {
     try {
       // Prepare CSV headers - matching table column order
-      // Exclude MAIL for Canada tab
+      // For Canada: exclude MAIL and CREATED AT, replace SCORE with MMN
       const headers = [
         'FIRST NAME',
         'LAST NAME',
@@ -305,9 +305,9 @@ const DataManagement = () => {
         'SSN',
         ...(activeTab === 'usa' ? ['MAIL'] : []), // Only include MAIL for USA tab
         'PHONE',
-        'SCORE',
+        activeTab === 'canada' ? 'MMN' : 'SCORE', // Replace SCORE with MMN for Canada
         'PRICE',
-        'CREATED AT'
+        ...(activeTab !== 'canada' ? ['CREATED AT'] : []) // Exclude CREATED AT for Canada
       ];
 
       // Convert leads to CSV rows
@@ -325,9 +325,9 @@ const DataManagement = () => {
             `"${(lead.ssn || '').replace(/"/g, '""')}"`,
             ...(activeTab === 'usa' ? [`"${(lead.email || '').replace(/"/g, '""')}"`] : []), // Only include email for USA tab
             `"${(lead.phone || '').replace(/"/g, '""')}"`,
-            lead.score || '',
+            lead.score || '', // This will be labeled as MMN for Canada in the header
             lead.price || 0,
-            `"${lead.createdAt ? new Date(lead.createdAt).toISOString() : ''}"`
+            ...(activeTab !== 'canada' ? [`"${lead.createdAt ? new Date(lead.createdAt).toISOString() : ''}"`] : []) // Exclude CREATED AT for Canada
           ];
           return row.join(',');
         })
