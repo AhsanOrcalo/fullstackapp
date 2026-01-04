@@ -4,6 +4,79 @@ import { getUserPurchases } from '../services/api';
 import { FaSearch, FaSync, FaFileExcel, FaDownload } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 
+// Canadian provinces and territories
+const CANADIAN_PROVINCES = [
+  'Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Manitoba', 
+  'Saskatchewan', 'Nova Scotia', 'New Brunswick', 'Newfoundland and Labrador',
+  'Newfoundland', 'Prince Edward Island', 'Northwest Territories', 'Yukon', 'Nunavut'
+];
+
+// Major Canadian cities
+const CANADIAN_CITIES = [
+  'Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Edmonton', 'Ottawa',
+  'Winnipeg', 'Quebec City', 'Hamilton', 'Kitchener', 'London', 'Victoria',
+  'Halifax', 'Oshawa', 'Windsor', 'Saskatoon', 'Regina', 'Sherbrooke',
+  'St. John\'s', 'Barrie', 'Kelowna', 'Abbotsford', 'Sudbury', 'Kingston',
+  'Saguenay', 'Trois-Rivières', 'Guelph', 'Cambridge', 'Thunder Bay', 'Saint John'
+];
+
+// US states
+const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado',
+  'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho',
+  'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana',
+  'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+  'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
+  'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma',
+  'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota',
+  'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
+  'West Virginia', 'Wisconsin', 'Wyoming', 'District of Columbia'
+];
+
+// Major US cities
+const US_CITIES = [
+  'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia',
+  'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville',
+  'Fort Worth', 'Columbus', 'Charlotte', 'San Francisco', 'Indianapolis',
+  'Seattle', 'Denver', 'Washington', 'Boston', 'El Paso', 'Detroit', 'Nashville',
+  'Portland', 'Oklahoma City', 'Las Vegas', 'Memphis', 'Louisville', 'Baltimore',
+  'Milwaukee', 'Albuquerque', 'Tucson', 'Fresno', 'Sacramento', 'Kansas City',
+  'Mesa', 'Atlanta', 'Omaha', 'Raleigh', 'Miami', 'Long Beach', 'Virginia Beach',
+  'Oakland', 'Minneapolis', 'Tulsa', 'Tampa', 'Arlington', 'New Orleans'
+];
+
+// Helper function to check if state/city is Canadian
+const isCanadianLocation = (state, city) => {
+  const stateLower = (state || '').trim().toLowerCase();
+  const cityLower = (city || '').trim().toLowerCase();
+  
+  const isCanadianState = CANADIAN_PROVINCES.some(province => 
+    stateLower === province.toLowerCase()
+  );
+  
+  const isCanadianCity = CANADIAN_CITIES.some(canadianCity => 
+    cityLower === canadianCity.toLowerCase()
+  );
+  
+  return isCanadianState || isCanadianCity;
+};
+
+// Helper function to check if state/city is US
+const isUSLocation = (state, city) => {
+  const stateLower = (state || '').trim().toLowerCase();
+  const cityLower = (city || '').trim().toLowerCase();
+  
+  const isUSState = US_STATES.some(usState => 
+    stateLower === usState.toLowerCase()
+  );
+  
+  const isUSCity = US_CITIES.some(usCity => 
+    cityLower === usCity.toLowerCase()
+  );
+  
+  return isUSState || isUSCity;
+};
+
 const Orders = () => {
   const [purchasedata, setPurchasedata] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -13,10 +86,19 @@ const Orders = () => {
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'canada', or 'usa'
 
   useEffect(() => {
     fetchPurchases();
   }, []);
+
+  // Reapply filters when tab changes
+  useEffect(() => {
+    if (purchasedata.length > 0) {
+      applyFilters();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const fetchPurchases = async () => {
     try {
@@ -55,7 +137,8 @@ const Orders = () => {
         lead: purchase.lead,
       })) : [];
       setPurchasedata(transformedData);
-      setFilteredData(transformedData);
+      // Apply tab filter after setting data
+      applyFilters(transformedData);
       setSelectedRows(new Set()); // Clear selection when data is refreshed
     } catch (err) {
       setError(err.message || 'Failed to fetch purchases');
@@ -65,40 +148,66 @@ const Orders = () => {
     }
   };
 
-  const handleSearch = () => {
-    if (!searchQuery.trim()) {
-      setFilteredData(purchasedata);
-      setCurrentPage(1); // Reset to first page when search is cleared
-      return;
+  // Apply filters (search + tab filter)
+  const applyFilters = (dataToFilter = purchasedata) => {
+    let filtered = [...dataToFilter];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(item => {
+        const searchableText = `
+          ${item.fname || ''} 
+          ${item.lname || ''} 
+          ${item.email || ''} 
+          ${item.address || ''} 
+          ${item.city || ''} 
+          ${item.state || ''} 
+          ${item.zip || ''} 
+          ${item.phone || ''}
+        `.toLowerCase();
+
+        return searchableText.includes(query);
+      });
     }
 
-    const query = searchQuery.toLowerCase().trim();
-    const filtered = purchasedata.filter(item => {
-      const searchableText = `
-        ${item.fname || ''} 
-        ${item.lname || ''} 
-        ${item.email || ''} 
-        ${item.address || ''} 
-        ${item.city || ''} 
-        ${item.state || ''} 
-        ${item.zip || ''} 
-        ${item.phone || ''}
-      `.toLowerCase();
-
-      return searchableText.includes(query);
-    });
+    // Apply country filter based on active tab
+    if (activeTab === 'canada') {
+      filtered = filtered.filter(item => {
+        const state = item.lead?.state || item.state || '';
+        const city = item.lead?.city || item.city || '';
+        return isCanadianLocation(state, city);
+      });
+    } else if (activeTab === 'usa') {
+      filtered = filtered.filter(item => {
+        const state = item.lead?.state || item.state || '';
+        const city = item.lead?.city || item.city || '';
+        return isUSLocation(state, city);
+      });
+    }
+    // If activeTab is 'all', show all records
 
     setFilteredData(filtered);
-    setCurrentPage(1); // Reset to first page when search is applied
+    setCurrentPage(1); // Reset to first page when filters are applied
+  };
+
+  const handleSearch = () => {
+    applyFilters();
   };
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
-    // If search is cleared, show all data
+    // If search is cleared, reapply filters (including tab filter)
     if (!e.target.value.trim()) {
-      setFilteredData(purchasedata);
-      setCurrentPage(1); // Reset to first page when search is cleared
+      applyFilters();
     }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to first page when tab changes
+    // Reapply all filters with new tab
+    applyFilters();
   };
 
   const handleKeyPress = (e) => {
@@ -197,21 +306,29 @@ const Orders = () => {
       const selectedRecords = filteredData.filter(item => selectedRows.has(item.id));
 
       // Prepare data for Excel
-      const excelData = selectedRecords.map(item => ({
-        'First Name': item.fname,
-        'Last Name': item.lname,
-        'Address': item.address,
-        'City': item.city,
-        'State': item.state,
-        'ZIP': item.zip,
-        'DOB': item.lead?.dob ? formatDOB(item.lead.dob) : item.dob,
-        'SSN': item.ssn,
-        'Email': item.email,
-        'Phone': item.phone,
-        'Score': item.score !== 'N/A' ? item.score : '',
-        'Price': item.price,
-        'Purchased Date': item.date ? formatDate(item.date) : 'N/A',
-      }));
+      const excelData = selectedRecords.map(item => {
+        const baseData = {
+          'First Name': item.fname,
+          'Last Name': item.lname,
+          'Address': item.address,
+          'City': item.city,
+          'State': item.state,
+          'ZIP': item.zip,
+          'DOB': item.lead?.dob ? formatDOB(item.lead.dob) : item.dob,
+          'SSN': item.ssn,
+          'Phone': item.phone,
+          'Score': item.score !== 'N/A' ? item.score : '',
+          'Price': item.price,
+          'Purchased Date': item.date ? formatDate(item.date) : 'N/A',
+        };
+        
+        // Only include email for USA and All tabs
+        if (activeTab === 'usa' || activeTab === 'all') {
+          baseData['Email'] = item.email;
+        }
+        
+        return baseData;
+      });
 
       // Create workbook and worksheet
       const worksheet = XLSX.utils.json_to_sheet(excelData);
@@ -264,6 +381,67 @@ const Orders = () => {
             {loading ? 'Loading...' : 'Refresh'}
           </button>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{
+        display: 'flex',
+        gap: '0',
+        borderBottom: '2px solid var(--border-clr)',
+        marginBottom: '20px',
+        paddingLeft: '0'
+      }}>
+        <button
+          onClick={() => handleTabChange('all')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            color: activeTab === 'all' ? 'var(--primary-blue)' : 'var(--text-sub)',
+            fontSize: '16px',
+            fontWeight: activeTab === 'all' ? '700' : '500',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'all' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+            marginBottom: '-2px',
+            transition: 'all 0.3s'
+          }}
+        >
+          All
+        </button>
+        <button
+          onClick={() => handleTabChange('canada')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            color: activeTab === 'canada' ? 'var(--primary-blue)' : 'var(--text-sub)',
+            fontSize: '16px',
+            fontWeight: activeTab === 'canada' ? '700' : '500',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'canada' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+            marginBottom: '-2px',
+            transition: 'all 0.3s'
+          }}
+        >
+          Canada
+        </button>
+        <button
+          onClick={() => handleTabChange('usa')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            color: activeTab === 'usa' ? 'var(--primary-blue)' : 'var(--text-sub)',
+            fontSize: '16px',
+            fontWeight: activeTab === 'usa' ? '700' : '500',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'usa' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+            marginBottom: '-2px',
+            transition: 'all 0.3s'
+          }}
+        >
+          USA
+        </button>
       </div>
 
       <div className="searchsection">
@@ -381,7 +559,7 @@ const Orders = () => {
                   <th>ZIP</th>
                   <th>DOB</th>
                   <th>SSN</th>
-                  <th>EMAIL</th>
+                  {(activeTab === 'usa' || activeTab === 'all') && <th>EMAIL</th>}
                   <th>PHONE</th>
                   <th>SCORE</th>
                   <th>PRICE</th>
@@ -391,7 +569,7 @@ const Orders = () => {
               <tbody>
                 {currentPageData.length === 0 ? (
                   <tr>
-                    <td colSpan="14" className="emptyrow">
+                    <td colSpan={activeTab === 'canada' ? 13 : 14} className="emptyrow">
                       {searchQuery ? 'No records found matching your search.' : 'No purchased records found.'}
                     </td>
                   </tr>
@@ -415,7 +593,7 @@ const Orders = () => {
                       <td>{item.zip}</td>
                       <td>{item.lead?.dob ? formatDOB(item.lead.dob) : item.dob}</td>
                       <td>{item.ssn}</td>
-                      <td>{item.email}</td>
+                      {(activeTab === 'usa' || activeTab === 'all') && <td>{item.email}</td>}
                       <td>{item.phone}</td>
                       <td>
                         {item.score && item.score !== 'N/A' ? (
