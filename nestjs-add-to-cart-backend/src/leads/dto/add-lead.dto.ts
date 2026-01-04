@@ -57,12 +57,14 @@ export class AddLeadDto {
   city: string;
 
   @ApiProperty({
-    description: 'Zip code of the lead',
+    description: 'Zip code or postal code of the lead (US: 12345 or 12345-6789, Canada: K1W 1G4 or K1W1G4)',
     example: '90001',
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{5}(-\d{4})?$/, { message: 'Zip code must be in format 12345 or 12345-6789' })
+  @Matches(/^(?:\d{5}(-\d{4})?|[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d)$/, { 
+    message: 'Zip code must be US format (12345 or 12345-6789) or Canadian format (K1W 1G4 or K1W1G4)' 
+  })
   zip: string;
 
   @ApiProperty({
