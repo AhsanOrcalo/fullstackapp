@@ -12,8 +12,7 @@ export enum PaymentStatus {
 
 export enum PaymentMethod {
   BALANCE = 'balance',
-  CRYPTOMUS = 'cryptomus',
-  PLISIO = 'plisio',
+  NOWPAYMENTS = 'nowpayments',
 }
 
 export type PaymentDocument = Payment & Document;
@@ -38,61 +37,39 @@ export class Payment {
   @Prop({ required: true, enum: PaymentStatus, default: PaymentStatus.PENDING })
   status: PaymentStatus;
 
-  // Cryptomus specific fields (kept for backward compatibility)
+  // NOWPayments specific fields
   @Prop({ required: false })
-  cryptomusOrderId?: string;
+  nowpaymentsPaymentId?: number;
 
   @Prop({ required: false })
-  cryptomusUuid?: string;
+  nowpaymentsInvoiceId?: number;
 
   @Prop({ required: false })
-  cryptomusAddress?: string;
+  nowpaymentsPayAddress?: string;
 
   @Prop({ required: false })
-  cryptomusNetwork?: string;
+  nowpaymentsPayCurrency?: string;
 
   @Prop({ required: false })
-  cryptomusCurrency?: string;
+  nowpaymentsPriceCurrency?: string;
 
   @Prop({ required: false })
-  cryptomusPaymentUrl?: string;
+  nowpaymentsPaymentUrl?: string;
 
   @Prop({ required: false })
-  cryptomusTxid?: string;
+  nowpaymentsPurchaseId?: string;
+
+  @Prop({ required: false })
+  nowpaymentsOrderId?: string;
+
+  @Prop({ required: false })
+  nowpaymentsOrderDescription?: string;
 
   @Prop({ required: false, type: Date })
-  cryptomusExpiredAt?: Date;
-
-  @Prop({ required: false })
-  cryptomusAdditionalData?: string;
+  nowpaymentsExpiredAt?: Date;
 
   @Prop({ required: false, type: Object })
-  cryptomusResponse?: any;
-
-  // Plisio specific fields
-  @Prop({ required: false })
-  plisioTxnId?: string;
-
-  @Prop({ required: false })
-  plisioInvoiceId?: string;
-
-  @Prop({ required: false })
-  plisioAddress?: string;
-
-  @Prop({ required: false })
-  plisioCurrency?: string;
-
-  @Prop({ required: false })
-  plisioPaymentUrl?: string;
-
-  @Prop({ required: false, type: Date })
-  plisioExpiredAt?: Date;
-
-  @Prop({ required: false })
-  plisioOrderNumber?: string;
-
-  @Prop({ required: false, type: Object })
-  plisioResponse?: any;
+  nowpaymentsResponse?: any;
 
   @Prop({ required: false, type: Date })
   paidAt?: Date;

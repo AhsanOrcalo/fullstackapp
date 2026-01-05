@@ -85,9 +85,9 @@ export class PaymentsController {
 
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Cryptomus webhook endpoint' })
+  @ApiOperation({ summary: 'NOWPayments webhook endpoint (IPN)' })
   @ApiBody({
-    description: 'Cryptomus webhook data',
+    description: 'NOWPayments IPN webhook data',
     schema: {
       type: 'object',
     },
@@ -98,9 +98,9 @@ export class PaymentsController {
   })
   async handleWebhook(
     @Body() webhookData: any,
-    @Headers('sign') signature: string,
+    @Headers('x-nowpayments-sig') signature: string,
   ) {
-    // Cryptomus sends signature in the 'sign' header
+    // NOWPayments sends signature in the 'x-nowpayments-sig' header
     return this.paymentsService.handleWebhook(webhookData, signature || '');
   }
 }

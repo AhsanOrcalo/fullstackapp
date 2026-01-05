@@ -327,7 +327,7 @@ export class UsersService implements OnModuleInit {
       currency: 'USD',
       paymentMethod: PaymentMethod.BALANCE,
       status: PaymentStatus.PAID,
-      cryptomusAdditionalData: 'Admin added funds',
+      nowpaymentsOrderDescription: 'Admin added funds',
       paidAt: new Date(),
     });
     await adminPayment.save();
@@ -353,7 +353,7 @@ export class UsersService implements OnModuleInit {
     
     // Calculate total deposits from all PAID payments that are for adding funds (not for purchasing leads)
     // This includes:
-    // 1. Cryptomus payments (for adding funds, not lead purchases)
+    // 1. NOWPayments payments (for adding funds, not lead purchases)
     // 2. Admin-added funds (marked with "Admin added funds" in additionalData)
     const depositPayments = await this.paymentModel.find({
       userId: new Types.ObjectId(userId),
@@ -364,9 +364,9 @@ export class UsersService implements OnModuleInit {
     const totalDeposits = depositPayments.reduce((sum, payment) => {
       // Count payments that are:
       // - Admin added funds (has "Admin added funds" in additionalData)
-      // - Cryptomus payments for adding funds (doesn't have "Lead purchase:" in additionalData)
-      const additionalData = payment.cryptomusAdditionalData || '';
-      if (additionalData.includes('Admin added funds') || !additionalData.includes('Lead purchase:')) {
+      // - NOWPayments payments for adding funds (doesn't have "Lead purchase:" in orderDescription)
+      const orderDescription = payment.nowpaymentsOrderDescription || '';
+      if (orderDescription.includes('Admin added funds') || !orderDescription.includes('Lead purchase:')) {
         return sum + parseFloat(payment.amount?.toString() || '0');
       }
       return sum;
@@ -390,11 +390,11 @@ export class UsersService implements OnModuleInit {
         id: p._id.toString(),
         amount: p.amount,
         status: p.status,
-        cryptomusAddress: p.cryptomusAddress,
-        cryptomusCurrency: p.cryptomusCurrency,
-        cryptomusNetwork: p.cryptomusNetwork,
-        cryptomusPaymentUrl: p.cryptomusPaymentUrl,
-        cryptomusExpiredAt: p.cryptomusExpiredAt,
+        nowpaymentsPayAddress: p.nowpaymentsPayAddress,
+        nowpaymentsPayCurrency: p.nowpaymentsPayCurrency,
+        nowpaymentsPriceCurrency: p.nowpaymentsPriceCurrency,
+        nowpaymentsPaymentUrl: p.nowpaymentsPaymentUrl,
+        nowpaymentsExpiredAt: p.nowpaymentsExpiredAt,
         createdAt: p.createdAt,
       })),
     };

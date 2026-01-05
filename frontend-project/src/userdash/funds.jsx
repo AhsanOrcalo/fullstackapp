@@ -125,7 +125,7 @@ const Funds = () => {
       const paymentData = {
         amount: paymentAmount,
         currency: 'USD',
-        paymentMethod: 'plisio',
+        paymentMethod: 'nowpayments',
       };
 
       const result = await createPayment(paymentData);
@@ -134,7 +134,7 @@ const Funds = () => {
         paymentId: result.paymentId,
         address: result.address,
         currency: result.currency,
-        network: result.network || result.currency || 'N/A',
+        network: result.currency || 'N/A',
         amount: result.amount,
         paymentUrl: result.paymentUrl,
         expiredAt: result.expiredAt ? new Date(result.expiredAt * 1000) : null,
