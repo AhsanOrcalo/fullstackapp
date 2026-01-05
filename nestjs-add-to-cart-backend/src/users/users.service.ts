@@ -10,7 +10,6 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { User, UserDocument } from './schemas/user.schema';
 import { Role } from './enums/role.enum';
-import { EmailService } from '../email/email.service';
 import { Payment, PaymentDocument, PaymentStatus, PaymentMethod } from '../payments/payment.schema';
 import { Purchase, PurchaseDocument } from '../purchases/schemas/purchase.schema';
 
@@ -24,7 +23,6 @@ export class UsersService implements OnModuleInit {
     @InjectModel(Purchase.name)
     private purchaseModel: Model<PurchaseDocument>,
     private jwtService: JwtService,
-    private emailService: EmailService,
   ) {}
 
   async onModuleInit() {
@@ -112,8 +110,13 @@ export class UsersService implements OnModuleInit {
   async login(loginDto: LoginDto): Promise<{ access_token: string; user: { id: string; userName: string; role: Role } }> {
     const { userName, password } = loginDto;
 
-    // Find user
-    const user = await this.userModel.findOne({ userName });
+    // Find user by username or email (allow login with either)
+    const user = await this.userModel.findOne({
+      $or: [
+        { userName: userName },
+        { email: userName }
+      ]
+    });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -259,7 +262,7 @@ export class UsersService implements OnModuleInit {
     };
   }
 
-  async forgetPassword(forgetPasswordDto: ForgetPasswordDto): Promise<{ message: string }> {
+  async forgetPassword(forgetPasswordDto: ForgetPasswordDto): Promise<{ message: string; temporaryPassword?: string; userName?: string }> {
     const { email } = forgetPasswordDto;
 
     // Find user by email
@@ -270,7 +273,7 @@ export class UsersService implements OnModuleInit {
     if (!user) {
       // Still return success to prevent email enumeration attacks
       return {
-        message: 'If the email exists, a temporary password has been sent to your email address.',
+        message: 'If the email exists, a temporary password has been generated.',
       };
     }
 
@@ -295,13 +298,12 @@ export class UsersService implements OnModuleInit {
     user.password = hashedPassword;
     await user.save();
 
-    // Send email with temporary password
-    // Note: Email service will handle errors and log appropriately
-    // In development mode, it will always log the temporary password
-    await this.emailService.sendPasswordResetEmail(user.email, temporaryPassword);
-
+    // Return temporary password to be displayed to user
+    // Also return the username so user knows what to use for login
     return {
-      message: 'If the email exists, a temporary password has been sent to your email address.',
+      message: 'Temporary password generated successfully. Please use it to log in.',
+      temporaryPassword: temporaryPassword,
+      userName: user.userName, // Include username so user knows what to use for login
     };
   }
 

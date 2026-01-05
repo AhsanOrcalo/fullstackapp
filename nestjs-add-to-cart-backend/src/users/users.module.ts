@@ -9,7 +9,6 @@ import { RolesGuard } from './guards/roles.guard';
 import { User, UserSchema } from './schemas/user.schema';
 import { Payment, PaymentSchema } from '../payments/payment.schema';
 import { Purchase, PurchaseSchema } from '../purchases/schemas/purchase.schema';
-import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -23,7 +22,6 @@ import { EmailModule } from '../email/email.module';
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
       signOptions: { expiresIn: '24h' },
     }),
-    EmailModule,
   ],
   controllers: [UsersController],
   providers: [UsersService, JwtStrategy, RolesGuard],

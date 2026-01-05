@@ -7,6 +7,8 @@ const Forget = ({ switchpage }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [temporaryPassword, setTemporaryPassword] = useState('');
+  const [userName, setUserName] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,11 +31,17 @@ const Forget = ({ switchpage }) => {
     try {
       setLoading(true);
       const response = await forgetPassword(email.trim());
-      setSuccess(true);
-      // Clear email after successful submission
-      setEmail('');
+      if (response.temporaryPassword) {
+        setTemporaryPassword(response.temporaryPassword);
+        setUserName(response.userName || '');
+        setSuccess(true);
+        // Clear email after successful submission
+        setEmail('');
+      } else {
+        setError('Email not found. Please check your email address.');
+      }
     } catch (err) {
-      setError(err.message || 'Failed to send password reset email. Please try again.');
+      setError(err.message || 'Failed to generate temporary password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -43,7 +51,7 @@ const Forget = ({ switchpage }) => {
     <div className="maincard">
       <h1 className="title">Reset Password</h1>
       <form onSubmit={handleSubmit}>
-        {success ? (
+        {success && temporaryPassword ? (
           <div style={{
             padding: '20px',
             backgroundColor: '#d1fae5',
@@ -52,16 +60,87 @@ const Forget = ({ switchpage }) => {
             marginBottom: '20px',
             textAlign: 'center'
           }}>
-            <p style={{ margin: 0, fontWeight: 'bold', marginBottom: '10px' }}>
-              ✓ Password Reset Email Sent
+            <p style={{ margin: 0, fontWeight: 'bold', marginBottom: '15px', fontSize: '16px' }}>
+              ✓ Temporary Password Generated
             </p>
-            <p style={{ margin: 0, fontSize: '14px' }}>
-              If the email exists, a temporary password has been sent to your email address.
-              Please check your inbox and use the temporary password to log in.
+            <div style={{
+              backgroundColor: '#ffffff',
+              padding: '15px',
+              borderRadius: '6px',
+              marginBottom: '15px',
+              border: '2px solid #059669'
+            }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#666' }}>
+                Your Temporary Password:
+              </p>
+              <p style={{
+                margin: 0,
+                fontSize: '24px',
+                fontWeight: 'bold',
+                fontFamily: 'monospace',
+                letterSpacing: '2px',
+                color: '#059669',
+                userSelect: 'all',
+                cursor: 'text'
+              }}>
+                {temporaryPassword}
+              </p>
+            </div>
+            {userName && (
+              <div style={{
+                backgroundColor: '#ffffff',
+                padding: '10px',
+                borderRadius: '6px',
+                marginBottom: '10px',
+                border: '1px solid #059669'
+              }}>
+                <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#666' }}>
+                  Your Username:
+                </p>
+                <p style={{
+                  margin: 0,
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#059669',
+                  userSelect: 'all',
+                  cursor: 'text'
+                }}>
+                  {userName}
+                </p>
+              </div>
+            )}
+            <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>
+              Please use your {userName ? 'username or email' : 'email'} and this temporary password to log in.
             </p>
-            <p style={{ margin: '10px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
-              Important: Please change your password after logging in.
+            <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#dc2626' }}>
+              ⚠️ Important: Please change your password after logging in.
             </p>
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(temporaryPassword);
+                  // Redirect to login page after copying
+                  switchpage('signin');
+                } catch (err) {
+                  // Fallback if clipboard API fails
+                  console.error('Failed to copy password:', err);
+                  switchpage('signin');
+                }
+              }}
+              style={{
+                marginTop: '15px',
+                padding: '8px 16px',
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              Copy Password
+            </button>
           </div>
         ) : (
           <>

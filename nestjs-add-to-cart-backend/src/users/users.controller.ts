@@ -109,14 +109,16 @@ export class UsersController {
 
   @Post('forget-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Request password reset - sends temporary password to email' })
+  @ApiOperation({ summary: 'Request password reset - returns temporary password' })
   @ApiBody({ type: ForgetPasswordDto })
   @ApiResponse({
     status: 200,
-    description: 'Password reset email sent (if email exists)',
+    description: 'Temporary password generated (if email exists)',
     schema: {
       example: {
-        message: 'If the email exists, a temporary password has been sent to your email address.',
+        message: 'Temporary password generated successfully. Please use it to log in.',
+        temporaryPassword: 'Abc123!@#$',
+        userName: 'john_doe',
       },
     },
   })
