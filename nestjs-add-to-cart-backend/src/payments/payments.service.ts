@@ -52,8 +52,8 @@ export class PaymentsService {
     if (paymentMethod === PaymentMethod.NOWPAYMENTS) {
       try {
         const orderId = payment._id.toString();
-        const baseUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+        const baseUrl = 'https://freshdata.shop/api'; 
+        const frontendUrl = 'https://freshdata.shop';
         
         const nowpaymentsRequest: NowPaymentsPaymentRequest = {
           price_amount: amount,
